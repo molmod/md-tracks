@@ -346,12 +346,11 @@ class CommandsTestCase(unittest.TestCase):
             "tracks/freqs,tracks/spectrum",
             os.path.join(output_dir, "make_spectrum_freqs")]
         )
-        output = self.execute("tr-plot", [
+        self.execute("tr-plot", [
             "--xlabel=Time", "-s1::", "--ylabel=Amplitude", "--xunit=fs", "--xinv",
             "tracks/freqs,tracks/spectrum",
             os.path.join(output_dir, "make_spectrum_freqs_inv")]
         )
-        print "".join(output)
 
     def test_fit_peaks(self):
         self.from_xyz("thf01", "vel", "-u1")
@@ -547,6 +546,40 @@ class CommandsTestCase(unittest.TestCase):
                     ekin += 0.5*mass*v*v
         ekin_check = load_track("tracks/kinetic_energy")
         self.assert_(abs(ekin/ekin_check - 1).max() < 1e-6)
+
+    def test_filter(self):
+        verbose = False
+        if verbose: print
+        def check_filter(case, kind, expression, expected):
+            arguments = [os.path.join(input_dir, "%s/init.psf" % case), kind, expression]
+            result = self.execute("tr-filter", arguments)[0].strip()
+            self.assertEqual(result, expected)
+            if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
+            arguments.append("--prefix=test")
+            result = self.execute("tr-filter", arguments)[0].strip()
+            if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
+
+        check_filter('thf01', 'at', 'a.symbol=="c"', '1,2,3,4')
+        check_filter('thf01', 'at', 'a.nsymbols=="c,c,h,h"', '3,4')
+        check_filter('thf01', 'at', 'a.nsymbols=="o,c,h,h"', '1,2')
+        check_filter('thf01', 'at', 'a.nsymbols=="c_2,h_2"', '3,4')
+        check_filter('thf01', 'at', 'a.nnumbers=="6_2,1_2"', '3,4')
+        check_filter('thf01', 'at', 'a.nnumbers=="6,8,1,1"', '1,2')
+        check_filter('thf01', 'at', 'a.nnumbers=="6,6"', '0')
+        check_filter('thf01', 'at', 'a.number=="6"', '')
+        check_filter('thf01', 'at', 'a.number==6', '1,2,3,4')
+        check_filter('thf01', 'at', 'a.index==6', '6')
+        check_filter('thf01', 'at', '0 in a.nindexes', '1,2')
+        check_filter('thf01', 'at', 'a.m.index==0', '0,1,2,3,4,5,6,7,8,9,10,11,12')
+        check_filter('thf01', 'mol', 'a.index==6', '0')
+        check_filter('thf01', 'mol', 'a.index=="6"', '')
+        check_filter('thf01', 'mol', 'm.index==0', '0')
+        check_filter('thf01', 'mol', 'm.composition=="C_4,O,H_8"', '0')
+        check_filter('thf01', 'mol', 'm.composition=="C_3,O,H_8"', '')
+        check_filter('water32', 'mol', 'm.composition=="H_2,O"', ",".join(str(val) for val in xrange(32)))
+        check_filter('water32', 'mol', 'm.index==5', '5')
+        check_filter('water32', 'mol', 'a.index==6', '2')
+
 
 
 class PSFFilterTestCase(unittest.TestCase):

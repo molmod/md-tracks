@@ -1,0 +1,148 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from ccio.psf import PSFFile
+from optparse import OptionParser
+import numpy
+from molmod.data import periodic
+
+usage = """Usage: %prog [options] connectivity {at|mol} expression
+%prog prints out atom or molecule numbers that satisfy the expression.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-p", "--prefix", 
+    help="Use this prefix when printing out the results.",
+    default=None
+)
+(options, args) = parser.parse_args()
+
+if len(args) == 3:
+    path_psf, kind, expression = args
+    kind = kind.lower()
+else:
+    parser.error("Expecting three arguments.")
+
+if not (kind=='at' or kind=='mol'):
+    parser.error("Kind must be at or mol.")
+    
+
+
+
+
+class Formula(object):
+    def __init__(self, l):
+        self.l = list(str(symbol).lower() for symbol in l)
+        self.l.sort()
+    
+    def __eq__(self, other):
+        if isinstance(other, str):
+            other_l = []
+            items = other.split(",")
+            for item in items:
+                pos = item.find("_")
+                if pos >= 0:
+                    count = int(item[pos+1:])
+                    symbol = item[:pos].lower()
+                    for index in xrange(count):
+                        other_l.append(symbol)
+                else:
+                    other_l.append(item.lower())
+            other_l.sort()
+            return (self.l == other_l)
+        else:
+            return False
+
+
+class Symbol(object):
+    def __init__(self, s):
+        self.s = str(s).lower()
+    
+    def __str__(self):
+        return self.s
+    
+    def __eq__(self, other):
+        return (self.s == str(other).lower())
+
+
+class Molecule(object):
+    def __init__(self, index):
+        self.index = index
+        self.atoms = []
+    
+
+class Atom(object):
+    def __init__(self, index, molecule, symbol, number, nindexes, nsymbols, nnumbers):
+        self.index = index
+        self.molecule = molecule
+        self.m = molecule
+        self.symbol = symbol
+        self.number = number
+        self.nindexes = nindexes
+        self.nsymbols = nsymbols
+        self.nnumbers = nnumbers
+
+
+psf = PSFFile(path_psf)
+graph = psf.get_graph()
+graph.init_neighbors()
+
+atoms = []
+molecules = dict((index, Molecule(Symbol(index))) for index in numpy.unique(psf.molecules))
+
+for a_index, (number, m_index) in enumerate(zip(psf.numbers, psf.molecules)):
+    nindexes = [nindex for nindex in graph.neighbors[a_index]]
+    nnumbers = [psf.numbers[nindex] for nindex in nindexes]
+    nsymbols = [periodic[nnumber].symbol for nnumber in nnumbers]
+    molecule = molecules[m_index]
+    atom = Atom(
+        a_index,
+        molecule,
+        Symbol(periodic[number].symbol),
+        number,
+        nindexes,
+        Formula(nsymbols),
+        Formula(nnumbers),
+    )
+    atoms.append(atom)
+    molecule.atoms.append(atom)
+
+for molecule in molecules.itervalues():
+    molecule.composition = Formula([atom.symbol for atom in molecule.atoms])
+
+
+result = []
+for atom in atoms:
+    if eval(expression, {"a": atom, "m": atom.m}):
+        if kind=='at':
+            result.append(int(str(atom.index)))
+        else:
+            result.append(int(str(atom.m.index)))
+
+result = list(set(result))
+result.sort()
+
+if options.prefix is None:
+    print ",".join([str(value) for value in result])
+else:
+    print " ".join(["%s.%07i" % (options.prefix, value) for value in result])
