@@ -27,8 +27,7 @@ from optparse import OptionParser
 
 usage = """Usage: %prog [options] input1 [input2 ...] 
 %prog performs an inverse real fourier transform on the tracks given by
-input1, input2, ... and stores each transform in a file in the same
-directory, but with the filename prepended with 'irfft.'"""
+input1, input2, ... and stores each transform in a file in ${input*}.irfft"""
 
 parser = OptionParser(usage)
 parser.add_option(
@@ -46,10 +45,7 @@ else:
 
 
 for path_in in paths_in:
-    if "/" not in path_in:
-        path_out = "irfft." % path_in
-    else:
-        path_out = os.path.join(os.path.dirname(path_in), "irfft.%s" % os.path.basename(path_in))
+    path_out = "%s.irfft" % path_in
     f = load_track(path_in)
     result = numpy.fft.irfft(f)
     dump_track(path_out, result)

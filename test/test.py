@@ -312,12 +312,12 @@ class CommandsTestCase(unittest.TestCase):
     def test_rfft_irfft(self):
         self.from_xyz("thf01", "vel", "-s:1000:", "-u1") # irrft always results in an even number of datapoints
         self.from_cp2k_ener("thf01")
-        self.execute("tr-rfft", glob.glob("tracks/atom.vel.*"))
-        self.execute("tr-irfft", glob.glob("tracks/rfft.atom.vel.*"))
-        self.assert_(len(glob.glob("tracks/atom.vel.*")) == len(glob.glob("tracks/rfft.*")))
-        self.assert_(len(glob.glob("tracks/atom.vel.*")) == len(glob.glob("tracks/irfft.rfft.*")))
-        for filename in glob.glob("tracks/atom.vel.*"):
-            other_filename = filename.replace("atom", "irfft.rfft.atom")
+        self.execute("tr-rfft", glob.glob("tracks/atom.vel.*.?"))
+        self.execute("tr-irfft", glob.glob("tracks/atom.vel.*.rfft"))
+        self.assert_(len(glob.glob("tracks/atom.vel.*.?")) == len(glob.glob("tracks/*.rfft")))
+        self.assert_(len(glob.glob("tracks/atom.vel.*.?")) == len(glob.glob("tracks/*.rfft.irfft")))
+        for filename in glob.glob("tracks/atom.vel.*.?"):
+            other_filename = "%s.rfft.irfft" % filename
             tmp1 = load_track(filename)
             tmp2 = load_track(other_filename)
             self.assert_(tmp1.shape == tmp2.shape)
@@ -327,7 +327,7 @@ class CommandsTestCase(unittest.TestCase):
         self.from_xyz("thf01", "vel", "-u1")
         self.from_cp2k_ener("thf01")
         self.execute("tr-rfft", glob.glob("tracks/atom.vel.*") + ["-whamming", "-d 5"])
-        self.execute("tr-make-spectrum", glob.glob("tracks/rfft.atom.vel.*") + ["tracks/spectrum"])
+        self.execute("tr-make-spectrum", glob.glob("tracks/atom.vel.*.rfft") + ["tracks/spectrum"])
         self.assert_(len(load_track("tracks/spectrum"))==101)
         self.execute("tr-wavenumber-axis", ["tracks/spectrum", "1000*fs", "tracks/wavenumbers"])
         self.execute("tr-freq-axis", ["tracks/spectrum", "1000*fs", "tracks/freqs"])
@@ -351,7 +351,7 @@ class CommandsTestCase(unittest.TestCase):
         self.from_xyz("thf01", "vel", "-u1")
         self.from_cp2k_ener("thf01")
         self.execute("tr-rfft", glob.glob("tracks/atom.vel.*") + ["-whamming", "-d 5"])
-        self.execute("tr-make-spectrum", glob.glob("tracks/rfft.atom.vel.*") + ["tracks/spectrum"])
+        self.execute("tr-make-spectrum", glob.glob("tracks/atom.vel.*.rfft") + ["tracks/spectrum"])
         self.execute("tr-wavenumber-axis", ["tracks/spectrum", "1000*fs", "tracks/wavenumbers"])
         output = self.execute("tr-fit-peaks", [
             "tracks/wavenumbers", "tracks/spectrum", "1750", "2250",
@@ -371,7 +371,7 @@ class CommandsTestCase(unittest.TestCase):
         self.from_cp2k_ener("thf01")
         time = load_track("tracks/time")
         self.execute("tr-rfft", ["tracks/temperature"])
-        self.execute("tr-make-spectrum", ["tracks/rfft.temperature", "tracks/spectrum"])
+        self.execute("tr-make-spectrum", ["tracks/temperature.rfft", "tracks/spectrum"])
         spectrum = load_track("tracks/spectrum")
         self.execute("tr-freq-axis", ["tracks/spectrum", "tracks/time", "tracks/freqs"])
         freqs = load_track("tracks/freqs")
@@ -393,7 +393,7 @@ class CommandsTestCase(unittest.TestCase):
         self.from_cp2k_ener("thf01")
         time = load_track("tracks/time")
         self.execute("tr-rfft", ["tracks/temperature"])
-        self.execute("tr-make-spectrum", ["tracks/rfft.temperature", "tracks/spectrum"])
+        self.execute("tr-make-spectrum", ["tracks/temperature.rfft", "tracks/spectrum"])
         spectrum = load_track("tracks/spectrum")
         self.execute("tr-wavenumber-axis", ["tracks/spectrum", "tracks/time", "tracks/wavenumbers"])
         wavenumbers = load_track("tracks/wavenumbers")

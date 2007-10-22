@@ -27,8 +27,7 @@ from optparse import OptionParser
 
 usage = """Usage: %prog [options] input1 [input2 ...] 
 %prog performs a forward real fourier transform on the tracks given by
-input1, input2, ... and stores each transform in a file in the same
-directory, but with the filename prepended with 'rfft.'"""
+input1, input2, ... and stores each transform in ${input*}.rfft"""
 
 parser = OptionParser(usage)
 parser.add_option(
@@ -75,10 +74,7 @@ window, correction = windows[options.window]
 
 
 for path_in in paths_in:
-    if "/" not in path_in:
-        path_out = "rfft." % path_in
-    else:
-        path_out = os.path.join(os.path.dirname(path_in), "rfft.%s" % os.path.basename(path_in))
+    path_out = "%s.rfft" % path_in
     f = load_track(path_in)
     size = len(f)/divide
     result = 0.0
