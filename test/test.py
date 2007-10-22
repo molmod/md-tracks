@@ -558,6 +558,9 @@ class CommandsTestCase(unittest.TestCase):
             arguments.append("--prefix=test")
             result = self.execute("tr-filter", arguments)[0].strip()
             if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
+            arguments.append("--xyz")
+            result = self.execute("tr-filter", arguments)[0].strip()
+            if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
 
         check_filter('thf01', 'at', 'a.symbol=="c"', '1,2,3,4')
         check_filter('thf01', 'at', 'a.nsymbols=="c,c,h,h"', '3,4')

@@ -35,6 +35,11 @@ parser.add_option(
     help="Use this prefix when printing out the results.",
     default=None
 )
+parser.add_option(
+    "--xyz", 
+    help="append .x, .y and .z to the filenames if --prefix is used.",
+    default=False, action="store_true",
+)
 (options, args) = parser.parse_args()
 
 if len(args) == 3:
@@ -145,4 +150,7 @@ result.sort()
 if options.prefix is None:
     print ",".join([str(value) for value in result])
 else:
-    print " ".join(["%s.%07i" % (options.prefix, value) for value in result])
+    filenames = ["%s.%07i" % (options.prefix, value) for value in result]
+    if options.xyz:
+        filenames = sum([["%s.x" % filename, "%s.y" % filename, "%s.z" % filename] for filename in filenames], [])
+    print " ".join(filenames)
