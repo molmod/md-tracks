@@ -63,10 +63,7 @@ parser.add_option(
 log.verbose = options.verbose
 if len(args) >= 3:
     paths_in = args[:-2]
-    try:
-        time_step = parse_x_step(args[-2])
-    except Exception, e:
-        parser.error(str(e))
+    time_step = parse_x_step(args[-2])
     path_out = args[-1]
 else:
     parser.error("Expecting at least two arguments.")

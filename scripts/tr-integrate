@@ -37,10 +37,7 @@ parser = OptionParser(usage)
 
 if len(args) == 2 or len(args) == 3:
     path_in = args[0]
-    try:
-        x_step = parse_x_step(args[1], "x")
-    except Exception, e:
-        parser.error(str(e))
+    x_step = parse_x_step(args[1], "x")
     if len(args) == 3:
         path_in_error = args[2]
     else:
