@@ -346,6 +346,12 @@ class CommandsTestCase(unittest.TestCase):
             "tracks/freqs,tracks/spectrum",
             os.path.join(output_dir, "make_spectrum_freqs")]
         )
+        output = self.execute("tr-plot", [
+            "--xlabel=Time", "-s1::", "--ylabel=Amplitude", "--xunit=fs", "--xinv",
+            "tracks/freqs,tracks/spectrum",
+            os.path.join(output_dir, "make_spectrum_freqs_inv")]
+        )
+        print "".join(output)
 
     def test_fit_peaks(self):
         self.from_xyz("thf01", "vel", "-u1")
