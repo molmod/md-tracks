@@ -1,0 +1,104 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from ccio.psf import PSFFile
+from tracks import dist_track, bend_track, dihed_track, dump_track, parse_slice, PSFFilter, TrackNotFoundError, log
+import numpy, os
+from optparse import OptionParser
+
+usage = """Usage: %prog [options] prefix connectivity.psf
+%prog computes all the internal coordinates for the cartesian
+tracks with the given prefix. the internal coordinates are determined
+from the connectivity file. Currently only the psf format is
+supported for the latter. The output is written to the following
+kinds of files:
+prefix.dist.${index1}.${index2}
+prefix.bend.${index1}.${index2}.${index3}
+prefix.dihed.${index1}.${index2}.${index3}.${index4}
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-s", "--slice", 
+    help="sample the input tracks with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+    default="::"
+)
+parser.add_option(
+    "-a", "--filter-atoms", 
+    help="Only consider internal coordinates in which on of the atoms indices "
+         "is listed in FILTER_ATOMS. FILTER_ATOMS is a comma separated list of "
+         "of integers. Counting starts at zero.",
+    default=None
+)
+parser.add_option(
+    "-m", "--filter-molecules", 
+    help="Only consider internal coordinates that are part of the molecules "
+         "listed in FILTER_MOLECULES. FILTER_MOLECULES is a comma separated list "
+         "of integers. Counting starts at zero.",
+    default=None
+)
+parser.add_option(
+    "-q", "--quiet",
+    action="store_false", dest="verbose", default=True,
+    help="Don't print any output"
+)
+(options, args) = parser.parse_args()
+
+log.verbose = options.verbose
+if len(args) == 2:
+    prefix, path_psf = args
+else:
+    parser.error("Expecting two arguments.")
+
+
+sub = parse_slice(options.slice)
+psf = PSFFile(path_psf)
+psf_filter = PSFFilter(psf, options.filter_atoms, options.filter_molecules)
+
+for index1, index2 in psf.bonds:
+    if psf_filter(index1, index2):
+        try:
+            name = '%s.dist.%07i.%07i' % (prefix, index1, index2)
+            dump_track(name, dist_track(index1, index2, prefix, sub))
+            log("DONE", name)
+        except TrackNotFoundError, e:
+            log("WARNING", str(e))
+for index1, index2, index3 in psf.bends:
+    if psf_filter(index1, index2, index3):
+        try:
+            name = '%s.bend.%07i.%07i.%07i' % (prefix, index1, index2, index3)
+            dump_track(name, bend_track(index1, index2, index3, prefix, sub))
+            log("DONE", name)
+        except TrackNotFoundError, e:
+            log("WARNING", str(e))
+for index1, index2, index3, index4 in psf.dihedrals:
+    if psf_filter(index1, index2, index3, index4):
+        try:
+            name = '%s.dihed.%07i.%07i.%07i.%07i' % (prefix, index1, index2, index3, index4)
+            dump_track(name, dihed_track(index1, index2, index3, index4, prefix, sub))
+            log("DONE", name)
+        except TrackNotFoundError, e:
+            log("WARNING", str(e))
+
+

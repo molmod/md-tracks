@@ -1,0 +1,90 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks import load_track, dump_track, log
+import numpy, os
+from optparse import OptionParser
+
+
+usage = """Usage: %prog [options] input1 [input2 ...] 
+%prog performs a forward real fourier transform on the tracks given by
+input1, input2, ... and stores each transform in a file in the same
+directory, but with the filename prepended with 'rfft.'"""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-w", "--window", 
+    help="define a window to handle leakage. WINDOW can be one of the "
+         "following: rectangular, hamming, hanning, blackman [default="
+         "%default]", 
+    default="rectangular",
+)
+parser.add_option(
+    "-d", "--divide", 
+    help="divide the tracks in DIVIDE subtracks of equal length and take the "
+         "average of the transforms of each subtrack [default=%default]",
+    default=1,
+)
+parser.add_option(
+    "-q", "--quiet",
+    action="store_false", dest="verbose", default=True,
+    help="Don't print any output"
+)
+(options, args) = parser.parse_args()
+
+log.verbose = options.verbose
+if len(args) >= 1:
+    paths_in = args
+else:
+    parser.error("Expecting at least one argument.")
+
+windows = {
+    "hamming": (numpy.hamming, 1.855),
+    "hanning": (numpy.hanning, 2.0),
+    "blackman": (numpy.blackman, 2.4875),
+    "rectangular": ((lambda x: numpy.ones(x, float)), 1.0),
+}
+
+if options.window not in windows:
+    parser.error("Unknown window: '%s'" % options.window)
+    
+divide = int(options.divide)
+if divide <= 0:
+    parser.error("The option divide must be strictly positive.")
+
+window, correction = windows[options.window]
+
+
+for path_in in paths_in:
+    if "/" not in path_in:
+        path_out = "rfft." % path_in
+    else:
+        path_out = os.path.join(os.path.dirname(path_in), "rfft.%s" % os.path.basename(path_in))
+    f = load_track(path_in)
+    size = len(f)/divide
+    result = 0.0
+    for index in xrange(divide):
+        result += numpy.fft.rfft(f[index*size:(index+1)*size]*window(size))*correction
+    result /= divide
+    dump_track(path_out, result)
+    log("TRANSFORMED %s -> %s" % (path_in, path_out))
+

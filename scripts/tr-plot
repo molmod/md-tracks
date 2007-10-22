@@ -1,0 +1,189 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from tracks import load_track, parse_slice
+from molmod.units import parse_unit
+import numpy
+from optparse import OptionParser
+
+usage = """Usage: %prog [options] input1 [input2 ...] image
+%prog is a generic plotting function that plots several tracks given by
+input1, input2, ... and the figure is saved to image.png. An input is given in
+the format y or x,y[,error], where y is the filename of the track with the
+y values, x contains the x values and error is the track with the errors on the
+y values
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-s", "--slice",
+    help="subsample the input track(s) with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+    default="::"
+)
+parser.add_option(
+    "-t", "--title",
+    help="The plot title. [default=%default]",
+    default="Quick and dirty plot",
+)
+parser.add_option(
+    "-x", "--xlabel",
+    help="The plot xlabel. [default=%default]",
+    default="X",
+)
+parser.add_option(
+    "-y", "--ylabel",
+    help="The plot ylabel. [default=%default]",
+    default="Y",
+)
+parser.add_option(
+    "--xlog", 
+    help="This option activates a logirthimic scale for the x-axis [default=%default]",
+    default=False, action="store_true",
+)
+parser.add_option(
+    "--ylog", 
+    help="This option activates a logirthimic scale for the y-axis [default=%default]",
+    default=False, action="store_true",
+)
+parser.add_option(
+    "--xunit", 
+    help="The unit for the x-axis [default=%default]",
+    default='au',
+)
+parser.add_option(
+    "--yunit", 
+    help="The unit for the y-axis [default=%default]",
+    default='au',
+)
+parser.add_option(
+    "--xlim", 
+    help="The range for the x-axis in the unit defined by XUNIT. "
+         "Format: [min],[max]. If min and/or max are omitted, they are set "
+         "auto matically. [default=%default]",
+    default=",",
+)
+parser.add_option(
+    "--ylim", 
+    help="The range for the y-axis in the unit defined by YUNIT. "
+         "Format: [min],[max]. If min and/or max are omitted, they are set "
+         "auto matically. [default=%default]",
+    default=",",
+)
+parser.add_option(
+    "--no-legend", action="store_false", dest="legend",
+    help="Hide the legend.",
+    default=True,
+)
+(options, args) = parser.parse_args()
+
+sub = parse_slice(options.slice)
+
+# parse the arguments
+if len(args) >= 2:
+    inputs = args[:-1]
+    image = args[-1]
+else:
+    parser.error("Expecting at least two arguments.")
+
+# parse the units:
+xunit = parse_unit(options.xunit)
+yunit = parse_unit(options.yunit)
+
+def load_parts(input_expr):
+    parts = input_expr.split(',')
+    if len(parts) == 1:
+        y = load_track(parts[0])[sub]
+        x = None
+        error = None
+        label = parts[0]
+    elif len(parts) == 2:
+        if len(parts[0]) == 0:
+            x = None
+        else:
+            x = load_track(parts[0])[sub]
+        y = load_track(parts[1])[sub]
+        error = None
+        label = parts[1]
+    elif len(parts) == 3:
+        if len(parts[0]) == 0:
+            x = None
+        else:
+            x = load_track(parts[0])[sub]
+        y = load_track(parts[1])[sub]
+        if len(parts[2]) == 0:
+            error = None
+        else:
+            error = load_track(parts[2])[sub]
+        label = parts[1]
+    if x is not None: x /= xunit
+    if y is not None: y /= yunit
+    if error is not None: error /= yunit
+    return x, y, error, label
+
+
+def parse_lim(s):
+    if s.count(",") != 1: 
+        raise ValueError("The value of the option xlim and ylim must contain exactly one ','.")
+    mi,ma = s.split(',')
+    if len(mi) == 0:
+        mi = None
+    else:
+        mi = float(mi)
+    if len(ma) == 0:
+        ma = None
+    else:
+        ma = float(ma)
+    return mi, ma
+
+
+import pylab, matplotlib
+
+pylab.clf()
+pylab.gcf().set_size_inches((6,4))
+pylab.title(options.title)
+pylab.xlabel("%s [%s]" % (options.xlabel, options.xunit))
+pylab.ylabel("%s [%s]" % (options.ylabel, options.yunit))
+for input_expr in inputs:
+    x,y,error,label = load_parts(input_expr)
+    if x is None:
+        line = pylab.plot(y, label=label, linewidth=1)[0]
+        if error is not None:
+            pylab.plot(y+error, label='error on %s' % label, linestyle=':', color=line.get_color())
+            pylab.plot(y-error, label='_nolegend_', linestyle=':', color=line.get_color())
+    else:
+        line = pylab.plot(x, y, label=label, linewidth=1)[0]
+        if error is not None:
+            pylab.plot(x, y+error, label='error on %s' % label, linestyle=':', color=line.get_color())
+            pylab.plot(x, y-error, label='_nolegend_', linestyle=':', color=line.get_color())
+pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
+if options.xlog:
+    pylab.gca().set_xscale("log")
+if options.ylog:
+    pylab.gca().set_yscale("log")
+pylab.xlim(parse_lim(options.xlim))
+pylab.ylim(parse_lim(options.ylim))
+if options.legend:
+    pylab.legend(loc=0)
+pylab.savefig("%s.png" % image)
+

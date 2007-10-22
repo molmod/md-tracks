@@ -1,0 +1,98 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from molmod.data import periodic
+from ccio.psf import PSFFile
+from tracks import load_track, dump_track, PSFFilter, log
+import numpy, os
+from optparse import OptionParser
+
+usage = """Usage: %prog [options] prefix output_middle_word connectivity.psf 
+%prog computes the time-dependent center of mass of the molecules listed in the
+connectivity file, as 
+directory/com.${output_middle_word}.${i}.${c}
+where
+ - ${middle_word} is the last argument but one
+ - ${i} is the molecule index from the psf file (counting starts at zero)
+ - ${c} is x, y or z
+Also the coordinates relative to the com are stored in tracks:
+directory/rel.${output_middle_word}.${i}.${c}
+ - ${middle_word} is the last argument but one
+ - ${i} is the atom index from the psf file (counting starts at zero)
+ - ${c} is x, y or z
+The prefix is the part of the paths to the coordinate tracks, without the index
+nor the x, y or z. For example: tracks/atom.pos
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-m", "--filter-molecules", 
+    help="Only consider internal coordinates that are part of the molecules "
+         "listed in FILTER_MOLECULES. FILTER_MOLECULES is a comma separated list "
+         "of integers. Counting starts at zero.",
+    default=None
+)
+parser.add_option(
+    "-q", "--quiet",
+    action="store_false", dest="verbose", default=True,
+    help="Don't print any output"
+)
+(options, args) = parser.parse_args()
+
+log.verbose = options.verbose
+if len(args) == 3:
+    prefix, middle_word, path_psf = args
+    directory = os.path.dirname(prefix)
+else:
+    parser.error("Expecting at least five arguments.")
+
+
+psf = PSFFile(path_psf)
+psf_filter = PSFFilter(psf, None, options.filter_molecules)
+
+molecules = {}
+for a_index, m_index in enumerate(psf.molecules):
+    if psf_filter.molecule_indices is None or m_index in psf_filter.molecule_indices:
+        l = molecules.setdefault(m_index, list())
+        l.append(a_index)
+
+for m_index, a_indices in molecules.iteritems():
+    for c in 'xyz':
+        com = 0
+        total_mass = 0
+        for a_index in a_indices:
+            mass = periodic[psf.numbers[a_index]].mass
+            com += load_track("%s.%07i.%s" % (prefix, a_index, c))*mass
+            total_mass += mass
+        com /= total_mass 
+        name = "%s.%s.%07i.%s" % (os.path.join(directory, "com"), middle_word, m_index, c)
+        log("WRITTEN %s" % name)
+        dump_track(name, com)
+        
+        for a_index in a_indices:
+            tmp = load_track("%s.%07i.%s" % (prefix, a_index, c))
+            tmp -= com
+            name = "%s.%s.%07i.%s" % (os.path.join(directory, "rel"), middle_word, a_index, c)
+            log("WRITTEN %s" % name)
+            dump_track(name, tmp)
+        
+        

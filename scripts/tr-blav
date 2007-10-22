@@ -1,0 +1,130 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from molmod.units import parse_unit
+from tracks import load_track, dump_track, log
+import numpy
+from optparse import OptionParser
+
+usage = """Usage: %prog [options] input {time|timestep}
+%prog applies to block average method to the given input track. It
+prints out the mean, (an underlimit for) the error on the mean and (an
+underlimit for) the correlation time.
+
+%prog -h prints out all available options.
+"""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "--plot_error", 
+    help="Plot the relation between blocksize and statistical error on"
+         "the average to the filename PLOT_ERROR.png.",
+    default=None,
+)
+parser.add_option(
+    "--plot_ctime", 
+    help="Plot the relation between blocksize and the correlation time"
+         "to the filename PLOT_CTIME.png.",
+    default=None,
+)
+parser.add_option(
+    "-u", "--unit", 
+    help="The output values are printed in the given UNIT [default=%default]",
+    default='au',
+)
+parser.add_option(
+    "-t", "--time-unit", 
+    help="The correlation time is printed in the given UNIT [default=%default]",
+    default='au',
+)
+parser.add_option(
+    "-q", "--quiet",
+    action="store_false", dest="verbose", default=True,
+    help="Don't print any output"
+)
+parser.add_option(
+    "-b", "--min-blocks", default="100",
+    help="The minimum number of blocks to be considered."
+)
+(options, args) = parser.parse_args()
+
+log.verbose = options.verbose
+if len(args) == 2:
+    path_in = args[0]
+    try:
+        time_axis = load_track(args[1])
+        time_step = time_axis[1] - time_axis[0]
+        time_step_check = time_axis[2] - time_axis[1]
+        if time_step != time_step_check:
+            parser.error("The time axis does not seem to be equidistant. Does the file %s really contain time data?" % args[1])
+        del time_step_check
+    except TrackNotFoundError:
+        time_step = parse_unit(args[1])
+else:
+    parser.error("Expecting two arguments.")
+
+min_blocks = int(options.min_blocks)
+f = load_track(path_in)
+
+x = [] # block sizes
+y = [] # error on the mean
+s = [] # correlation time
+for block_size in xrange(1, len(f)/min_blocks):
+    n_blocks = len(f)/block_size
+    total_size = n_blocks * block_size
+    averages = numpy.array([
+        f[i*block_size:(i+1)*block_size].mean() for i in xrange(n_blocks)
+    ], float)
+    
+    x.append(block_size)
+    y.append(averages.std()/numpy.sqrt(n_blocks))
+    s.append(averages.std()**2/f[:total_size].std()**2*block_size)
+
+x = numpy.array(x)
+y = numpy.array(y)
+s = numpy.array(s)*time_step
+
+l = len(y)/10
+unit = parse_unit(options.unit)
+time_unit = parse_unit(options.time_unit)
+log("%s +- %s (%s)" % (f.mean()/unit, y[-l:].mean()/unit, s[-l:].mean()/time_unit))
+
+if options.plot_error is not None:
+    import pylab
+    pylab.clf()
+    pylab.gcf().set_size_inches((6,4))
+    pylab.title("Block average plot")
+    pylab.xlabel("Block size [%s]" % options.time_unit)
+    pylab.ylabel("Error on the mean [%s]" % options.unit)
+    pylab.plot(x/time_unit,y/unit,"k+")
+    pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
+    pylab.savefig("%s.png" % options.plot_error)
+
+if options.plot_ctime is not None:
+    import pylab
+    pylab.clf()
+    pylab.gcf().set_size_inches((6,4))
+    pylab.title("Block average plot")
+    pylab.xlabel("Block size [%s]" % options.time_unit)
+    pylab.ylabel("Correlation time [%s]" % options.time_unit)
+    pylab.plot(x/time_unit,s/time_unit,"k+")
+    pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
+    pylab.savefig("%s.png" % options.plot_ctime)

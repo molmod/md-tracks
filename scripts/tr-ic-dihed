@@ -1,0 +1,64 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from tracks import dihed_track, dump_track, parse_slice
+import numpy, glob, os
+from optparse import OptionParser
+
+usage = """Usage: %prog [options] prefix index1 index2 index3
+%prog computes the distance between the atom with index1 and the atom
+with index2 for all time steps. Tracks with the given prefix must exist, and
+their filenames must look like:
+${prefix}.${index1}.c, ${prefix}.${index2}.c, ${prefix}.${index3}.c and 
+${prefix}.${index4}.c
+where c is x,y or z.
+The output is stored in 
+${prefix}.dihed.${index1}.${index2}.${index3}.${index4}
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-s", "--slice", 
+    help="sample the input tracks with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+    default="::"
+)
+(options, args) = parser.parse_args()
+
+if len(args) == 5:
+    prefix, index1, index2, index3, index4 = args
+    index1 = int(index1)
+    index2 = int(index2)
+    index3 = int(index3)
+    index4 = int(index4)
+else:
+    parser.error("Expecting five arguments.")
+
+sub = parse_slice(options.slice)
+dump_track(
+    '%s.dihed.%07i.%07i.%07i.%07i' % (prefix, index1, index2, index3, index4), 
+    dihed_track(index1, index2, index3, index4, prefix, sub)
+)
+    
+
+

@@ -1,0 +1,55 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from tracks import load_track, dump_track, log
+from molmod.data import periodic
+from optparse import OptionParser
+
+
+usage = """Usage: %prog input1 [input2 ...] output
+%prog computes the power spectrum from the individual fourier transforms
+given as input1, input2, ... and stores the result in output.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-q", "--quiet",
+    action="store_false", dest="verbose", default=True,
+    help="Don't print any output"
+)
+(options, args) = parser.parse_args()
+
+log.verbose = options.verbose
+if len(args) >= 2:
+    paths_in = args[:-1]
+    path_out = args[-1]
+else:
+    parser.error("Expecting at least two arguments.")
+
+result = 0.0
+for path_in in paths_in:
+    F = abs(load_track(path_in))**2
+    result += F
+    log("PROCESSED %s" % path_in)
+
+dump_track(path_out, result)
+log("WRITTEN %s" % path_out)

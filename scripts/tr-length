@@ -1,0 +1,49 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from molmod.units import parse_unit
+from tracks import load_track, parse_slice
+import numpy
+from optparse import OptionParser
+
+usage = """Usage: %prog [options] input
+%prog prints out the length of a track.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-s", "--slice", 
+    help="subsample the input track with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+    default="::"
+)
+(options, args) = parser.parse_args()
+
+if len(args) == 1:
+    path_in = args[0]
+else:
+    parser.error("Expecting one argument.")
+
+sub = parse_slice(options.slice)
+print len(load_track(path_in))
+

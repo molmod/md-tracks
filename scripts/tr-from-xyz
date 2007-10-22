@@ -1,0 +1,101 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from molmod.units import parse_unit
+from tracks import xyz_to_tracks, parse_slice, PSFFilter, log
+from ccio.psf import PSFFile
+from optparse import OptionParser
+
+usage = """Usage: %prog [options] filename middle_word [output_directory]
+%prog transforms the given XYZ trajectory file into separate tracks.
+
+Each track is associated with one Cartesian coordinate with the name 
+atom.${middle_word}.${index}.${c} where
+ * ${middle_word} is defined by the second argument. Use 'pos' when the xyz file 
+   contains atomic positions. Use 'vel' when the xyz file contains atomic
+   velocities. Other scripts rely on this convention.
+ * ${index} is the atom index, seven characters wide, padded with zeros.
+   Counting starts at zero.
+ * ${c} is x, y or z.
+The tracks are stored in output_directory. If the output_directory 
+argument is not given, it defaults to 'tracks'.
+
+%prog -h prints out all available options."""
+
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-s", "--slice", 
+    help="subsample the trajectory with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+    default="::"
+)
+parser.add_option(
+    "-u", "--unit", 
+    help="The unit in which the data in the xyz file are given. [default=%default]",
+    default="angstrom"
+)
+parser.add_option(
+    "--psf", 
+    help="Specify a topology file. This is required when --filter-molecules is used.",
+    default=None
+)
+parser.add_option(
+    "-a", "--filter-atoms", 
+    help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
+         "comma separated list of of integers. Counting starts at zero.",
+    default=None
+)
+parser.add_option(
+    "-m", "--filter-molecules", 
+    help="Only consider atoms that are part of the molecules "
+         "listed in FILTER_MOLECULES. FILTER_MOLECULES is a comma separated list "
+         "of integers. Counting starts at zero.",
+    default=None
+)
+parser.add_option(
+    "-q", "--quiet",
+    action="store_false", dest="verbose", default=True,
+    help="Don't print any output"
+)
+(options, args) = parser.parse_args()
+
+log.verbose = options.verbose
+if len(args) == 2:
+    filename, middle_word = args
+    output_dir = "tracks"
+elif len(args) == 3:
+    filename, middle_word, output_dir = args
+else:
+    parser.error("Expecting two or three arguments.")
+
+file_unit = parse_unit(options.unit)
+sub = parse_slice(options.slice)
+
+if options.psf is None:
+    psf = None
+else:
+    psf = PSFFile(options.psf)
+psf_filter = PSFFilter(psf, options.filter_atoms, options.filter_molecules)
+
+xyz_to_tracks(filename, middle_word, output_dir, sub, file_unit, psf_filter.get_atom_indices())
+

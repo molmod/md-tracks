@@ -1,0 +1,91 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from molmod.units import parse_unit
+from tracks import tracks_to_xyz, parse_slice, PSFFilter, log
+from optparse import OptionParser
+from ccio.xyz import XYZFile
+from ccio.psf import PSFFile
+
+usage = """Usage: %prog [options] ref.xyz prefix output.xyz
+%prog reads the atomic coordinates from tracks with the following format:
+${prefix}.${index}.${c}
+where ${index} is the atom index and ${c} is x,y or z
+The atom symbols are read from ref.xyz. The output trajectory is written to
+output.xyz.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-s", "--slice", 
+    help="subsample the trajectory with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+    default="::"
+)
+parser.add_option(
+    "-u", "--unit", 
+    help="The unit in which the data in the xyz file are written. [default=%default]",
+    default="angstrom"
+)
+parser.add_option(
+    "--psf", 
+    help="Specify a topology file. This is required when --filter-molecules is used.",
+    default=None
+)
+parser.add_option(
+    "-a", "--filter-atoms", 
+    help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
+         "comma separated list of of integers. Counting starts at zero.",
+    default=None
+)
+parser.add_option(
+    "-m", "--filter-molecules", 
+    help="Only consider atoms that are part of the molecules "
+         "listed in FILTER_MOLECULES. FILTER_MOLECULES is a comma separated list "
+         "of integers. Counting starts at zero.",
+    default=None
+)
+parser.add_option(
+    "-q", "--quiet",
+    action="store_false", dest="verbose", default=True,
+    help="Don't print any output"
+)
+(options, args) = parser.parse_args()
+
+log.verbose = options.verbose
+if len(args) == 3:
+    ref_path, prefix, output_path = args
+else:
+    parser.error("Expecting three arguments.")
+
+ref = XYZFile(ref_path)
+sub = parse_slice(options.slice)
+file_unit = parse_unit(options.unit)
+if options.psf is None:
+    psf = None
+else:
+    psf = PSFFile(options.psf)
+psf_filter = PSFFilter(psf, options.filter_atoms, options.filter_molecules)
+
+tracks_to_xyz(prefix, output_path, ref.symbols, sub, file_unit, psf_filter.get_atom_indices())
+
