@@ -19,7 +19,7 @@
 #
 # --
 
-from tracks import load_track, dump_track
+from tracks import load_track, dump_track, parse_x_last, parse_x_length
 from molmod.units import parse_unit
 import numpy
 from optparse import OptionParser
@@ -43,14 +43,8 @@ parser = OptionParser(usage)
 (options, args) = parser.parse_args()
 
 if len(args) == 3:
-    try:
-        nfreq = int(args[0])
-    except ValueError:
-        nfreq = len(load_track(args[0]))
-    try:
-        duration = parse_unit(args[1])
-    except (ValueError, NameError):
-        duration = load_track(args[1])[-1]
+    nfreq = parse_x_length(args[0])
+    duration = parse_x_last(args[1])
     output_path = args[2]
 else:
     parser.error("Expecting three arguments.")

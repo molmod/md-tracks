@@ -19,24 +19,24 @@
 #
 # --
 
-from tracks import load_track, dump_track
+from tracks import load_track, dump_track, parse_x_last, parse_x_length
 from molmod.units import parse_unit
 from molmod.constants import lightspeed
 import numpy
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] {spectrum|nfreq} {time|duration} output
+usage = """Usage: %prog [options] {spectrum|nwavenumber} {time|duration} output
 %prog creates a track that contains equidistant wavenumber values that are
 suitable for creating spectrum plots of dynamics simulations. The output is
 written to the file output.
 
 arguments:
   spectrum -- The spectrum track (the number of datapoints are read from this file.)
-  nfreq -- the number of frequency data points in the spectrum
+  nwavenumber -- the number of wavenumber data points in the spectrum
   time -- the time track (the last value will be taken to read the duration of the simulation.)
   duration -- The total duration of the dynamics simulation in fs
-  output -- The name of the track where the frequency axis is written to.
+  output -- The name of the track where the wavenumber axis is written to.
 
 %prog -h prints out all available options."""
 
@@ -44,17 +44,11 @@ parser = OptionParser(usage)
 (options, args) = parser.parse_args()
 
 if len(args) == 3:
-    try:
-        nfreq = int(args[0])
-    except ValueError:
-        nfreq = len(load_track(args[0]))
-    try:
-        duration = parse_unit(args[1])
-    except (ValueError, NameError):
-        duration = load_track(args[1])[-1]
+    nwavenumber = parse_x_length(args[0])
+    duration = parse_x_last(args[1])
     output_path = args[2]
 else:
     parser.error("Expecting three arguments.")
 
-dump_track(output_path, 1/duration/lightspeed*numpy.arange(nfreq))
+dump_track(output_path, 1/duration/lightspeed*numpy.arange(nwavenumber))
 

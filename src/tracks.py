@@ -21,7 +21,7 @@
 
 from ccio.xyz import XYZReader, XYZWriter
 from molmod.data import periodic
-from molmod.units import angstrom, fs
+from molmod.units import angstrom, fs, parse_unit
 
 import numpy, cPickle, os, glob, sys
 
@@ -29,7 +29,7 @@ __all__ = [
     "xyz_to_tracks", "cp2k_ener_to_tracks", "cpmd_traj_to_tracks",
     "tracks_to_xyz",
     "dump_track", "TrackNotFoundError", "load_track",
-    "parse_slice",
+    "parse_slice", "parse_x_step", "parse_x_last", "parse_x_length"
     "dist_track", "bend_track", "dihed_track",
     "PSFFilter",
     "Logger", "log"
@@ -240,6 +240,37 @@ def parse_slice(s):
         else:
             result.append(float(word))
     return slice(*result)
+
+
+def _parse_x_track(s, fn, convert=parse_unit):
+    try:
+        # first try to read the file
+        x_axis = load_track(s)
+        return fn(x_axis)
+    except TrackNotFoundError:
+        # then interpret s as a measure with units
+        try:
+            return convert(s)
+        except ValueError:
+            raise Error("Can not open file %s and can not interpret %s." % (s, s))
+
+def parse_x_step(s, measure="time"):
+    def fn(x_axis):
+        delta = x_axis[1:]-x_axis[:-1]
+        if (delta[0] != delta).all():
+            raise Error("The %s-axis is not equidistant. Is %s truly a %s-axis?" % (measure, s, measure))
+        return delta[0]
+    return _parse_x_track(s, fn)
+
+def parse_x_last(s):
+    def fn(x_axis):
+        return x_axis[-1]
+    return _parse_x_track(s, fn)
+
+def parse_x_length(s):
+    def fn(x_axis):
+        return len(x_axis)
+    return _parse_x_track(s, fn, int)
 
 
 def dist_track(index1, index2, prefix, sub):

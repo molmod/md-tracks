@@ -19,7 +19,7 @@
 #
 # --
 
-from tracks import load_track, dump_track, log
+from tracks import load_track, dump_track, parse_x_step, log
 from molmod.units import parse_unit
 import numpy
 from optparse import OptionParser
@@ -64,14 +64,9 @@ log.verbose = options.verbose
 if len(args) >= 3:
     paths_in = args[:-2]
     try:
-        time_step = parse_unit(args[-2])
-    except (ValueError, NameError, SyntaxError):
-        time_axis = load_track(args[-2])
-        time_step = time_axis[1]-time_axis[0]
-        time_step_check = time_axis[2]-time_axis[1]
-        if time_step != time_step_check:
-            parser.error("The time axis does not seem to be equidistant. Does the file %s really contain time data?" % args[-2])
-        del time_step_check
+        time_step = parse_x_step(args[-2])
+    except Exception, e:
+        parser.error(str(e))
     path_out = args[-1]
 else:
     parser.error("Expecting at least two arguments.")
