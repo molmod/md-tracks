@@ -41,10 +41,24 @@ class Error(Exception):
 
 
 class TracksSplitter(object):
-    total_buffer_size = 10*1024*1024
-    dot_interval = 50
+    """Efficiently convert any kind of trajectory file into separate tracks.
+
+    After creating an object of this class, one calls the method dump_row
+    for each record in the trajectory. When done, one calls the method finalize.
+    """
+    total_buffer_size = 10*1024*1024 # the size of the buffers, defaults to 1MB
+    dot_interval = 50 # print a dot on screen, each 50 steps.
 
     def __init__(self, directory, names):
+        """Initialize the serialization procedure.
+
+        Arguments:
+            directory -- the directory where the tracks are stored
+            filenames -- the file names of the individual tracks
+
+        This function creates the directory and initializes the buffers for the
+        serialization procedure.
+        """
         if not os.path.exists(directory):
             os.mkdir(directory)
         self.filenames = [os.path.join(directory, name) for name in names]
@@ -57,11 +71,12 @@ class TracksSplitter(object):
             if os.path.isfile(filename):
                 os.remove(filename)
 
-    def finalize(self):
-        self._flush_buffers()
-        self._serialize()
-
     def dump_row(self, row):
+        """Dump a record to the track files.
+
+        The elements from row correspons to the file names in self.filenames.
+        Each time the buffers are filled, they are written to disk and emptied.
+        """
         self.rowcount += 1
         if self.rowcount % self.dot_interval == 0:
             log(".", False)
@@ -69,6 +84,15 @@ class TracksSplitter(object):
         self.counter += 1
         if self.counter == self.buffer_length:
             self._flush_buffers()
+
+    def finalize(self):
+        """Finalize the tracks created by this TracksSplitter instance.
+
+        First the buffers are written to disk and emptied. Consequently each
+        track is transformed into a single continuous pickled numpy array.
+        """
+        self._flush_buffers()
+        self._serialize()
 
     def _flush_buffers(self):
         if self.counter == 0:
@@ -97,36 +121,56 @@ class TracksSplitter(object):
 
 
 class TracksJoiner(object):
+    """Performs essentially the inverse operation of TracksSplitter, i.e. it
+    converts a set of tracks into a single trajectory file.
+
+    Instances of this class are initialized with a set of track objects, and
+    behave like an iterator that yields a rows containing corresponding values
+    from each track.
+    """
     total_buffer_size = 10*1024*1024
     dot_interval = 50
 
     def __init__(self, filenames):
+        """Initializes a TracksJoiner object."""
         import sha, time, os
         self.prefix = sha.new(str(os.getpid())+" "+str(time.time())).hexdigest()
         self.buffer_length = self.total_buffer_size/len(filenames)
         self.filenames = filenames
 
-    def yield_rows(self, sub=slice(None)):
+    def next(self):
+        return self
+
+    def __iter__(self, sub=slice(None)):
+        """Yield a row of corresponding values from each track in self.filenames.
+
+        First each track is de-serialized in small files stored into a temporary
+        subdirectory. Then, one by one the temporary files are loaded into
+        memory and the buffers from the TracksJoiner are reconstructed. Given
+        these buffers, the individual rows are reconstructed and yielded.
+        """
         # interpret the slice
         start = sub.start or 0
         stop = sub.stop or sys.maxint
         step = sub.step or 1
         # a temporary working directory
         os.mkdir(self.prefix)
-        # first de-serialize the track files
-        self._de_serialize()
-        counter = 0
-        for b_index in xrange(self.num_blocks):
-            blocks = [load_track("%s/%i.%i" % (self.prefix, f_index, b_index)) for f_index in xrange(len(self.filenames))]
-            for row in zip(*blocks):
-                if counter >= start and counter < stop and (counter - start) % step == 0:
-                    yield row
-                    if counter % self.dot_interval == 0:
-                        log(".", False)
-                counter += 1
-            log(".", False)
-        import shutil
-        shutil.rmtree(self.prefix)
+        try:
+            # first de-serialize the track files
+            self._de_serialize()
+            counter = 0
+            for b_index in xrange(self.num_blocks):
+                blocks = [load_track("%s/%i.%i" % (self.prefix, f_index, b_index)) for f_index in xrange(len(self.filenames))]
+                for row in zip(*blocks):
+                    if counter >= start and counter < stop and (counter - start) % step == 0:
+                        yield row
+                        if counter % self.dot_interval == 0:
+                            log(".", False)
+                    counter += 1
+                log(".", False)
+        finally:
+            import shutil
+            shutil.rmtree(self.prefix)
 
     def _de_serialize(self):
         track_length = None
@@ -151,6 +195,7 @@ class TracksJoiner(object):
 
 
 def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit=angstrom, atom_indices=None):
+    """Convert an xyz file into separate tracks."""
     xyz_reader = XYZReader(filename, sub, file_unit=file_unit)
 
     names = []
@@ -169,6 +214,7 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
 
 
 def cp2k_ener_to_tracks(filename, destination, sub=slice(None)):
+    """Convert a cp2k energy file into separate tracks."""
     import itertools
     tracks_splitter = TracksSplitter(destination, ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy"])
     f = file(filename)
@@ -181,6 +227,10 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None)):
 
 
 def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_indices=None):
+    """Convert a cpmd trajectory file into separate tracks.
+
+    num_atoms must be the number of atoms in the system.
+    """
     if atom_indices is None:
         atom_indices = range(num_atoms)
     else:
@@ -207,6 +257,7 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
 
 
 def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angstrom, atom_indices=None):
+    """Converts a set of tracks into an xyz file."""
     if atom_indices is None:
         atom_indices = range(len(symbols))
     else:
@@ -227,6 +278,7 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
 
 
 def dump_track(path, array):
+    """Dump a numpy array into a track file, which is simply a pickled array."""
     array.dump(path)
 
 
@@ -235,12 +287,14 @@ class TrackNotFoundError(Exception):
 
 
 def load_track(path):
+    """Loads a track from file."""
     if not os.path.isfile(path):
         raise TrackNotFoundError("Track %s could not be found." % path)
     return numpy.load(path)
 
 
 def parse_slice(s):
+    """Converts a text description of a slice into a slice object."""
     result = []
     for word, default in zip(s.split(":"), [0, sys.maxint, 1]):
         if word == '':
@@ -263,6 +317,13 @@ def _parse_x_track(s, fn, convert=parse_unit):
             raise Error("Can not open file %s and can not interpret %s." % (s, s))
 
 def parse_x_step(s, measure="time"):
+    """Convert s into a discretization step.
+
+    The argument s can be a track file that contains a equidistant x axis, or a
+    distance between to subsequent data points multiplied by a unit, e.g. 1*fs.
+
+    The return value is the discretization step in a.u.
+    """
     def fn(x_axis):
         delta = x_axis[1:]-x_axis[:-1]
         if (delta[0] != delta).all():
@@ -271,17 +332,30 @@ def parse_x_step(s, measure="time"):
     return _parse_x_track(s, fn)
 
 def parse_x_last(s):
+    """Convert s into the total time or interval size.
+
+    The argument can be a track file with the x-axis, or the interval size
+    multiplied by a unit, e.g. 20*ps.
+
+    The return value is the total size in a.u.
+    """
     def fn(x_axis):
-        return x_axis[-1]
+        return x_axis[-1] - x_axis[0]
     return _parse_x_track(s, fn)
 
 def parse_x_length(s):
+    """Convert s into an array length
+
+    The argument can be a track file or an integer. The return value is the size
+    of the array or the given integer.
+    """
     def fn(x_axis):
         return len(x_axis)
     return _parse_x_track(s, fn, int)
 
 
 def dist_track(prefix1, prefix2, sub):
+    """Compute the distance between two atoms at each time step."""
     deltas = []
     for c in ['x','y','z']:
         first = load_track('%s.%s' % (prefix1, c))[sub]
@@ -292,6 +366,7 @@ def dist_track(prefix1, prefix2, sub):
 
 
 def bend_track(prefix1, prefix2, prefix3, sub):
+    """Compute the bending angle of three atoms at each time step."""
     deltas_a = []
     deltas_b = []
     for c in ['x','y','z']:
@@ -317,6 +392,7 @@ def bend_track(prefix1, prefix2, prefix3, sub):
 
 
 def dihed_track(prefix1, prefix2, prefix3, prefix4, sub):
+    """Compute the dihedral angle of three atoms at each time step."""
     deltas_a = []
     deltas_b = []
     deltas_c = []
@@ -363,7 +439,14 @@ def dihed_track(prefix1, prefix2, prefix3, prefix4, sub):
 
 
 class AtomFilter(object):
+    """A tool to test whether some atoms belong to a user defined set."""
+
     def __init__(self, filter_atoms):
+        """Initialize the atom filter.
+
+        The argument filter_atoms can be a list of atom indexes or a string with
+        comma-separated atom indexes.
+        """
         if isinstance(filter_atoms, str):
             self.filter_atoms = frozenset(int(word) for word in filter_atoms.split(","))
         elif filter_atoms is None:
@@ -372,12 +455,17 @@ class AtomFilter(object):
             self.filter_atoms = frozenset(filter_atoms)
 
     def __call__(self, *test_indices):
+        """Test wither one of the indexes belongs to the predefined set."""
         if self.filter_atoms is None:
             return True
         return len(self.filter_atoms.intersection(test_indices)) > 0
 
 
 class Logger(object):
+    """The Logger class regulates the output of the tracks scripts.
+
+    It can be muted by setting log.verbose=False (see below).
+    """
     def __init__(self, verbose=False, f=sys.stdout, old_newline=True):
         self.verbose = verbose
         self.f = f

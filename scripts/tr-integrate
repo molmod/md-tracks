@@ -28,7 +28,7 @@ from optparse import OptionParser
 
 usage = """Usage: %prog [options] input {x_axis|x_step} [input.error]
 
-%prog computes the integral of the function stored in input. If ${input.error}
+%prog computes the integral of the function in ${input}. If ${input.error}
 is given or ${input}.error exists, %prog will also compute the error on the
 integral. The second argument is a track with the x-axis, or the distance
 between two subsequent data points. The output is written to ${input}.int and

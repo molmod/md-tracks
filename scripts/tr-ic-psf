@@ -77,6 +77,7 @@ for index1, index2 in psf.bonds:
             log("DONE %s" % name)
         except TrackNotFoundError, e:
             log("WARNING %s" % str(e))
+
 for index1, index2, index3 in psf.bends:
     if atom_filter(index1, index2, index3):
         try:
@@ -85,6 +86,7 @@ for index1, index2, index3 in psf.bends:
             log("DONE %s" % name)
         except TrackNotFoundError, e:
             log("WARNING %s" % str(e))
+
 for index1, index2, index3, index4 in psf.dihedrals:
     if atom_filter(index1, index2, index3, index4):
         try:

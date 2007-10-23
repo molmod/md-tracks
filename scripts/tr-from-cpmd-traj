@@ -85,5 +85,6 @@ for line in f:
     num_atoms += 1
 f.close()
 
+# then do the conversion
 cpmd_traj_to_tracks(filename, num_atoms, output_dir, sub, atom_filter.filter_atoms)
 

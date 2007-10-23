@@ -168,6 +168,7 @@ if not (kind=='at' or kind=='mol'):
 
 
 class Formula(object):
+    """Allows user friendly comparisons of symbols and labels."""
     def __init__(self, l):
         self.l = list(str(symbol).lower() for symbol in l)
         self.l.sort()
@@ -192,6 +193,7 @@ class Formula(object):
 
 
 class Symbol(object):
+    """Allows context insensitive comparisons of symbols and labels."""
     def __init__(self, s):
         self.s = str(s).lower()
 
@@ -221,7 +223,7 @@ class Atom(object):
         self.nsymbols = nsymbols
         self.nlabels = nlabels
 
-
+# Initialize the atom and molecule objects:
 psf = PSFFile(path_psf)
 graph = psf.get_graph()
 graph.init_neighbors()
@@ -254,7 +256,7 @@ for molecule in molecules.itervalues():
     molecule.cf = Formula([atom.symbol for atom in molecule.atoms])
     molecule.cfl = Formula([atom.label for atom in molecule.atoms])
 
-
+# Run the user defined expression on each atom/molecule.
 result = []
 for atom in atoms:
     if eval(expression, {"a": atom, "m": atom.m}):
@@ -266,6 +268,7 @@ for atom in atoms:
 result = list(set(result))
 result.sort()
 
+# Print the results in the desired format.
 if options.prefix is None:
     print ",".join([str(value) for value in result])
 else:
