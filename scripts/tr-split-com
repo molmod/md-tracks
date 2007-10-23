@@ -28,6 +28,7 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] prefix output_middle_word connectivity.psf
+
 %prog computes the time-dependent center of mass of the molecules defined in
 the connectivity file. The output is written as
 directory/com.${output_middle_word}.${i}.${c}
@@ -47,19 +48,16 @@ nor the x, y or z. For example: tracks/atom.pos
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-q", "--quiet",
-    action="store_false", dest="verbose", default=True,
-    help="Don't print any output"
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
 )
 parser.add_option(
     "-m", "--filter-molecules",
     help="Only consider the molecules listed in FILTER_MOLECULES. This is a "
          "comma-separated list of molecule indexes. Counting starts at zero.",
-    default=None
 )
 parser.add_option(
-    "--no-rel",
-    action="store_false", dest="relative", default=True,
+    "--no-rel", action="store_false", dest="relative", default=True,
     help="Don't write out the relative coordinates."
 )
 (options, args) = parser.parse_args()

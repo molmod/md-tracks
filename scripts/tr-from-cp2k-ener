@@ -25,25 +25,24 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog filename [output_directory]
+
 %prog transforms the given cp2k energy file into separate tracks.
 
-Each track is associated with one column of the file:
+Each track is associated with a column of the file:
 step, time, kinetic_energy, temperature, potential_energy, total_energy
 
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice",
-    help="subsample the energy file with the given slice start:stop:step "
+    "-s", "--slice", default="::",
+    help="Subsample the energy file with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
-    default="::"
 )
 parser.add_option(
-    "-q", "--quiet",
-    action="store_false", dest="verbose", default=True,
-    help="Don't print any output"
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
 )
 (options, args) = parser.parse_args()
 

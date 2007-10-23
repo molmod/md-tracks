@@ -27,10 +27,12 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] prefix connectivity.psf
-%prog computes all the internal coordinates for the cartesian tracks with the
+
+%prog computes all the internal coordinates for the Cartesian tracks with the
 given prefix. The list of internal coordinates is taken from the connectivity
 file. Currently only the psf format is supported for the latter. The output is
 written to the following kinds of files:
+
 prefix.dist.${index1}.${index2}
 prefix.bend.${index1}.${index2}.${index3}
 prefix.dihed.${index1}.${index2}.${index3}.${index4}
@@ -39,23 +41,20 @@ prefix.dihed.${index1}.${index2}.${index3}.${index4}
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice",
-    help="sample the input tracks with the given slice start:stop:step "
+    "-s", "--slice", default="::",
+    help="Subsample the input tracks with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
-    default="::"
 )
 parser.add_option(
     "-a", "--filter-atoms",
-    help="Only consider internal coordinates in which on of the atoms indices "
+    help="Only consider internal coordinates in which on of the atoms indexes "
          "is listed in FILTER_ATOMS. FILTER_ATOMS is a comma separated list of "
          "of integers. Counting starts at zero.",
-    default=None
 )
 parser.add_option(
-    "-q", "--quiet",
-    action="store_false", dest="verbose", default=True,
-    help="Don't print any output"
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
 )
 (options, args) = parser.parse_args()
 

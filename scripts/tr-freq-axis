@@ -27,12 +27,13 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] {spectrum|nfreq} {time|duration} output
+
 %prog creates a track that contains equidistant frequency values that are
 suitable for creating spectrum plots of dynamics simulations. The output is
-written to the file output.
+written to the file ${output}.
 
 arguments:
-  spectrum -- The spectrum track (the number of datapoints are read from this file.)
+  spectrum -- The spectrum track (the number of data points are read from this file.)
   nfreq -- the number of frequency data points in the spectrum
   time -- the time track (the last value will be taken to read the duration of the simulation.)
   duration -- The total duration of the dynamics simulation in fs

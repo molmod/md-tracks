@@ -26,14 +26,17 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] input1 [input2 ...]
-%prog performs an inverse real fourier transform on the tracks given by
-input1, input2, ... and stores each transform in a file in ${input*}.irfft"""
+
+%prog performs an inverse real Fourier transform on the tracks given by
+${input1}, ${input2}, ... and stores each transform in a file in
+${input*}.irfft.
+
+%prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-q", "--quiet",
-    action="store_false", dest="verbose", default=True,
-    help="Don't print any output"
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
 )
 (options, args) = parser.parse_args()
 

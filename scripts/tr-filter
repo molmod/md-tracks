@@ -21,26 +21,138 @@
 
 
 from ccio.psf import PSFFile
+from molmod.data import periodic
 from optparse import OptionParser
 import numpy
-from molmod.data import periodic
 
 
-usage = """Usage: %prog [options] connectivity {at|mol} expression
-%prog prints out atom or molecule numbers that satisfy the expression.
+usage = """Usage: %prog [options] connectivity.psf {at|mol} expression
+
+%prog prints out atom or molecule indexes that satisfy the expression. The
+last argument is a standard python expression. It is recommended to quote this
+expression with single straight quotation marks, e.g. 'a.number==6'
+
+The expression is evaluated for each atom in the molecule. If the expression
+evaluates to False, nothing is added to the output. If the expression is True,
+the index of the current atom or molecule is added to the output, depending on
+the second argument. If the expression is True for more than one atom in a
+molecule, the corresponding molecule index is printed only once. The resulting
+indexes are printed to the output as a comma separated list, unless the -p
+option is used. (see options for more details)
+
+The expression can use two objects: a and m, the current atom and the current
+molecule, respectively. The atom has the following attributes:
+
+  * a.index
+
+    A unique index for the current atom. Counting starts at zero.
+
+  * a.number
+
+    The atom number, e.g 'a.number==6' and 'a.symbol=="c"' would have the same
+    result.
+
+  * a.symbol
+
+    The symbol of the atom. Comparisons with this symbol are case insensitive,
+    e.g. both 'a.symbol=="C"' and 'a.symbol=="c"' would have the same result.
+
+  * a.label
+
+    The label of the atom as defined in the connectivity file. Comparisons with
+    this label are case insensitive, e.g. both 'a.label=="Ca"' and
+    'a.label=="ca"' would have the same result.
+
+  * a.nindexes
+
+    The unique indexes of the neighboring atoms, as defined by the connectivity
+    file. Counting starts at zero. The typical usage pattern is to look up all
+    atoms bonded to a given atom: '10 in a.nindexes'
+
+  * a.nnumbers
+
+    The atom numbers of the neighboring atoms, as defined by the connectivity
+    file. The typical usage pattern is to look up all atoms with a certain
+    chemical environment, e.g. 'a.nnumbers=="6_2,1_2"' would give all atoms that
+    are connected to nothing but two carbons and two hydrogens. Another approach
+    is to look up all atoms bonded to a given type of atom: '6 in a.nnumbers.l'
+    would result in all atoms bonded to a carbon.
+
+  * a.nsymbols
+
+    This is similar to the previous, but it applies to atom symbols, e.g.
+    'a.nsymbols=="C_2,H_2"' would result in all atoms bonded to two carbons and
+    two hydrogens.
+
+  * a.nlabels
+
+    This is similar to the previous, but it applies to atom labels defined in
+    the psf file, e.g. 'a.nlabels=="Ca,Cb,H_2"' would result in all atoms
+    bonded to a (carbon) atom indicated by Ca, a (carbon) atom indicated by Cb
+    and two hydrogens.
+
+The molecule object, m, has the following attributes:
+
+  * m.index
+
+    A unique molecule index. Counting starts at zero.
+
+  * m.atoms
+
+    A list of atom objects that are part of this molecule.
+
+  * m.cf
+
+    The chemical formula of the molecule, which can be tested in a similar
+    way to a.nsymbols, e.g. 'm.composition=="C_2,O,H_6"' would result in all
+    ethanol molecules and their conformers.
+
+  * m.cfl
+
+    Similary to the previous, but with atom labels defined in the connectivity
+    file instead of atom symbols.
+
+Some example expressions to get you started:
+
+  * %prog example.psf mol 'a.number==6 and len(m.atoms)==8'
+
+    Returns all molecules with eight atoms and at least one carbon.
+
+  * %prog example.psf at 'a.number==6 and len(m.atoms)==8'
+
+    Returns all carbons atoms in a molecule with eight atoms.
+
+  * %prog example.psf at 'a.nsymbols="C_2"'
+
+    Returns all atoms bonded to nothing but two carbon atoms
+
+  * %prog example.psf mol 'a.symbol=="O" and a.nsymbols="C,H"'
+
+    Returns all molecules with an organic alcohol group.
+
+  * %prog example.psf mol 'not m.composition=="O,H_2"'
+
+    Returns all molecules, except the water molecules
+
+  ...
+
+%prog is designed to be used with the other scripts from the tracks library,
+e.g. if you are interested in the velocity auto-correlation of all oxygen atoms
+in a simulation, this command will do the job:
+
+tr-ac $(%prog example.psf 'a.number==8' -p tracks/atom.vel --xyz) tracks/time tracks/oxygen.vel.ac
 
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
     "-p", "--prefix",
-    help="Use this prefix when printing out the results.",
-    default=None
+    help="Use this file name prefix when printing out the result. The file "
+         "names will be printed as a space-separated list."
 )
 parser.add_option(
-    "--xyz",
+    "--xyz", default=False, action="store_true",
     help="append .x, .y and .z to the filenames if --prefix is used.",
-    default=False, action="store_true",
 )
 (options, args) = parser.parse_args()
 
@@ -97,15 +209,17 @@ class Molecule(object):
 
 
 class Atom(object):
-    def __init__(self, index, molecule, symbol, number, nindexes, nsymbols, nnumbers):
+    def __init__(self, index, molecule, number, symbol, label, nindexes, nnumbers, nsymbols, nlabels):
         self.index = index
         self.molecule = molecule
         self.m = molecule
-        self.symbol = symbol
         self.number = number
+        self.label = label
+        self.symbol = symbol
         self.nindexes = nindexes
-        self.nsymbols = nsymbols
         self.nnumbers = nnumbers
+        self.nsymbols = nsymbols
+        self.nlabels = nlabels
 
 
 psf = PSFFile(path_psf)
@@ -115,25 +229,30 @@ graph.init_neighbors()
 atoms = []
 molecules = dict((index, Molecule(Symbol(index))) for index in numpy.unique(psf.molecules))
 
-for a_index, (number, m_index) in enumerate(zip(psf.numbers, psf.molecules)):
+for a_index, (number, m_index, label) in enumerate(zip(psf.numbers, psf.molecules, psf.symbols)):
+    symbol = periodic[number].symbol
     nindexes = [nindex for nindex in graph.neighbors[a_index]]
     nnumbers = [psf.numbers[nindex] for nindex in nindexes]
-    nsymbols = [periodic[nnumber].symbol for nnumber in nnumbers]
+    nsymbols = [periodic[n].symbol for n in nnumbers]
+    nlabels = [psf.symbols[nindex] for nindex in nindexes]
     molecule = molecules[m_index]
     atom = Atom(
         a_index,
         molecule,
-        Symbol(periodic[number].symbol),
         number,
+        Symbol(symbol),
+        Symbol(label),
         nindexes,
-        Formula(nsymbols),
         Formula(nnumbers),
+        Formula(nsymbols),
+        Formula(nlabels),
     )
     atoms.append(atom)
     molecule.atoms.append(atom)
 
 for molecule in molecules.itervalues():
-    molecule.composition = Formula([atom.symbol for atom in molecule.atoms])
+    molecule.cf = Formula([atom.symbol for atom in molecule.atoms])
+    molecule.cfl = Formula([atom.label for atom in molecule.atoms])
 
 
 result = []

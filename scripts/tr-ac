@@ -27,35 +27,33 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] input1 [input2 ...] {time_axis|time_step} output
-%prog computes the auto-correlation function from a set of tracks (input1,
-input2, ...) and stores the result in a track ${output}. The normalized auto-
-correlation function will be stored in ${output}.normalized. The  last argument
-but one is a track that contains the time-axis, or it can also be the time step
-between two discrite data points.
 
-%prog -h prints out all available options.
-"""
+%prog computes the auto-correlation function from a set of tracks (${input1},
+${input2}, ...) and stores the result in a track ${output}. The normalized auto-
+correlation function will be stored in ${output}.normalized. The next-to-last
+argument is a track that contains the time-axis, or it can also be the time step
+between two discrete data points.
+
+%prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
     "-m", "--max-delta-t",
-    help="Determines the maximum time-difference for which the auto-"
-         "correlation has to be computed. This value defaults to half "
-         "the track size. The lower this value, the better "
-         "the statistical accuracy of the end result."
+    help="Determines the maximum time-difference for which the auto- "
+         "correlation has to be computed. This value defaults to half the "
+         "track size. The lower this value, the better the statistical "
+         "accuracy of the end result."
 )
 parser.add_option(
-    "-n", "--non-zero-average",
-    help="Set this option, if the average of the tracks is nonzero [default=%default]",
-    default=False, action="store_true",
+    "-n", "--non-zero-average", default=False, action="store_true",
+    help="Take into account that the average of the tracks is non-zero.",
 )
 parser.add_option(
-    "-q", "--quiet",
-    action="store_false", dest="verbose", default=True,
-    help="Don't print any output"
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
 )
 parser.add_option(
-    "-t", "--tau", default=None,
+    "-t", "--tau",
     help="Give an estimate of the correlation time. If given, an error estimate "
          "of the time correlation function will be computed and stored in "
          "${output}.error and ${output}.normalized.error."
@@ -69,7 +67,7 @@ if len(args) >= 3:
     time_step = parse_x_step(args[-2])
     path_out = args[-1]
 else:
-    parser.error("Expecting at least two arguments.")
+    parser.error("Expecting at least three arguments.")
 
 length = len(load_track(paths_in[0]))
 if options.max_delta_t is None:
@@ -77,7 +75,7 @@ if options.max_delta_t is None:
 else:
     max_delta_steps = int(parse_unit(options.max_delta_t)/time_step)
     if max_delta_steps <= 0:
-        parser.error("the option max_delta_t must be strictly positive")
+        parser.error("The option --max-delta-t must be strictly positive.")
 average_steps = length - max_delta_steps
 agerage_time = average_steps*time_step
 

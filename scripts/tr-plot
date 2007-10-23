@@ -27,46 +27,41 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] input1 [input2 ...] image
-%prog is a generic plotting function that plots several tracks given by
-input1, input2, ... and the figure is saved to image.png. An input is given in
-the format y or x,y[,error], where y is the filename of the track with the
-y values, x contains the x values and error is the track with the errors on the
-y values
+
+%prog is a generic plotting script that plots several tracks given by ${input1},
+${input2}, ... and the figure is saved to ${image}.png. An input is given in the
+format y or x,y[,error], where y is the file name of the track with the y
+values, x contains the x values and error is the track with the errors on the y
+values.
 
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice",
-    help="subsample the input track(s) with the given slice start:stop:step "
+    "-s", "--slice", default="::",
+    help="Subsample the input track(s) with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
-    default="::"
 )
 parser.add_option(
-    "-t", "--title",
+    "-t", "--title", default="Quick and dirty plot",
     help="The plot title. [default=%default]",
-    default="Quick and dirty plot",
 )
 parser.add_option(
-    "-x", "--xlabel",
+    "-x", "--xlabel", default="X",
     help="The plot xlabel. [default=%default]",
-    default="X",
 )
 parser.add_option(
-    "-y", "--ylabel",
+    "-y", "--ylabel", default="Y",
     help="The plot ylabel. [default=%default]",
-    default="Y",
 )
 parser.add_option(
-    "--xlog",
-    help="This option activates a logirthimic scale for the x-axis [default=%default]",
-    default=False, action="store_true",
+    "--xlog", default=False, action="store_true",
+    help="This option activates a logarithmic scale for the x-axis.",
 )
 parser.add_option(
-    "--ylog",
-    help="This option activates a logirthimic scale for the y-axis [default=%default]",
-    default=False, action="store_true",
+    "--ylog", default=False, action="store_true",
+    help="This option activates a logarithmic scale for the y-axis.",
 )
 parser.add_option(
     "--xinv",
@@ -74,38 +69,32 @@ parser.add_option(
     default=False, action="store_true",
 )
 parser.add_option(
-    "--yinv",
+    "--yinv", default=False, action="store_true",
     help="Use the inverse values as labels on the x-axis.",
-    default=False, action="store_true",
 )
 parser.add_option(
-    "--xunit",
-    help="The unit for the x-axis [default=%default]",
-    default='au',
+    "--xunit", default='au',
+    help="The unit for the x-axis. [default=%default]",
 )
 parser.add_option(
-    "--yunit",
-    help="The unit for the y-axis [default=%default]",
-    default='au',
+    "--yunit", default='au',
+    help="The unit for the y-axis. [default=%default]",
 )
 parser.add_option(
-    "--xlim",
+    "--xlim", default=",",
     help="The range for the x-axis in the unit defined by XUNIT. "
          "Format: [min],[max]. If min and/or max are omitted, they are set "
-         "auto matically. [default=%default]",
-    default=",",
+         "automatically. [default=%default]",
 )
 parser.add_option(
-    "--ylim",
+    "--ylim", default=",",
     help="The range for the y-axis in the unit defined by YUNIT. "
          "Format: [min],[max]. If min and/or max are omitted, they are set "
-         "auto matically. [default=%default]",
-    default=",",
+         "automatically. [default=%default]",
 )
 parser.add_option(
-    "--no-legend", action="store_false", dest="legend",
+    "--no-legend", action="store_false", dest="legend", default=True,
     help="Hide the legend.",
-    default=True,
 )
 (options, args) = parser.parse_args()
 

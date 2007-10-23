@@ -28,37 +28,33 @@ from ccio.psf import PSFFile
 
 
 usage = """Usage: %prog [options] ref.xyz prefix output.xyz
+
 %prog reads the atomic coordinates from tracks with the following format:
-${prefix}.${index}.${c}
-where ${index} is the atom index and ${c} is x,y or z
-The atom symbols are read from ref.xyz. The output trajectory is written to
-output.xyz.
+${prefix}.${index}.${c} where ${index} is the atom index and ${c} is x, y or z.
+The atom symbols are read from ${ref.xyz}. The output trajectory is written to
+${output.xyz}.
 
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice",
-    help="subsample the trajectory with the given slice start:stop:step "
+    "-s", "--slice", default="::",
+    help="Subsample the trajectory with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
-    default="::"
 )
 parser.add_option(
-    "-u", "--unit",
+    "-u", "--unit", default="angstrom",
     help="The unit in which the data in the xyz file are written. [default=%default]",
-    default="angstrom"
 )
 parser.add_option(
     "-a", "--filter-atoms",
     help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
          "comma separated list of of integers. Counting starts at zero.",
-    default=None
 )
 parser.add_option(
-    "-q", "--quiet",
+    "-q", "--quiet", help="Don't print any output.",
     action="store_false", dest="verbose", default=True,
-    help="Don't print any output"
 )
 (options, args) = parser.parse_args()
 

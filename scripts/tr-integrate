@@ -27,10 +27,12 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] input {x_axis|x_step} [input.error]
-%prog computes the integral of the function stored in input. If input.error
-is available, %prog will also compute the error on the integral. The second
-argument is a track with the x-axis, or the distance between two subsequent
-data points. The output is written to ${input}.int and ${input}.int.error
+
+%prog computes the integral of the function stored in input. If ${input.error}
+is given or ${input}.error exists, %prog will also compute the error on the
+integral. The second argument is a track with the x-axis, or the distance
+between two subsequent data points. The output is written to ${input}.int and
+${input}.int.error.
 
 %prog -h prints out all available options."""
 
@@ -48,7 +50,7 @@ if len(args) == 2 or len(args) == 3:
         if not os.path.isfile(path_in_error):
             path_in_error = None
 else:
-    parser.error("Expecting three arguments.")
+    parser.error("Expecting two or three arguments.")
 
 f = load_track(path_in)
 fint = numpy.cumsum(f)*x_step

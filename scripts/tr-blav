@@ -27,40 +27,35 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] input {time|timestep}
-%prog applies to block average method to the given input track. It
-prints out the mean, (an underlimit for) the error on the mean and (an
-underlimit for) the correlation time.
 
-%prog -h prints out all available options.
-"""
+%prog applies the block average method track ${input}. It prints out the mean,
+(an under limit for) the error on the mean and (an under limit for) the
+correlation time.
+
+%prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
     "--plot_error",
-    help="Plot the relation between blocksize and statistical error on"
-         "the average to the filename PLOT_ERROR.png.",
-    default=None,
+    help="Plot the relation between blocksize and statistical error on "
+         "the mean, and save the figure as ${PLOT_ERROR}.png.",
 )
 parser.add_option(
     "--plot_ctime",
-    help="Plot the relation between blocksize and the correlation time"
-         "to the filename PLOT_CTIME.png.",
-    default=None,
+    help="Plot the relation between blocksize and the correlation time, and "
+         "save the figure as ${PLOT_CTIME}.png.",
 )
 parser.add_option(
-    "-u", "--unit",
-    help="The output values are printed in the given UNIT [default=%default]",
-    default='au',
+    "-u", "--unit", default='au',
+    help="The output values are printed in the given UNIT. [default=%default]",
 )
 parser.add_option(
-    "-t", "--time-unit",
-    help="The correlation time is printed in the given UNIT [default=%default]",
-    default='au',
+    "-t", "--time-unit", default='au',
+    help="The correlation time is printed in the given TIME_UNIT. [default=%default]",
 )
 parser.add_option(
-    "-q", "--quiet",
-    action="store_false", dest="verbose", default=True,
-    help="Don't print any output"
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
 )
 parser.add_option(
     "-b", "--min-blocks", default="100",

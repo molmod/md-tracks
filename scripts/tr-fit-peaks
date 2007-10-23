@@ -50,15 +50,15 @@ class GaussianModel(Model):
         self.parameters = parameters.copy()
 
     def get_labels(self):
-        return 'f0', 'sigma', 'A'
+        return 'lc', 'sigma', 'A'
 
-    def __call__(self, f):
-        f0, sigma, A = self.get_parameters()
-        return A*numpy.exp(-((f - f0)/sigma)**2)
+    def __call__(self, l):
+        lc, sigma, A = self.get_parameters()
+        return A*numpy.exp(-((l - lc)/sigma)**2)
 
-    def gradient(self, f):
-        f0, sigma, A = self.get_parameters()
-        x = (f - f0)/sigma
+    def gradient(self, l):
+        lc, sigma, A = self.get_parameters()
+        x = (l - lc)/sigma
         g = numpy.exp(-x**2)
         return numpy.array([
             A*g*2*x/sigma,
@@ -66,11 +66,11 @@ class GaussianModel(Model):
             g,
         ], float)
 
-    def hessian(self, f):
-        f0, sigma, A = self.get_parameters()
-        x = (f - f0)/sigma
+    def hessian(self, l):
+        lc, sigma, A = self.get_parameters()
+        x = (l - lc)/sigma
         g = numpy.exp(-x**2)
-        result = numpy.zeros((3,3,len(f)),float)
+        result = numpy.zeros((3,3,len(l)),float)
         result[0,0] = A*g*2/sigma**2*(2*x**2-1)
         result[0,1] = A*g*4*x/sigma**2*(x**2-1)#A*g*2*(x/sigma)**2*(2*x-3)
         result[1,0] = result[0,1]
@@ -83,7 +83,7 @@ class GaussianModel(Model):
         return result
 
 
-class PeakModel0(Model):
+class PeakModel(Model):
     def __init__(self, parameters=None):
         if parameters is None:
             self.b = 0
@@ -107,91 +107,47 @@ class PeakModel0(Model):
     def get_labels(self):
         return ('b',) + sum((gaussian.get_labels() for gaussian in self.gaussians), ())
 
-    def __call__(self, f):
-        return self.b+sum(gaussian(f) for gaussian in self.gaussians)
+    def __call__(self, l):
+        return self.b+sum(gaussian(l) for gaussian in self.gaussians)
 
-    def gradient(self, f):
+    def gradient(self, l):
         return numpy.array([
-            numpy.ones(len(f), float)
+            numpy.ones(len(l), float)
         ] + sum(
-            (list(gaussian.gradient(f)) for gaussian in self.gaussians)
+            (list(gaussian.gradient(l)) for gaussian in self.gaussians)
         , []))
 
-    def hessian(self, f):
+    def hessian(self, l):
         num_parameters = len(self.get_parameters())
-        result = numpy.zeros((num_parameters,num_parameters,len(f)), float)
+        result = numpy.zeros((num_parameters,num_parameters,len(l)), float)
         for index, gaussian in enumerate(self.gaussians):
-            result[index*3+1:index*3+4,index*3+1:index*3+4] = gaussian.hessian(f)
-        return result
-
-
-class PeakModel1(Model):
-    def __init__(self, parameters=None):
-        if parameters is None:
-            self.b = 0
-            self.a = 1
-            self.gaussians = [GaussianModel()]
-        else:
-            self.a = parameters[0]
-            self.b = parameters[1]
-            num_gaussians = (len(parameters)-2)/3
-            self.gaussians = [GaussianModel(parameters[index*3+2:index*3+5]) for index in xrange(num_gaussians)]
-
-    def get_parameters(self):
-        result = (self.a, self.b)
-        for gaussian in self.gaussians:
-            result += gaussian.get_parameters()
-        return result
-
-    def set_parameters(self, parameters):
-        self.a, self.b = parameters[:2]
-        for index, gaussian in enumerate(self.gaussians):
-            gaussian.set_parameters(parameters[2+index*3:5+index*3])
-
-    def get_labels(self):
-        return ('a', 'b') + sum((gaussian.get_labels() for gaussian in self.gaussians), ())
-
-    def __call__(self, f):
-        return self.a*f+self.b+sum(gaussian(f) for gaussian in self.gaussians)
-
-    def gradient(self, f):
-        return numpy.array([
-            f, numpy.ones(len(f), float)
-        ] + sum(
-            (list(gaussian.gradient(f)) for gaussian in self.gaussians)
-        , []))
-
-    def hessian(self, f):
-        num_parameters = len(self.get_parameters())
-        result = numpy.zeros((num_parameters,num_parameters,len(f)), float)
-        for index, gaussian in enumerate(self.gaussians):
-            result[index*3+2:index*3+5,index*3+2:index*3+5] = gaussian.hessian(f)
+            result[index*3+1:index*3+4,index*3+1:index*3+4] = gaussian.hessian(l)
         return result
 
 
 class FitCostFunction(object):
-    def __init__(self, freqs, amplitudes, peak_model):
-        self.freqs = freqs
+    def __init__(self, wavenumbers, amplitudes, peak_model):
+        self.wavenumbers = wavenumbers
         self.amplitudes = amplitudes
         self.peak_model = peak_model
 
     def __call__(self, parameters):
         self.peak_model.set_parameters(parameters)
-        return ((self.peak_model(self.freqs)-self.amplitudes)**2).mean()
+        return ((self.peak_model(self.wavenumbers)-self.amplitudes)**2).mean()
 
     def gradient(self, parameters):
         self.peak_model.set_parameters(parameters)
-        return 2*numpy.dot(self.peak_model.gradient(self.freqs), (self.peak_model(self.freqs)-self.amplitudes))/len(self.freqs)
+        return 2*numpy.dot(self.peak_model.gradient(self.wavenumbers), (self.peak_model(self.wavenumbers)-self.amplitudes))/len(self.wavenumbers)
 
     def hessian(self, parameters):
-        errors = (self.peak_model(self.freqs) - self.amplitudes)
-        mg = self.peak_model.gradient(self.freqs)
-        mh = self.peak_model.hessian(self.freqs)
+        errors = (self.peak_model(self.wavenumbers) - self.amplitudes)
+        mg = self.peak_model.gradient(self.wavenumbers)
+        mh = self.peak_model.hessian(self.wavenumbers)
         result = numpy.zeros((len(parameters),len(parameters)), float)
         for index1 in xrange(len(parameters)):
             for index2 in xrange(len(parameters)):
                 result[index1,index2] = numpy.dot(mg[index1],mg[index2]) + numpy.dot(errors,mh[index1,index2])
-        return 2*result/len(self.freqs)
+        return 2*result/len(self.wavenumbers)
 
 
 
@@ -201,48 +157,48 @@ from optparse import OptionParser
 from molmod.units import parse_unit
 
 
-usage = """Usage: %prog [options] freqs amplitudes minfreq maxfreq initial_parameters
+usage = """Usage: %prog [options] wavenumbers amplitudes minwn maxwn initial_parameters
+
 %prog fits a model to a given spectrum.
 
 The mandatory arguments are the following:
-  freqs -- the track with the frequencies
+  wavenumbers -- the track with the wavenumbers
   amplitudes -- the amplitudes of the vibrational spectrum
-  minfreq -- the beginning of the fitting window
-  maxfreq -- the end of the fitting window
-  initial_parameters -- The initial model parameters: b:f0:sigma0:A0[:f1:sigma1:A1:...]
+  minwn -- the beginning of the fitting window
+  maxwn -- the end of the fitting window
+  initial_parameters -- The initial model parameters: b:lc_0:sigma_0:A_0[:lc_1:sigma_1:A_1:...]
+
+The model has the following analytical form:
+
+amplitude(l) = b + sum_i A_i*exp(-((l-lc_i)/sigma_i)**2)
 
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
-    "--test",
-    help="perform some internal consistency tests of the fitting program, using the given data [default=%default]",
-    default=False, action="store_true",
+    "--test", default=False, action="store_true",
+    help="Perform some internal consistency tests of the fitting program, "
+         "using the given data.",
 )
 parser.add_option(
-    "--no-fit",
-    help="Do not optimize the parameters [default=%default]",
-    default=False, action="store_true",
+    "--no-fit", default=True, action="store_false", dest="fit",
+    help="Do not optimize the parameters.",
 )
 parser.add_option(
     "--dump-model", dest="model_path",
-    help="Dump the optimized model to MODEL_PATH [default=%default]",
-    default=None
+    help="Dump the aplitudes track from the optimized model to MODEL_PATH.",
 )
 parser.add_option(
-    "--xunit",
-    help="The unit for the x-data [default=%default]",
-    default='1/cm',
+    "--xunit", default='1/cm',
+    help="The unit for the x-data. [default=%default]",
 )
 parser.add_option(
-    "--yunit",
-    help="The unit for the y-data [default=%default]",
-    default='au',
+    "--yunit", default='au',
+    help="The unit for the y-data. [default=%default]",
 )
 parser.add_option(
-    "-q", "--quiet",
-    action="store_false", dest="verbose", default=True,
-    help="Don't print any output"
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
 )
 (options, args) = parser.parse_args()
 
@@ -252,7 +208,7 @@ yunit = parse_unit(options.yunit)
 
 log.verbose = options.verbose
 if len(args) == 5:
-    path_freqs, path_amplitudes, minfreq, maxfreq, initps = args
+    path_wavenumbers, path_amplitudes, minfreq, maxfreq, initps = args
     minfreq = float(minfreq)
     maxfreq = float(maxfreq)
     initial_parameters = numpy.array([float(word) for word in initps.split(":")])
@@ -260,17 +216,17 @@ else:
     parser.error("Expecting five arguments")
 
 # manipulate the training data
-all_freqs = load_track(path_freqs)/xunit
+all_wavenumbers = load_track(path_wavenumbers)/xunit
 all_amplitudes = load_track(path_amplitudes)/yunit
-begin,end = all_freqs.searchsorted([minfreq, maxfreq])
-freqs = all_freqs[begin:end]
+begin,end = all_wavenumbers.searchsorted([minfreq, maxfreq])
+wavenumbers = all_wavenumbers[begin:end]
 amplitudes = all_amplitudes[begin:end]
 
 # create the model
-peak_model = PeakModel0(initial_parameters)
+peak_model = PeakModel(initial_parameters)
 
 # create the cost function
-cost_function = FitCostFunction(freqs, amplitudes, peak_model)
+cost_function = FitCostFunction(wavenumbers, amplitudes, peak_model)
 
 if options.test:
     import unittest
@@ -278,16 +234,16 @@ if options.test:
         def test_model_gradient(self):
             peak_model.set_parameters(initial_parameters)
             epsilon = 1e-5
-            ag = peak_model.gradient(freqs) # analytical gradient
+            ag = peak_model.gradient(wavenumbers) # analytical gradient
             for index in xrange(len(initial_parameters)):
                 tmp = initial_parameters.copy()
                 tmp[index] -= 0.5*epsilon
                 peak_model.set_parameters(tmp)
-                m = peak_model(freqs)
+                m = peak_model(wavenumbers)
                 tmp = initial_parameters.copy()
                 tmp[index] += 0.5*epsilon
                 peak_model.set_parameters(tmp)
-                p = peak_model(freqs)
+                p = peak_model(wavenumbers)
                 #print "target = (p-m)/epsilon"
                 target = (p-m)/epsilon
                 #print target
@@ -304,16 +260,16 @@ if options.test:
         def test_model_hessian(self):
             peak_model.set_parameters(initial_parameters)
             epsilon = 1e-5
-            ah = peak_model.hessian(freqs) # analytical hessian
+            ah = peak_model.hessian(wavenumbers) # analytical hessian
             for index1 in xrange(len(initial_parameters)):
                 tmp = initial_parameters.copy()
                 tmp[index1] -= 0.5*epsilon
                 peak_model.set_parameters(tmp)
-                m = peak_model.gradient(freqs)
+                m = peak_model.gradient(wavenumbers)
                 tmp = initial_parameters.copy()
                 tmp[index1] += 0.5*epsilon
                 peak_model.set_parameters(tmp)
-                p = peak_model.gradient(freqs)
+                p = peak_model.gradient(wavenumbers)
                 for index2 in xrange(len(initial_parameters)):
                     #print "index1 index2 =", index1, index2
                     #print "target = (p[index2]-m[index2])/epsilon"
@@ -403,13 +359,13 @@ else:
         sys.stdout.flush()
 
     ranges = tuple((val*0.9, val*1.1) for val in initial_parameters)
-    if options.no_fit:
+    if options.fit:
+        opt_parameters = fmin_bfgs(cost_function, initial_parameters, cost_function.gradient, disp=1, callback=log_iteration)
+    else:
         opt_parameters = initial_parameters
         log_iteration(opt_parameters)
-    else:
-        opt_parameters = fmin_bfgs(cost_function, initial_parameters, cost_function.gradient, disp=1, callback=log_iteration)
 
     if options.model_path is not None:
-        model = peak_model(all_freqs)
+        model = peak_model(all_wavenumbers)
         dump_track(options.model_path, model*yunit)
 

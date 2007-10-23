@@ -26,6 +26,7 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] prefix1 prefix2 prefix3 prefix4 output
+
 %prog computes the dihedral angled prefix1-prefix2-prefix3-prefix4 for all time
 steps. Tracks with the given prefixes must exist, and their filenames must look
 like: ${prefix1}.c, ${prefix2}.c, ${prefix3}.c and ${prefix4}.c where c is x, y
@@ -35,11 +36,10 @@ or z. The output is stored in ${output}.
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice",
-    help="sample the input tracks with the given slice start:stop:step "
+    "-s", "--slice", default="::",
+    help="Subsample the input tracks with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
-    default="::"
 )
 (options, args) = parser.parse_args()
 

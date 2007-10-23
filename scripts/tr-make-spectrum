@@ -26,16 +26,16 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog input1 [input2 ...] output
-%prog computes the power spectrum from the individual fourier transforms
-given as input1, input2, ... and stores the result in output.
+
+%prog computes the power spectrum from the individual Fourier transforms given
+as ${input1}, ${input2}, ... and stores the result in ${output}.
 
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-q", "--quiet",
-    action="store_false", dest="verbose", default=True,
-    help="Don't print any output"
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
 )
 (options, args) = parser.parse_args()
 

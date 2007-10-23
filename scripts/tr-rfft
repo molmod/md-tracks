@@ -26,27 +26,25 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] input1 [input2 ...]
-%prog performs a forward real fourier transform on the tracks given by
-input1, input2, ... and stores each transform in ${input*}.rfft"""
+
+%prog performs a forward real Fourier transform on the tracks given by
+${input1}, ${input2}, ... and stores each transform in ${input*}.rfft"""
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-w", "--window",
-    help="define a window to handle leakage. WINDOW can be one of the "
-         "following: rectangular, hamming, hanning, blackman [default="
+    "-w", "--window", default="rectangular",
+    help="Define a window to handle leakage. WINDOW can be one of the "
+         "following: rectangular, hamming, hanning, blackman. [default="
          "%default]",
-    default="rectangular",
 )
 parser.add_option(
-    "-d", "--divide",
-    help="divide the tracks in DIVIDE subtracks of equal length and take the "
-         "average of the transforms of each subtrack [default=%default]",
-    default=1,
+    "-d", "--divide", default=1,
+    help="Divide the tracks in DIVIDE subtracks of equal length and take the "
+         "average of the transforms of each subtrack. [default=%default]",
 )
 parser.add_option(
-    "-q", "--quiet",
-    action="store_false", dest="verbose", default=True,
-    help="Don't print any output"
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
 )
 (options, args) = parser.parse_args()
 

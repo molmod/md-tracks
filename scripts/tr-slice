@@ -26,12 +26,12 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] input slice output
-%prog slices the input track and writes the result to the output track.
 
-The slice argument has the following format:
-start:stop:step
-where start, stop and step must be integers or can be omitted.
-The slice interpretation is pythonic.
+%prog slices the track ${input} and writes the result to ${output}.
+
+The ${slice} argument has the following format: 'start:stop:step' where start,
+stop and step must be integers or can be omitted. The slice interpretation is
+pythonic.
 
 %prog -h prints out all available options."""
 

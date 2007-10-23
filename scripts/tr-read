@@ -27,22 +27,21 @@ from optparse import OptionParser
 
 
 usage = """Usage: %prog [options] input
-%prog prints out the contents of a track.
+
+%prog prints out the contents of the track ${input}.
 
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice",
-    help="subsample the input track with the given slice start:stop:step "
+    "-s", "--slice", default="::",
+    help="Subsample the input track with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
-    default="::"
 )
 parser.add_option(
-    "--unit",
-    help="The output values are printed in the given UNIT [default=%default]",
-    default='au',
+    "--unit", default='au',
+    help="The output values are printed in the given UNIT. [default=%default]",
 )
 (options, args) = parser.parse_args()
 
