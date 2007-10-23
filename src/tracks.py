@@ -138,10 +138,7 @@ class TracksJoiner(object):
         self.buffer_length = self.total_buffer_size/len(filenames)
         self.filenames = filenames
 
-    def next(self):
-        return self
-
-    def __iter__(self, sub=slice(None)):
+    def yield_rows(self, sub=slice(None)):
         """Yield a row of corresponding values from each track in self.filenames.
 
         First each track is de-serialized in small files stored into a temporary
@@ -155,22 +152,20 @@ class TracksJoiner(object):
         step = sub.step or 1
         # a temporary working directory
         os.mkdir(self.prefix)
-        try:
-            # first de-serialize the track files
-            self._de_serialize()
-            counter = 0
-            for b_index in xrange(self.num_blocks):
-                blocks = [load_track("%s/%i.%i" % (self.prefix, f_index, b_index)) for f_index in xrange(len(self.filenames))]
-                for row in zip(*blocks):
-                    if counter >= start and counter < stop and (counter - start) % step == 0:
-                        yield row
-                        if counter % self.dot_interval == 0:
-                            log(".", False)
-                    counter += 1
-                log(".", False)
-        finally:
-            import shutil
-            shutil.rmtree(self.prefix)
+        # first de-serialize the track files
+        self._de_serialize()
+        counter = 0
+        for b_index in xrange(self.num_blocks):
+            blocks = [load_track("%s/%i.%i" % (self.prefix, f_index, b_index)) for f_index in xrange(len(self.filenames))]
+            for row in zip(*blocks):
+                if counter >= start and counter < stop and (counter - start) % step == 0:
+                    yield row
+                    if counter % self.dot_interval == 0:
+                        log(".", False)
+                counter += 1
+            log(".", False)
+        import shutil
+        shutil.rmtree(self.prefix)
 
     def _de_serialize(self):
         track_length = None
@@ -194,22 +189,22 @@ class TracksJoiner(object):
         self.num_blocks = num_blocks
 
 
-def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit=angstrom, atom_indices=None):
+def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit=angstrom, atom_indexes=None):
     """Convert an xyz file into separate tracks."""
     xyz_reader = XYZReader(filename, sub, file_unit=file_unit)
 
     names = []
-    if atom_indices is None:
-        atom_indices = range(len(xyz_reader.numbers))
+    if atom_indexes is None:
+        atom_indexes = range(len(xyz_reader.numbers))
     else:
-        atom_indices = list(atom_indices)
-    for index in atom_indices:
+        atom_indexes = list(atom_indexes)
+    for index in atom_indexes:
         for cor in ["x", "y", "z"]:
             names.append("atom.%s.%07i.%s" % (middle_word, index, cor))
 
     tracks_splitter = TracksSplitter(destination, names)
     for title, coordinates in xyz_reader:
-        tracks_splitter.dump_row(coordinates[atom_indices].ravel())
+        tracks_splitter.dump_row(coordinates[atom_indexes].ravel())
     tracks_splitter.finalize()
 
 
@@ -226,18 +221,18 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None)):
     tracks_splitter.finalize()
 
 
-def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_indices=None):
+def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_indexes=None):
     """Convert a cpmd trajectory file into separate tracks.
 
     num_atoms must be the number of atoms in the system.
     """
-    if atom_indices is None:
-        atom_indices = range(num_atoms)
+    if atom_indexes is None:
+        atom_indexes = range(num_atoms)
     else:
-        atom_indices = list(atom_indices)
+        atom_indexes = list(atom_indexes)
     tracks_splitter = TracksSplitter(destination, sum((
         ["atom.pos.%07i.x", "atom.pos.%07i.y", "atom.pos.%07i.z", "atom.vel.%07i.x", "atom.vel.%07i.y", "atom.vel.%07i.z"]
-        for index in atom_indices
+        for index in atom_indexes
     ), []))
 
     f = file(filename)
@@ -256,16 +251,16 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
     tracks_splitter.finalize()
 
 
-def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angstrom, atom_indices=None):
+def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angstrom, atom_indexes=None):
     """Converts a set of tracks into an xyz file."""
-    if atom_indices is None:
-        atom_indices = range(len(symbols))
+    if atom_indexes is None:
+        atom_indexes = range(len(symbols))
     else:
-        atom_indices = list(atom_indices)
-    symbols = [symbols[index] for index in atom_indices]
+        atom_indexes = list(atom_indexes)
+    symbols = [symbols[index] for index in atom_indexes]
 
     filenames = []
-    for index in atom_indices:
+    for index in atom_indexes:
         for c in 'xyz':
             filenames.append("%s.%07i.%s" % (prefix, index, c))
 
@@ -454,11 +449,11 @@ class AtomFilter(object):
         else:
             self.filter_atoms = frozenset(filter_atoms)
 
-    def __call__(self, *test_indices):
+    def __call__(self, *test_indexes):
         """Test wither one of the indexes belongs to the predefined set."""
         if self.filter_atoms is None:
             return True
-        return len(self.filter_atoms.intersection(test_indices)) > 0
+        return len(self.filter_atoms.intersection(test_indexes)) > 0
 
 
 class Logger(object):

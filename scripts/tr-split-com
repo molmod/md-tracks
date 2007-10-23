@@ -83,11 +83,11 @@ molecules = dict(
     for m_index in m_indexes
 )
 
-for m_index, a_indices in molecules.iteritems():
+for m_index, a_indexes in molecules.iteritems():
     for c in 'xyz':
         com = 0
         total_mass = 0
-        for a_index in a_indices:
+        for a_index in a_indexes:
             mass = periodic[psf.numbers[a_index]].mass
             com += load_track("%s.%07i.%s" % (prefix, a_index, c))*mass
             total_mass += mass
@@ -97,7 +97,7 @@ for m_index, a_indices in molecules.iteritems():
         dump_track(name, com)
 
         if options.relative:
-            for a_index in a_indices:
+            for a_index in a_indexes:
                 tmp = load_track("%s.%07i.%s" % (prefix, a_index, c))
                 tmp -= com
                 name = "%s.%s.%07i.%s" % (os.path.join(directory, "rel"), middle_word, a_index, c)
