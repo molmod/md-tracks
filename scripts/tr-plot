@@ -26,13 +26,17 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] input1 [input2 ...] image
+usage = """Usage: %prog [options] {y0|x0 y0 [e0]} [- {y1|x1 y1 [e1]} - ...] image
 
-%prog is a generic plotting script that plots several tracks given by ${input1},
-${input2}, ... and the figure is saved to ${image}.png. An input is given in the
-format y or x,y[,error], where y is the file name of the track with the y
-values, x contains the x values and error is the track with the errors on the y
-values.
+%prog is a generic plotting script that plots data from multiple tracks. Each
+line-plot argument is given in the following format: {y|x y [e]}. Multiple
+line-plot arguments are separated by a minus sign. One, two or three tracks can
+be given for each line plot:
+ * One: y        The track is interpreted as y values. The x values are
+                 automatically generated: x=0..N-1 au.
+ * Two: x y      A standard line plot.
+ * Three: x y e  Similar to the previous case, but also y+e and y-e are plotted.
+The figure is saved to ${image}.png.
 
 %prog -h prints out all available options."""
 
@@ -103,7 +107,7 @@ sub = parse_slice(options.slice)
 
 # parse the arguments
 if len(args) >= 2:
-    inputs = args[:-1]
+    inputs = " ".join(args[:-1]).split(" - ")
     image = args[-1]
 else:
     parser.error("Expecting at least two arguments.")
@@ -115,7 +119,7 @@ yunit = parse_unit(options.yunit)
 if options.yinv: yunit = 1/yunit
 
 def load_parts(input_expr):
-    parts = input_expr.split(',')
+    parts = input_expr.split(' ')
     if len(parts) == 1:
         y = load_track(parts[0])[sub]
         x = None
@@ -140,6 +144,8 @@ def load_parts(input_expr):
         else:
             error = load_track(parts[2])[sub]
         label = parts[1]
+    else:
+        parser.error("A line plot description should at most contain three tracks.")
     if x is not None: x /= xunit
     if y is not None: y /= yunit
     if error is not None: error /= yunit
@@ -169,7 +175,6 @@ class InvScalarFormatter(ScalarFormatter):
 
 
 pylab.clf()
-pylab.gcf().set_size_inches((6,4))
 pylab.title(options.title)
 pylab.xlabel("%s [%s]" % (options.xlabel, options.xunit))
 pylab.ylabel("%s [%s]" % (options.ylabel, options.yunit))
