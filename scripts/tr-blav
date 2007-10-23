@@ -86,7 +86,7 @@ for block_size in xrange(1, len(f)/min_blocks):
 
     x.append(block_size)
     y.append(averages.std()/numpy.sqrt(n_blocks))
-    s.append(averages.std()**2/f[:total_size].std()**2*block_size)
+    s.append(0.5*averages.std()**2/f[:total_size].std()**2*block_size)
 
 x = numpy.array(x)
 y = numpy.array(y)
