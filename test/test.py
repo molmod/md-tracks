@@ -629,6 +629,10 @@ class CommandsTestCase(unittest.TestCase):
         check_filter('water32', 'mol', 'm.index==5', '5')
         check_filter('water32', 'mol', 'a.index==6', '2')
 
+    def test_fluct(self):
+        self.from_cp2k_ener("thf01")
+        self.execute("tr-fluct", ["tracks/temperature", "tracks/temperature", "tracks/test"])
+
 
 unittest.main()
 
