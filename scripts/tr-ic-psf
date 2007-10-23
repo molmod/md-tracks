@@ -19,10 +19,12 @@
 #
 # --
 
+
 from ccio.psf import PSFFile
 from tracks import dist_track, bend_track, dihed_track, dump_track, parse_slice, AtomFilter, TrackNotFoundError, log
 import numpy, os
 from optparse import OptionParser
+
 
 usage = """Usage: %prog [options] prefix connectivity.psf
 %prog computes all the internal coordinates for the cartesian tracks with the
@@ -37,14 +39,14 @@ prefix.dihed.${index1}.${index2}.${index3}.${index4}
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice", 
+    "-s", "--slice",
     help="sample the input tracks with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
     default="::"
 )
 parser.add_option(
-    "-a", "--filter-atoms", 
+    "-a", "--filter-atoms",
     help="Only consider internal coordinates in which on of the atoms indices "
          "is listed in FILTER_ATOMS. FILTER_ATOMS is a comma separated list of "
          "of integers. Counting starts at zero.",
@@ -57,12 +59,12 @@ parser.add_option(
 )
 (options, args) = parser.parse_args()
 
+
 log.verbose = options.verbose
 if len(args) == 2:
     prefix, path_psf = args
 else:
     parser.error("Expecting two arguments.")
-
 
 sub = parse_slice(options.slice)
 psf = PSFFile(path_psf)

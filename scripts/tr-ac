@@ -19,16 +19,18 @@
 #
 # --
 
+
 from tracks import load_track, dump_track, parse_x_step, log
 from molmod.units import parse_unit
 import numpy
 from optparse import OptionParser
 
+
 usage = """Usage: %prog [options] input1 [input2 ...] {time_axis|time_step} output
-%prog computes the auto-correlation function from a set of tracks (input1, 
+%prog computes the auto-correlation function from a set of tracks (input1,
 input2, ...) and stores the result in a track ${output}. The normalized auto-
 correlation function will be stored in ${output}.normalized. The  last argument
-but one is a track that contains the time-axis, or it can also be the time step 
+but one is a track that contains the time-axis, or it can also be the time step
 between two discrite data points.
 
 %prog -h prints out all available options.
@@ -36,14 +38,14 @@ between two discrite data points.
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-m", "--max-delta-t", 
+    "-m", "--max-delta-t",
     help="Determines the maximum time-difference for which the auto-"
          "correlation has to be computed. This value defaults to half "
          "the track size. The lower this value, the better "
          "the statistical accuracy of the end result."
 )
 parser.add_option(
-    "-n", "--non-zero-average", 
+    "-n", "--non-zero-average",
     help="Set this option, if the average of the tracks is nonzero [default=%default]",
     default=False, action="store_true",
 )
@@ -60,6 +62,7 @@ parser.add_option(
 )
 (options, args) = parser.parse_args()
 
+
 log.verbose = options.verbose
 if len(args) >= 3:
     paths_in = args[:-2]
@@ -67,7 +70,6 @@ if len(args) >= 3:
     path_out = args[-1]
 else:
     parser.error("Expecting at least two arguments.")
-
 
 length = len(load_track(paths_in[0]))
 if options.max_delta_t is None:
@@ -102,4 +104,3 @@ if options.tau is not None:
     error = normalized_error*result[0]
     dump_track("%s.error" % path_out, ones*error)
     dump_track("%s.normalized.error" % path_out, ones*normalized_error)
-

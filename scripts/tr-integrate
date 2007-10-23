@@ -19,10 +19,12 @@
 #
 # --
 
+
 from molmod.units import parse_unit
 from tracks import load_track, dump_track, parse_slice, parse_x_step, log
 import numpy, os
 from optparse import OptionParser
+
 
 usage = """Usage: %prog [options] input {x_axis|x_step} [input.error]
 %prog computes the integral of the function stored in input. If input.error
@@ -34,6 +36,7 @@ data points. The output is written to ${input}.int and ${input}.int.error
 
 parser = OptionParser(usage)
 (options, args) = parser.parse_args()
+
 
 if len(args) == 2 or len(args) == 3:
     path_in = args[0]
@@ -61,4 +64,3 @@ if path_in_error is not None:
     name = "%s.int.error" % path_in
     dump_track(name, eint)
     log("WRITTEN %s" % name)
-

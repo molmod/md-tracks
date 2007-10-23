@@ -19,9 +19,11 @@
 #
 # --
 
+
 from tracks import bend_track, dump_track, parse_slice
 import numpy, glob, os
 from optparse import OptionParser
+
 
 usage = """Usage: %prog [options] prefix1 prefix2 prefix3 output
 %prog computes the bending angle, defined by prefix1-prefix2-prefix3, for all
@@ -33,13 +35,14 @@ The output is stored in ${output}.
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice", 
+    "-s", "--slice",
     help="sample the input tracks with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
     default="::"
 )
 (options, args) = parser.parse_args()
+
 
 if len(args) == 4:
     prefix1, prefix2, prefix3, output_path = args
@@ -48,4 +51,3 @@ else:
 
 sub = parse_slice(options.slice)
 dump_track(output_path, bend_track(prefix1, prefix2, prefix3, sub))
-

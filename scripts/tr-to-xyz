@@ -19,11 +19,13 @@
 #
 # --
 
+
 from molmod.units import parse_unit
 from tracks import tracks_to_xyz, parse_slice, AtomFilter, log
 from optparse import OptionParser
 from ccio.xyz import XYZFile
 from ccio.psf import PSFFile
+
 
 usage = """Usage: %prog [options] ref.xyz prefix output.xyz
 %prog reads the atomic coordinates from tracks with the following format:
@@ -36,19 +38,19 @@ output.xyz.
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice", 
+    "-s", "--slice",
     help="subsample the trajectory with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
     default="::"
 )
 parser.add_option(
-    "-u", "--unit", 
+    "-u", "--unit",
     help="The unit in which the data in the xyz file are written. [default=%default]",
     default="angstrom"
 )
 parser.add_option(
-    "-a", "--filter-atoms", 
+    "-a", "--filter-atoms",
     help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
          "comma separated list of of integers. Counting starts at zero.",
     default=None
@@ -59,6 +61,7 @@ parser.add_option(
     help="Don't print any output"
 )
 (options, args) = parser.parse_args()
+
 
 log.verbose = options.verbose
 if len(args) == 3:
@@ -71,6 +74,4 @@ sub = parse_slice(options.slice)
 file_unit = parse_unit(options.unit)
 atom_filter = AtomFilter(options.filter_atoms)
 
-
 tracks_to_xyz(prefix, output_path, ref.symbols, sub, file_unit, atom_filter.filter_atoms)
-

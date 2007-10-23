@@ -19,10 +19,12 @@
 #
 # --
 
+
 from molmod.units import parse_unit
 from tracks import load_track, dump_track, parse_x_step, log
 import numpy
 from optparse import OptionParser
+
 
 usage = """Usage: %prog [options] input {time|timestep}
 %prog applies to block average method to the given input track. It
@@ -34,24 +36,24 @@ underlimit for) the correlation time.
 
 parser = OptionParser(usage)
 parser.add_option(
-    "--plot_error", 
+    "--plot_error",
     help="Plot the relation between blocksize and statistical error on"
          "the average to the filename PLOT_ERROR.png.",
     default=None,
 )
 parser.add_option(
-    "--plot_ctime", 
+    "--plot_ctime",
     help="Plot the relation between blocksize and the correlation time"
          "to the filename PLOT_CTIME.png.",
     default=None,
 )
 parser.add_option(
-    "-u", "--unit", 
+    "-u", "--unit",
     help="The output values are printed in the given UNIT [default=%default]",
     default='au',
 )
 parser.add_option(
-    "-t", "--time-unit", 
+    "-t", "--time-unit",
     help="The correlation time is printed in the given UNIT [default=%default]",
     default='au',
 )
@@ -65,6 +67,7 @@ parser.add_option(
     help="The minimum number of blocks to be considered."
 )
 (options, args) = parser.parse_args()
+
 
 log.verbose = options.verbose
 if len(args) == 2:
@@ -85,7 +88,7 @@ for block_size in xrange(1, len(f)/min_blocks):
     averages = numpy.array([
         f[i*block_size:(i+1)*block_size].mean() for i in xrange(n_blocks)
     ], float)
-    
+
     x.append(block_size)
     y.append(averages.std()/numpy.sqrt(n_blocks))
     s.append(averages.std()**2/f[:total_size].std()**2*block_size)

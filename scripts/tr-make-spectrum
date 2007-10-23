@@ -19,6 +19,7 @@
 #
 # --
 
+
 from tracks import load_track, dump_track, log
 from molmod.data import periodic
 from optparse import OptionParser
@@ -37,6 +38,7 @@ parser.add_option(
     help="Don't print any output"
 )
 (options, args) = parser.parse_args()
+
 
 log.verbose = options.verbose
 if len(args) >= 2:

@@ -19,36 +19,37 @@
 #
 # --
 
+
 from tracks import cpmd_traj_to_tracks, parse_slice, AtomFilter, log
 from ccio.psf import PSFFile
 from optparse import OptionParser
 
+
 usage = """Usage: %prog [options] filename [output_directory]
 %prog transforms the given CPMD trajectory file into separate tracks.
 
-Each track is associated with one Cartesian coordinate with the name 
+Each track is associated with one Cartesian coordinate with the name
 atom.${middle_word}.${index}.${c} where
  * ${middle_word} is pos or vel, to indicat the kind of data stored in the
    track file (i.e. positions or velocities).
  * ${index} is the atom index, seven characters wide, padded with zeros.
    Counting starts at zero.
  * ${c} is x, y or z.
-The tracks are stored in output_directory. If the output_directory 
+The tracks are stored in output_directory. If the output_directory
 argument is not given, it defaults to 'tracks'.
 
 %prog -h prints out all available options."""
 
-
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice", 
+    "-s", "--slice",
     help="subsample the trajectory with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
     default="::"
 )
 parser.add_option(
-    "-a", "--filter-atoms", 
+    "-a", "--filter-atoms",
     help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
          "comma separated list of of integers. Counting starts at zero.",
     default=None
@@ -59,6 +60,7 @@ parser.add_option(
     help="Don't print any output"
 )
 (options, args) = parser.parse_args()
+
 
 log.verbose = options.verbose
 if len(args) == 1:

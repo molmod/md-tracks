@@ -19,10 +19,12 @@
 #
 # --
 
+
 from molmod.units import parse_unit
 from tracks import load_track, parse_slice
 import numpy
 from optparse import OptionParser
+
 
 usage = """Usage: %prog [options] input
 %prog prints out the length of a track.
@@ -31,13 +33,14 @@ usage = """Usage: %prog [options] input
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice", 
+    "-s", "--slice",
     help="subsample the input track with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
     default="::"
 )
 (options, args) = parser.parse_args()
+
 
 if len(args) == 1:
     path_in = args[0]
@@ -46,4 +49,3 @@ else:
 
 sub = parse_slice(options.slice)
 print len(load_track(path_in))
-

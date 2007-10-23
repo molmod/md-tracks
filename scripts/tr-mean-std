@@ -19,20 +19,22 @@
 #
 # --
 
+
 from tracks import load_track, parse_slice, dump_track, log
 import numpy
 from optparse import OptionParser
 
+
 usage = """Usage: %prog [options] input1 input2 [input 3 ...] output_prefix
 %prog computes the meann, the standard deviation and the standard error on the
-mean of the input tracks and writes the result to ${output_prefix}.mean, 
+mean of the input tracks and writes the result to ${output_prefix}.mean,
 ${output_prefix}.std and ${output_prefix}.error.
 
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice", 
+    "-s", "--slice",
     help="subsample the input track with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
@@ -44,6 +46,7 @@ parser.add_option(
     help="Don't print any output"
 )
 (options, args) = parser.parse_args()
+
 
 log.verbose = options.verbose
 if len(args) >= 3:
@@ -73,4 +76,3 @@ dump_track(path_std, numpy.sqrt(mean_squared-mean**2))
 log("WRITTEN %s" % path_std)
 dump_track(path_error, numpy.sqrt((mean_squared-mean**2)/len(paths_in)))
 log("WRITTEN %s" % path_error)
-

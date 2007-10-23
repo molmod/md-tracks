@@ -19,21 +19,23 @@
 #
 # --
 
+
 from tracks import dist_track, dump_track, parse_slice
 import numpy, os
 from optparse import OptionParser
 
+
 usage = """Usage: %prog [options] prefix1 prefix2 output
 %prog computes the distance between the atom prefix1 and prefix2 for all time
 steps. Tracks with the given prefixes must exist, and their filenames must look
-like: ${prefix1}.c and ${prefix2}.c where c is x,y or z. The output is stored in 
+like: ${prefix1}.c and ${prefix2}.c where c is x,y or z. The output is stored in
 ${output}.
 
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice", 
+    "-s", "--slice",
     help="sample the input tracks with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
@@ -48,6 +50,3 @@ else:
 
 sub = parse_slice(options.slice)
 dump_track(output_path, dist_track(prefix1, prefix2, sub))
-    
-
-

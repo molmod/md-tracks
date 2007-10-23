@@ -19,10 +19,12 @@
 #
 # --
 
+
 from tracks import load_track, parse_slice
 from molmod.units import parse_unit
 import numpy
 from optparse import OptionParser
+
 
 usage = """Usage: %prog [options] input1 [input2 ...] image
 %prog is a generic plotting function that plots several tracks given by
@@ -57,44 +59,44 @@ parser.add_option(
     default="Y",
 )
 parser.add_option(
-    "--xlog", 
+    "--xlog",
     help="This option activates a logirthimic scale for the x-axis [default=%default]",
     default=False, action="store_true",
 )
 parser.add_option(
-    "--ylog", 
+    "--ylog",
     help="This option activates a logirthimic scale for the y-axis [default=%default]",
     default=False, action="store_true",
 )
 parser.add_option(
-    "--xinv", 
+    "--xinv",
     help="Use the inverse values as labels on the x-axis.",
     default=False, action="store_true",
 )
 parser.add_option(
-    "--yinv", 
+    "--yinv",
     help="Use the inverse values as labels on the x-axis.",
     default=False, action="store_true",
 )
 parser.add_option(
-    "--xunit", 
+    "--xunit",
     help="The unit for the x-axis [default=%default]",
     default='au',
 )
 parser.add_option(
-    "--yunit", 
+    "--yunit",
     help="The unit for the y-axis [default=%default]",
     default='au',
 )
 parser.add_option(
-    "--xlim", 
+    "--xlim",
     help="The range for the x-axis in the unit defined by XUNIT. "
          "Format: [min],[max]. If min and/or max are omitted, they are set "
          "auto matically. [default=%default]",
     default=",",
 )
 parser.add_option(
-    "--ylim", 
+    "--ylim",
     help="The range for the y-axis in the unit defined by YUNIT. "
          "Format: [min],[max]. If min and/or max are omitted, they are set "
          "auto matically. [default=%default]",
@@ -106,6 +108,7 @@ parser.add_option(
     default=True,
 )
 (options, args) = parser.parse_args()
+
 
 sub = parse_slice(options.slice)
 
@@ -155,7 +158,7 @@ def load_parts(input_expr):
 
 
 def parse_lim(s):
-    if s.count(",") != 1: 
+    if s.count(",") != 1:
         raise ValueError("The value of the option xlim and ylim must contain exactly one ','.")
     mi,ma = s.split(',')
     if len(mi) == 0:
@@ -207,4 +210,3 @@ pylab.ylim(parse_lim(options.ylim))
 if options.legend:
     pylab.legend(loc=0)
 pylab.savefig("%s.png" % image)
-

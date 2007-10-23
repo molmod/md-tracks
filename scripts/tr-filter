@@ -19,10 +19,12 @@
 #
 # --
 
+
 from ccio.psf import PSFFile
 from optparse import OptionParser
 import numpy
 from molmod.data import periodic
+
 
 usage = """Usage: %prog [options] connectivity {at|mol} expression
 %prog prints out atom or molecule numbers that satisfy the expression.
@@ -31,16 +33,17 @@ usage = """Usage: %prog [options] connectivity {at|mol} expression
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-p", "--prefix", 
+    "-p", "--prefix",
     help="Use this prefix when printing out the results.",
     default=None
 )
 parser.add_option(
-    "--xyz", 
+    "--xyz",
     help="append .x, .y and .z to the filenames if --prefix is used.",
     default=False, action="store_true",
 )
 (options, args) = parser.parse_args()
+
 
 if len(args) == 3:
     path_psf, kind, expression = args
@@ -50,16 +53,13 @@ else:
 
 if not (kind=='at' or kind=='mol'):
     parser.error("Kind must be at or mol.")
-    
-
-
 
 
 class Formula(object):
     def __init__(self, l):
         self.l = list(str(symbol).lower() for symbol in l)
         self.l.sort()
-    
+
     def __eq__(self, other):
         if isinstance(other, str):
             other_l = []
@@ -82,10 +82,10 @@ class Formula(object):
 class Symbol(object):
     def __init__(self, s):
         self.s = str(s).lower()
-    
+
     def __str__(self):
         return self.s
-    
+
     def __eq__(self, other):
         return (self.s == str(other).lower())
 
@@ -94,7 +94,7 @@ class Molecule(object):
     def __init__(self, index):
         self.index = index
         self.atoms = []
-    
+
 
 class Atom(object):
     def __init__(self, index, molecule, symbol, number, nindexes, nsymbols, nnumbers):

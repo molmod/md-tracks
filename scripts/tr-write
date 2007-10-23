@@ -19,10 +19,12 @@
 #
 # --
 
+
 from molmod.units import parse_unit
 from tracks import dump_track, parse_slice
 import numpy, sys, itertools
 from optparse import OptionParser
+
 
 usage = """Usage: %prog [options] output
 %prog stores the data from stdin in the track output. The program expects one
@@ -32,18 +34,19 @@ floating point value per line on stdin
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-s", "--slice", 
+    "-s", "--slice",
     help="subsample the standard input with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
     default="::"
 )
 parser.add_option(
-    "--unit", 
+    "--unit",
     help="The values from stdin are interpreted in the given UNIT [default=%default]",
     default='au',
 )
 (options, args) = parser.parse_args()
+
 
 if len(args) == 1:
     path_out = args[0]
@@ -57,4 +60,3 @@ result = []
 for line in itertools.islice(sys.stdin, sub.start, sub.stop, sub.step):
     result.append(float(line)*unit)
 dump_track(path_out, numpy.array(result))
-

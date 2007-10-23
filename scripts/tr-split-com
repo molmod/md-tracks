@@ -19,15 +19,17 @@
 #
 # --
 
+
 from molmod.data import periodic
 from ccio.psf import PSFFile
 from tracks import load_track, dump_track, log
 import numpy, os
 from optparse import OptionParser
 
+
 usage = """Usage: %prog [options] prefix output_middle_word connectivity.psf
 %prog computes the time-dependent center of mass of the molecules defined in
-the connectivity file. The output is written as 
+the connectivity file. The output is written as
 directory/com.${output_middle_word}.${i}.${c}
 where
  - ${middle_word} is the last argument but one
@@ -50,7 +52,7 @@ parser.add_option(
     help="Don't print any output"
 )
 parser.add_option(
-    "-m", "--filter-molecules", 
+    "-m", "--filter-molecules",
     help="Only consider the molecules listed in FILTER_MOLECULES. This is a "
          "comma-separated list of molecule indexes. Counting starts at zero.",
     default=None
@@ -61,6 +63,7 @@ parser.add_option(
     help="Don't write out the relative coordinates."
 )
 (options, args) = parser.parse_args()
+
 
 log.verbose = options.verbose
 if len(args) == 3:
@@ -90,11 +93,11 @@ for m_index, a_indices in molecules.iteritems():
             mass = periodic[psf.numbers[a_index]].mass
             com += load_track("%s.%07i.%s" % (prefix, a_index, c))*mass
             total_mass += mass
-        com /= total_mass 
+        com /= total_mass
         name = "%s.%s.%07i.%s" % (os.path.join(directory, "com"), middle_word, m_index, c)
         log("WRITTEN %s" % name)
         dump_track(name, com)
-        
+
         if options.relative:
             for a_index in a_indices:
                 tmp = load_track("%s.%07i.%s" % (prefix, a_index, c))
@@ -102,5 +105,3 @@ for m_index, a_indices in molecules.iteritems():
                 name = "%s.%s.%07i.%s" % (os.path.join(directory, "rel"), middle_word, a_index, c)
                 log("WRITTEN %s" % name)
                 dump_track(name, tmp)
-        
-        
