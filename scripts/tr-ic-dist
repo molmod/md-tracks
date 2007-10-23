@@ -23,13 +23,11 @@ from tracks import dist_track, dump_track, parse_slice
 import numpy, os
 from optparse import OptionParser
 
-usage = """Usage: %prog [options] prefix index1 index2
-%prog computes the distance between the atom with index1 and the atom with 
-index2 for all time steps. Tracks with the given prefix must exist, and their 
-filenames must look like:
-${prefix}.${index1}.c and ${prefix}.${index2}.c
-where c is x,y or z. The output is stored in 
-${prefix}.dist.${index1}.${index2}
+usage = """Usage: %prog [options] prefix1 prefix2 output
+%prog computes the distance between the atom prefix1 and prefix2 for all time
+steps. Tracks with the given prefixes must exist, and their filenames must look
+like: ${prefix1}.c and ${prefix2}.c where c is x,y or z. The output is stored in 
+${output}.
 
 %prog -h prints out all available options."""
 
@@ -44,17 +42,12 @@ parser.add_option(
 (options, args) = parser.parse_args()
 
 if len(args) == 3:
-    prefix, index1, index2 = args
-    index1 = int(index1)
-    index2 = int(index2)
+    prefix1, prefix2, output_path = args
 else:
     parser.error("Expecting three arguments.")
 
 sub = parse_slice(options.slice)
-dump_track(
-    '%s.dist.%07i.%07i' % (prefix, index1, index2), 
-    dist_track(index1, index2, prefix, sub)
-)
+dump_track(output_path, dist_track(prefix1, prefix2, sub))
     
 
 

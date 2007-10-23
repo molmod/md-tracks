@@ -37,7 +37,7 @@ from ccio.xyz import XYZReader, XYZFile
 from molmod.units import angstrom, fs
 from molmod.constants import lightspeed
 from molmod.data import periodic
-from tracks import load_track, dist_track, bend_track, dihed_track, dump_track, PSFFilter
+from tracks import load_track, dist_track, bend_track, dihed_track, dump_track
 import numpy
 
 
@@ -128,6 +128,21 @@ class CommandsTestCase(unittest.TestCase):
         self.assertAlmostEqual(tmp[0], 0.0001216775, 5)
         self.assertAlmostEqual(tmp[1], -0.0001251857, 5)
         self.assertAlmostEqual(tmp[-1], 0.0007943491, 5)
+        # clean up
+        shutil.rmtree("tracks")
+        # Load the xyz file
+        self.from_xyz("thf01", "pos", "-a2,5")
+        # Test the number of files
+        self.assertEqual(len(glob.glob("tracks/atom.pos.*")), 6)
+        # Test some values
+        tmp = load_track("tracks/atom.pos.0000002.x")
+        self.assertAlmostEqual(tmp[0]/angstrom, 0.4226530000, 5)
+        self.assertAlmostEqual(tmp[1]/angstrom, 0.3698115354, 5)
+        self.assertAlmostEqual(tmp[-1]/angstrom, 0.1250660111, 5)
+        tmp = load_track("tracks/atom.pos.0000005.z")
+        self.assertAlmostEqual(tmp[0]/angstrom, 0.3813110000, 5)
+        self.assertAlmostEqual(tmp[1]/angstrom, 0.4181952123, 5)
+        self.assertAlmostEqual(tmp[-1]/angstrom, -1.7859607480, 5)
 
     def test_from_cp2k_ener(self):
         # Load the energy file
@@ -187,12 +202,20 @@ class CommandsTestCase(unittest.TestCase):
 
     def test_to_xyz(self):
         self.from_xyz("thf01", "pos")
+        # all-atoms version
         self.execute("tr-to-xyz", [os.path.join(input_dir, "thf01/init.xyz"), "tracks/atom.pos", "test.pos.xyz"])
         xyz_reader_orig = XYZReader(os.path.join(input_dir, "thf01/md-pos-1.xyz"))
         xyz_reader_copy = XYZReader("test.pos.xyz")
-        self.assert_(xyz_reader_orig.symbols == xyz_reader_copy.symbols)
+        self.assertEqual(xyz_reader_orig.symbols,xyz_reader_copy.symbols)
         for (title_orig, coordinates_orig), (tile_copy, coordinates_copy) in zip(xyz_reader_orig, xyz_reader_copy):
             self.assert_(abs(coordinates_orig - coordinates_copy).max() < 1e-7)
+        # atom-filter version
+        self.execute("tr-to-xyz", [os.path.join(input_dir, "thf01/init.xyz"), "tracks/atom.pos", "test.pos.xyz", "-a2,5"])
+        xyz_reader_orig = XYZReader(os.path.join(input_dir, "thf01/md-pos-1.xyz"))
+        xyz_reader_copy = XYZReader("test.pos.xyz")
+        self.assertEqual(xyz_reader_copy.symbols,['C','H'])
+        for (title_orig, coordinates_orig), (tile_copy, coordinates_copy) in zip(xyz_reader_orig, xyz_reader_copy):
+            self.assert_(abs(coordinates_orig[[2,5]] - coordinates_copy).max() < 1e-7)
 
     def test_read_write_slice_length(self):
         self.from_cp2k_ener("water32")
@@ -418,70 +441,77 @@ class CommandsTestCase(unittest.TestCase):
 
     def test_ic_dist(self):
         self.from_xyz("thf01", "pos")
-        self.execute("tr-ic-dist", ["tracks/atom.pos", "1", "2"])
-        dists = load_track("tracks/atom.pos.dist.0000001.0000002")
+        self.execute("tr-ic-dist", ["tracks/atom.pos.0000001", "tracks/atom.pos.0000002", "tracks/test"])
+        dists = load_track("tracks/test")
         self.assertAlmostEqual(dists[0], 4.25631, 4)
         self.assertAlmostEqual(dists[1], 4.28458, 4)
         self.assertAlmostEqual(dists[-1], 4.26709, 4)
-        self.execute("tr-ic-dist", ["-s20:601:5", "tracks/atom.pos", "1", "2"])
-        dists = load_track("tracks/atom.pos.dist.0000001.0000002")
+        self.execute("tr-ic-dist", ["-s20:601:5", "tracks/atom.pos.0000001", "tracks/atom.pos.0000002", "tracks/test"])
+        dists = load_track("tracks/test")
         self.assertAlmostEqual(dists[0], 4.32567, 4)
         self.assertAlmostEqual(dists[1], 4.41805, 4)
         self.assertAlmostEqual(dists[-1], 4.35014, 4)
 
     def test_ic_bend(self):
         self.from_xyz("thf01", "pos")
-        self.execute("tr-ic-bend", ["tracks/atom.pos", "1", "0", "2"])
-        bends = load_track("tracks/atom.pos.bend.0000001.0000000.0000002")
+        self.execute("tr-ic-bend", ["tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002", "tracks/test"])
+        bends = load_track("tracks/test")
         self.assertAlmostEqual(bends[0]*180/numpy.pi, 105.426, 3)
         self.assertAlmostEqual(bends[1]*180/numpy.pi, 102.286, 3)
         self.assertAlmostEqual(bends[-1]*180/numpy.pi, 107.284, 3)
-        self.execute("tr-ic-bend", ["-s20:601:5", "tracks/atom.pos", "1", "0", "2"])
-        bends = load_track("tracks/atom.pos.bend.0000001.0000000.0000002")
+        self.execute("tr-ic-bend", ["-s20:601:5", "tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002", "tracks/test"])
+        bends = load_track("tracks/test")
         self.assertAlmostEqual(bends[0]*180/numpy.pi, 104.739, 3)
         self.assertAlmostEqual(bends[1]*180/numpy.pi, 108.972, 3)
         self.assertAlmostEqual(bends[-1]*180/numpy.pi, 107.277, 3)
 
     def test_ic_dihed(self):
         self.from_xyz("thf01", "pos")
-        self.execute("tr-ic-dihed", ["tracks/atom.pos", "2", "3", "4", "1"])
-        bends = load_track("tracks/atom.pos.dihed.0000002.0000003.0000004.0000001")
+        self.execute("tr-ic-dihed", ["tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"])
+        bends = load_track("tracks/test")
         self.assertAlmostEqual(bends[0]*180/numpy.pi, 0.000, 3)
         self.assertAlmostEqual(bends[1]*180/numpy.pi, -1.919, 3)
         self.assertAlmostEqual(bends[-1]*180/numpy.pi, 21.320, 3)
-        self.execute("tr-ic-dihed", ["-s20:601:5", "tracks/atom.pos", "2", "3", "4", "1"])
-        bends = load_track("tracks/atom.pos.dihed.0000002.0000003.0000004.0000001")
+        self.execute("tr-ic-dihed", ["-s20:601:5", "tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"])
+        bends = load_track("tracks/test")
         self.assertAlmostEqual(bends[0]*180/numpy.pi, -15.209, 3)
         self.assertAlmostEqual(bends[1]*180/numpy.pi, -16.602, 3)
         self.assertAlmostEqual(bends[-1]*180/numpy.pi, -31.306, 3)
 
     def test_ic_psf(self):
+        def check_ic_psf(nbonds, nbends, ndiheds):
+            # bond
+            bond_filenames = glob.glob("tracks/atom.pos.dist*")
+            self.assertEqual(len(bond_filenames), nbonds)
+            for bond_filename in bond_filenames:
+                bond = load_track(bond_filename)
+                index1, index2 = [int(word) for word in bond_filename.split(".")[-2:]]
+                bond_check = dist_track("tracks/atom.pos.%07i" % index1, "tracks/atom.pos.%07i" % index2, slice(None))
+                self.assert_((bond==bond_check).all())
+            # bend
+            bend_filenames = glob.glob("tracks/atom.pos.bend*")
+            self.assertEqual(len(bend_filenames), nbends)
+            for bend_filename in bend_filenames:
+                bend = load_track(bend_filename)
+                index1, index2, index3 = [int(word) for word in bend_filename.split(".")[-3:]]
+                bend_check = bend_track("tracks/atom.pos.%07i" % index1, "tracks/atom.pos.%07i" % index2, "tracks/atom.pos.%07i" % index3, slice(None))
+                self.assert_((bend==bend_check).all())
+            # dihed
+            dihed_filenames = glob.glob("tracks/atom.pos.dihed*")
+            self.assertEqual(len(dihed_filenames), ndiheds)
+            for dihed_filename in dihed_filenames:
+                dihed = load_track(dihed_filename)
+                index1, index2, index3, index4 = [int(word) for word in dihed_filename.split(".")[-4:]]
+                dihed_check = dihed_track("tracks/atom.pos.%07i" % index1, "tracks/atom.pos.%07i" % index2, "tracks/atom.pos.%07i" % index3, "tracks/atom.pos.%07i" % index4, slice(None))
+                self.assert_((dihed==dihed_check).all())
         self.from_xyz("thf01", "pos")
         self.execute("tr-ic-psf", ["tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
-        # bond
-        bond_filenames = glob.glob("tracks/atom.pos.dist*")
-        self.assert_(len(bond_filenames)==13)
-        for bond_filename in bond_filenames:
-            bond = load_track(bond_filename)
-            index1, index2 = [int(word) for word in bond_filename.split(".")[-2:]]
-            bond_check = dist_track(index1, index2, "tracks/atom.pos", slice(None))
-            self.assert_((bond==bond_check).all())
-        # bend
-        bend_filenames = glob.glob("tracks/atom.pos.bend*")
-        self.assert_(len(bend_filenames)==25)
-        for bend_filename in bend_filenames:
-            bend = load_track(bend_filename)
-            index1, index2, index3 = [int(word) for word in bend_filename.split(".")[-3:]]
-            bend_check = bend_track(index1, index2, index3, "tracks/atom.pos", slice(None))
-            self.assert_((bend==bend_check).all())
-        # dihed
-        dihed_filenames = glob.glob("tracks/atom.pos.dihed*")
-        self.assert_(len(dihed_filenames)==33)
-        for dihed_filename in dihed_filenames:
-            dihed = load_track(dihed_filename)
-            index1, index2, index3, index4 = [int(word) for word in dihed_filename.split(".")[-4:]]
-            dihed_check = dihed_track(index1, index2, index3, index4, "tracks/atom.pos", slice(None))
-            self.assert_((dihed==dihed_check).all())
+        check_ic_psf(13,25,33)
+        # clean up and start again with --filter-atoms
+        shutil.rmtree("tracks")
+        self.from_xyz("thf01", "pos")
+        self.execute("tr-ic-psf", ["-a2,5", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
+        check_ic_psf(4,10,18)
 
     def test_mean_std(self):
         self.from_xyz("thf01", "vel", "-u1")
@@ -517,6 +547,14 @@ class CommandsTestCase(unittest.TestCase):
     def test_split_com(self):
         self.from_xyz("water32", "vel", "-u1")
         self.from_cp2k_ener("water32")
+        # first test the --filter-molecules
+        self.execute("tr-split-com", ["-m2,5", "--no-rel", "tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])
+        self.assertEqual(len(glob.glob("tracks/com.vel.*")),6)
+        self.assertEqual(len(glob.glob("tracks/rel.vel.*")),0)
+        self.execute("tr-split-com", ["-m2,5", "tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])
+        self.assertEqual(len(glob.glob("tracks/com.vel.*")),6)
+        self.assertEqual(len(glob.glob("tracks/rel.vel.*")),18)
+        # then do the remaining tests
         self.execute("tr-split-com", ["tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])
         psf = PSFFile(os.path.join(input_dir, "water32/init.psf"))
         # check that the coms have in total no translational kinetic energy
@@ -552,14 +590,14 @@ class CommandsTestCase(unittest.TestCase):
         if verbose: print
         def check_filter(case, kind, expression, expected):
             arguments = [os.path.join(input_dir, "%s/init.psf" % case), kind, expression]
-            result = self.execute("tr-filter", arguments)[0].strip()
+            result = self.execute("tr-filter", arguments, verbose=verbose)[0].strip()
             self.assertEqual(result, expected)
             if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
             arguments.append("--prefix=test")
-            result = self.execute("tr-filter", arguments)[0].strip()
+            result = self.execute("tr-filter", arguments, verbose=verbose)[0].strip()
             if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
             arguments.append("--xyz")
-            result = self.execute("tr-filter", arguments)[0].strip()
+            result = self.execute("tr-filter", arguments, verbose=verbose)[0].strip()
             if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
 
         check_filter('thf01', 'at', 'a.symbol=="c"', '1,2,3,4')
@@ -579,28 +617,9 @@ class CommandsTestCase(unittest.TestCase):
         check_filter('thf01', 'mol', 'm.index==0', '0')
         check_filter('thf01', 'mol', 'm.composition=="C_4,O,H_8"', '0')
         check_filter('thf01', 'mol', 'm.composition=="C_3,O,H_8"', '')
-        check_filter('water32', 'mol', 'm.composition=="H_2,O"', ",".join(str(val) for val in xrange(32)))
+        check_filter('water32', 'mol', 'm.composition=="H_2,O"', '0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31')
         check_filter('water32', 'mol', 'm.index==5', '5')
         check_filter('water32', 'mol', 'a.index==6', '2')
-
-
-
-class PSFFilterTestCase(unittest.TestCase):
-    def test_filter(self):
-        psf = PSFFile(os.path.join(input_dir, "water32/init.psf"))
-
-        psf_filter = PSFFilter(psf,[1,2,3,54],[])
-        self.assert_(psf_filter(4, 3))
-        self.assert_(not psf_filter(4, 7, 13))
-
-        psf_filter = PSFFilter(psf,[],[1])
-        self.assert_(psf_filter(3, 55, 77))
-        self.assert_(not psf_filter(88, 22, 0))
-
-        psf_filter = PSFFilter(psf,[1,2,10,54],[1])
-        self.assert_(psf_filter(2, 88, 10))
-        self.assert_(psf_filter(10, 0, 54))
-        self.assert_(not psf_filter(30, 31, 0))
 
 
 unittest.main()

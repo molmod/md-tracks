@@ -19,7 +19,7 @@
 #
 # --
 
-from tracks import cpmd_traj_to_tracks, parse_slice, PSFFilter, log
+from tracks import cpmd_traj_to_tracks, parse_slice, AtomFilter, log
 from ccio.psf import PSFFile
 from optparse import OptionParser
 
@@ -48,21 +48,9 @@ parser.add_option(
     default="::"
 )
 parser.add_option(
-    "--psf", 
-    help="Specify a topology file. This is required when --filter-molecules is used.",
-    default=None
-)
-parser.add_option(
     "-a", "--filter-atoms", 
     help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
          "comma separated list of of integers. Counting starts at zero.",
-    default=None
-)
-parser.add_option(
-    "-m", "--filter-molecules", 
-    help="Only consider atoms that are part of the molecules "
-         "listed in FILTER_MOLECULES. FILTER_MOLECULES is a comma separated list "
-         "of integers. Counting starts at zero.",
     default=None
 )
 parser.add_option(
@@ -82,12 +70,7 @@ else:
     parser.error("Expecting one or two arguments.")
 
 sub = parse_slice(options.slice)
-
-if options.psf is None:
-    psf = None
-else:
-    psf = PSFFile(options.psf)
-psf_filter = PSFFilter(psf, options.filter_atoms, options.filter_molecules)
+atom_filter = AtomFilter(options.filter_atoms)
 
 # first find out how many atoms the system has:
 first_index = None
@@ -102,5 +85,5 @@ for line in f:
     num_atoms += 1
 f.close()
 
-cpmd_traj_to_tracks(filename, num_atoms, output_dir, sub, psf_filter.get_atom_indices())
+cpmd_traj_to_tracks(filename, num_atoms, output_dir, sub, atom_filter.filter_atoms)
 

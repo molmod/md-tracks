@@ -31,7 +31,7 @@ __all__ = [
     "dump_track", "TrackNotFoundError", "load_track",
     "parse_slice", "parse_x_step", "parse_x_last", "parse_x_length"
     "dist_track", "bend_track", "dihed_track",
-    "PSFFilter",
+    "AtomFilter",
     "Logger", "log"
 ]
 
@@ -156,6 +156,8 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
     names = []
     if atom_indices is None:
         atom_indices = range(len(xyz_reader.numbers))
+    else:
+        atom_indices = list(atom_indices)
     for index in atom_indices:
         for cor in ["x", "y", "z"]:
             names.append("atom.%s.%07i.%s" % (middle_word, index, cor))
@@ -179,9 +181,13 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None)):
 
 
 def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_indices=None):
+    if atom_indices is None:
+        atom_indices = range(num_atoms)
+    else:
+        atom_indices = list(atom_indices)
     tracks_splitter = TracksSplitter(destination, sum((
         ["atom.pos.%07i.x", "atom.pos.%07i.y", "atom.pos.%07i.z", "atom.vel.%07i.x", "atom.vel.%07i.y", "atom.vel.%07i.z"]
-        for index in xrange(num_atoms)
+        for index in atom_indices
     ), []))
 
     f = file(filename)
@@ -203,6 +209,8 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
 def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angstrom, atom_indices=None):
     if atom_indices is None:
         atom_indices = range(len(symbols))
+    else:
+        atom_indices = list(atom_indices)
     symbols = [symbols[index] for index in atom_indices]
 
     filenames = []
@@ -273,23 +281,23 @@ def parse_x_length(s):
     return _parse_x_track(s, fn, int)
 
 
-def dist_track(index1, index2, prefix, sub):
+def dist_track(prefix1, prefix2, sub):
     deltas = []
     for c in ['x','y','z']:
-        first = load_track('%s.%07i.%s' % (prefix, index1, c))[sub]
-        second = load_track('%s.%07i.%s' % (prefix, index2, c))[sub]
+        first = load_track('%s.%s' % (prefix1, c))[sub]
+        second = load_track('%s.%s' % (prefix2, c))[sub]
         deltas.append(second-first)
     distances = numpy.sqrt(sum(delta**2 for delta in deltas))
     return distances
 
 
-def bend_track(index1, index2, index3, prefix, sub):
+def bend_track(prefix1, prefix2, prefix3, sub):
     deltas_a = []
     deltas_b = []
     for c in ['x','y','z']:
-        first = load_track('%s.%07i.%s' % (prefix, index1, c))[sub]
-        second = load_track('%s.%07i.%s' % (prefix, index2, c))[sub]
-        third = load_track('%s.%07i.%s' % (prefix, index3, c))[sub]
+        first = load_track('%s.%s' % (prefix1, c))[sub]
+        second = load_track('%s.%s' % (prefix2, c))[sub]
+        third = load_track('%s.%s' % (prefix3, c))[sub]
         deltas_a.append(first-second)
         deltas_b.append(third-second)
     # compute the norms
@@ -308,15 +316,15 @@ def bend_track(index1, index2, index3, prefix, sub):
     return angle
 
 
-def dihed_track(index1, index2, index3, index4, prefix, sub):
+def dihed_track(prefix1, prefix2, prefix3, prefix4, sub):
     deltas_a = []
     deltas_b = []
     deltas_c = []
     for c in ['x','y','z']:
-        first = load_track('%s.%07i.%s' % (prefix, index1, c))[sub]
-        second = load_track('%s.%07i.%s' % (prefix, index2, c))[sub]
-        third = load_track('%s.%07i.%s' % (prefix, index3, c))[sub]
-        fourth = load_track('%s.%07i.%s' % (prefix, index4, c))[sub]
+        first = load_track('%s.%s' % (prefix1, c))[sub]
+        second = load_track('%s.%s' % (prefix2, c))[sub]
+        third = load_track('%s.%s' % (prefix3, c))[sub]
+        fourth = load_track('%s.%s' % (prefix4, c))[sub]
         deltas_a.append(first-second)
         deltas_b.append(third-second)
         deltas_c.append(fourth-third)
@@ -354,44 +362,19 @@ def dihed_track(index1, index2, index3, index4, prefix, sub):
     return angle
 
 
-class PSFFilter(object):
-    def __init__(self, psf, atom_indices, molecule_indices):
-        tmp = set()
-        if atom_indices is not None and len(atom_indices) > 0:
-            if isinstance(atom_indices, str):
-                atom_indices = [int(word) for word in atom_indices.split(',')]
-            tmp.update(atom_indices)
-        if molecule_indices is not None and len(molecule_indices) > 0:
-            if psf is None:
-                raise Error("The psf argument is required when using molecule_indices")
-            if isinstance(molecule_indices, str):
-                self.molecule_indices = set(int(word) for word in molecule_indices.split(','))
-            else:
-                self.molecule_indices = set(molecule_indices)
-            for a_index, m_index in enumerate(psf.molecules):
-                if m_index in self.molecule_indices:
-                    tmp.add(a_index)
+class AtomFilter(object):
+    def __init__(self, filter_atoms):
+        if isinstance(filter_atoms, str):
+            self.filter_atoms = frozenset(int(word) for word in filter_atoms.split(","))
+        elif filter_atoms is None:
+            self.filter_atoms = None
         else:
-            self.molecule_indices = None
-        if len(tmp) == 0:
-            self.atom_indices = None
-        else:
-            self.atom_indices = tmp
+            self.filter_atoms = frozenset(filter_atoms)
 
     def __call__(self, *test_indices):
-        if self.atom_indices is None:
+        if self.filter_atoms is None:
             return True
-        for t_index in test_indices:
-            if t_index in self.atom_indices:
-                return True
-        return False
-
-    def get_atom_indices(self):
-        if self.atom_indices is None:
-            return None
-        result = list(self.atom_indices)
-        result.sort()
-        return result
+        return len(self.filter_atoms.intersection(test_indices)) > 0
 
 
 class Logger(object):

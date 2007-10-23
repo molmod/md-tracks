@@ -21,13 +21,13 @@
 
 from molmod.data import periodic
 from ccio.psf import PSFFile
-from tracks import load_track, dump_track, PSFFilter, log
+from tracks import load_track, dump_track, log
 import numpy, os
 from optparse import OptionParser
 
-usage = """Usage: %prog [options] prefix output_middle_word connectivity.psf 
-%prog computes the time-dependent center of mass of the molecules listed in the
-connectivity file, as 
+usage = """Usage: %prog [options] prefix output_middle_word connectivity.psf
+%prog computes the time-dependent center of mass of the molecules defined in
+the connectivity file. The output is written as 
 directory/com.${output_middle_word}.${i}.${c}
 where
  - ${middle_word} is the last argument but one
@@ -45,16 +45,20 @@ nor the x, y or z. For example: tracks/atom.pos
 
 parser = OptionParser(usage)
 parser.add_option(
-    "-m", "--filter-molecules", 
-    help="Only consider internal coordinates that are part of the molecules "
-         "listed in FILTER_MOLECULES. FILTER_MOLECULES is a comma separated list "
-         "of integers. Counting starts at zero.",
-    default=None
-)
-parser.add_option(
     "-q", "--quiet",
     action="store_false", dest="verbose", default=True,
     help="Don't print any output"
+)
+parser.add_option(
+    "-m", "--filter-molecules", 
+    help="Only consider the molecules listed in FILTER_MOLECULES. This is a "
+         "comma-separated list of molecule indexes. Counting starts at zero.",
+    default=None
+)
+parser.add_option(
+    "--no-rel",
+    action="store_false", dest="relative", default=True,
+    help="Don't write out the relative coordinates."
 )
 (options, args) = parser.parse_args()
 
@@ -67,13 +71,16 @@ else:
 
 
 psf = PSFFile(path_psf)
-psf_filter = PSFFilter(psf, None, options.filter_molecules)
 
-molecules = {}
-for a_index, m_index in enumerate(psf.molecules):
-    if psf_filter.molecule_indices is None or m_index in psf_filter.molecule_indices:
-        l = molecules.setdefault(m_index, list())
-        l.append(a_index)
+if options.filter_molecules is None:
+    m_indexes = frozenset(numpy.unique(psf.molecules))
+else:
+    m_indexes = frozenset(int(word) for word in options.filter_molecules.split(","))
+
+molecules = dict(
+    (m_index, (psf.molecules==m_index).nonzero()[0])
+    for m_index in m_indexes
+)
 
 for m_index, a_indices in molecules.iteritems():
     for c in 'xyz':
@@ -88,11 +95,12 @@ for m_index, a_indices in molecules.iteritems():
         log("WRITTEN %s" % name)
         dump_track(name, com)
         
-        for a_index in a_indices:
-            tmp = load_track("%s.%07i.%s" % (prefix, a_index, c))
-            tmp -= com
-            name = "%s.%s.%07i.%s" % (os.path.join(directory, "rel"), middle_word, a_index, c)
-            log("WRITTEN %s" % name)
-            dump_track(name, tmp)
+        if options.relative:
+            for a_index in a_indices:
+                tmp = load_track("%s.%07i.%s" % (prefix, a_index, c))
+                tmp -= com
+                name = "%s.%s.%07i.%s" % (os.path.join(directory, "rel"), middle_word, a_index, c)
+                log("WRITTEN %s" % name)
+                dump_track(name, tmp)
         
         
