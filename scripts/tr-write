@@ -41,7 +41,7 @@ parser.add_option(
          "The slice interpretation is pythonic. [default=%default]",
 )
 parser.add_option(
-    "--unit", default='au',
+    "-u", "--unit", default='au',
     help="The values from stdin are interpreted in the given UNIT. [default=%default]",
 )
 (options, args) = parser.parse_args()
