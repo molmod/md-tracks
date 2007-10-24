@@ -30,6 +30,7 @@ usage = """Usage: %prog filename [output_directory]
 
 Each track is associated with a column of the file:
 step, time, kinetic_energy, temperature, potential_energy, total_energy
+The tracks are stored in atomic units.
 
 %prog -h prints out all available options."""
 
