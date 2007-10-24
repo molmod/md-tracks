@@ -26,7 +26,7 @@ import numpy, sys, itertools
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] [unit1] output1 [[unit2] output2 ...]
+usage = """%prog [options] [unit1] output1 [[unit2] output2 ...]
 
 %prog stores the data from stdin in the tracks ${output*}. The data on stdin
 must be formatted as follows: one line contains all data that belong to one

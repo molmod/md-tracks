@@ -26,7 +26,7 @@ import numpy, os
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] input {x_axis|x_step} [input.error]
+usage = """%prog [options] input {x_axis|x_step} [input.error]
 
 %prog computes the integral of the function in ${input}. If ${input.error}
 is given or ${input}.error exists, %prog will also compute the error on the

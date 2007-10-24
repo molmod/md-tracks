@@ -26,7 +26,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] input1 [input2 ...] {time_axis|time_step} output
+usage = """%prog [options] input1 [input2 ...] {time_axis|time_step} output
 
 %prog computes the auto-correlation function from a set of tracks (${input1},
 ${input2}, ...) and stores the result in a track ${output}. The normalized auto-

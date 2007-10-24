@@ -25,7 +25,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] input slice output
+usage = """%prog [options] input slice output
 
 %prog slices the track ${input} and writes the result to ${output}.
 

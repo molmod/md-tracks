@@ -157,7 +157,7 @@ from optparse import OptionParser
 from molmod.units import parse_unit
 
 
-usage = """Usage: %prog [options] wavenumbers amplitudes minwn maxwn initial_parameters
+usage = """%prog [options] wavenumbers amplitudes minwn maxwn initial_parameters
 
 %prog fits a model to a given spectrum.
 

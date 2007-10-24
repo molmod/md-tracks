@@ -25,7 +25,7 @@ import numpy, glob, os
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] prefix1 prefix2 prefix3 output
+usage = """%prog [options] prefix1 prefix2 prefix3 output
 
 %prog computes the bending angle, defined by prefix1-prefix2-prefix3, for all
 time steps. Tracks with the given prefixes must exist, and their filenames must

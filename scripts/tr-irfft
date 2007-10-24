@@ -25,7 +25,7 @@ import numpy, os
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] input1 [input2 ...]
+usage = """%prog [options] input1 [input2 ...]
 
 %prog performs an inverse real Fourier transform on the tracks given by
 ${input1}, ${input2}, ... and stores each transform in a file in

@@ -26,7 +26,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] [unit1] input1 [[unit2] input2 ...]
+usage = """%prog [options] [unit1] input1 [[unit2] input2 ...]
 
 %prog prints the contents of the tracks ${input*} to stdout, one column per
 input track, one row per time step. The values are tab separated. Optionally

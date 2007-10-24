@@ -25,7 +25,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] input1 input2 [input3 ...] output_prefix
+usage = """%prog [options] input1 input2 [input3 ...] output_prefix
 
 %prog computes the mean, the standard deviation and the standard error on the
 mean of the input tracks and writes the result to ${output_prefix}.mean,

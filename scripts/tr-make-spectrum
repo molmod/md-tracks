@@ -25,7 +25,7 @@ from molmod.data import periodic
 from optparse import OptionParser
 
 
-usage = """Usage: %prog input1 [input2 ...] output
+usage = """%prog input1 [input2 ...] output
 
 %prog computes the power spectrum from the individual Fourier transforms given
 as ${input1}, ${input2}, ... and stores the result in ${output}.

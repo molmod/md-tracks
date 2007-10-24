@@ -27,7 +27,7 @@ import numpy, os
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] prefix output_middle_word connectivity.psf
+usage = """%prog [options] prefix output_middle_word connectivity.psf
 
 %prog computes the time-dependent center of mass of the molecules defined in
 the connectivity file. The output is written as

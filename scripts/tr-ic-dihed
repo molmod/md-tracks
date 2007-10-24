@@ -25,7 +25,7 @@ import numpy, glob, os
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] prefix1 prefix2 prefix3 prefix4 output
+usage = """%prog [options] prefix1 prefix2 prefix3 prefix4 output
 
 %prog computes the dihedral angled prefix1-prefix2-prefix3-prefix4 for all time
 steps. Tracks with the given prefixes must exist, and their filenames must look

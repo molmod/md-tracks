@@ -25,7 +25,7 @@ import numpy, os
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] prefix1 prefix2 output
+usage = """%prog [options] prefix1 prefix2 output
 
 %prog computes the distance between the atom prefix1 and prefix2 for all time
 steps. Tracks with the given prefixes must exist, and their filenames must look

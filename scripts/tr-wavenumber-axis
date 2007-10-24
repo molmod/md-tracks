@@ -27,7 +27,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] {spectrum|nwavenumber} {time|duration} output
+usage = """%prog [options] {spectrum|nwavenumber} {time|duration} output
 
 %prog creates a track that contains equidistant wavenumber values that are
 suitable for creating spectrum plots of dynamics simulations. The output is

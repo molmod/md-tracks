@@ -24,7 +24,7 @@ from tracks import cp2k_ener_to_tracks, parse_slice, log
 from optparse import OptionParser
 
 
-usage = """Usage: %prog filename [output_directory]
+usage = """%prog filename [output_directory]
 
 %prog transforms the given cp2k energy file into separate tracks.
 

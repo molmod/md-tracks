@@ -26,7 +26,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] input1 [input2] output
+usage = """%prog [options] input1 [input2] output
 
 %prog simply computes:
 output = (input1 - <input1>)*(input1 - <input1>)

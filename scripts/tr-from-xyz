@@ -26,7 +26,7 @@ from ccio.psf import PSFFile
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] filename middle_word [output_directory]
+usage = """%prog [options] filename middle_word [output_directory]
 
 %prog transforms the given XYZ trajectory file into separate tracks.
 

@@ -27,7 +27,7 @@ from ccio.xyz import XYZFile
 from ccio.psf import PSFFile
 
 
-usage = """Usage: %prog [options] ref.xyz prefix output.xyz
+usage = """%prog [options] ref.xyz prefix output.xyz
 
 %prog reads the atomic coordinates from tracks with the following format:
 ${prefix}.${index}.${c} where ${index} is the atom index and ${c} is x, y or z.

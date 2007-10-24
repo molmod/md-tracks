@@ -25,7 +25,7 @@ from ccio.psf import PSFFile
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] filename [output_directory]
+usage = """%prog [options] filename [output_directory]
 
 %prog transforms the given CPMD trajectory file into separate tracks.
 

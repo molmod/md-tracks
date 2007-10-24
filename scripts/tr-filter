@@ -26,7 +26,7 @@ from optparse import OptionParser
 import numpy
 
 
-usage = """Usage: %prog [options] connectivity.psf {at|mol} expression
+usage = """%prog [options] connectivity.psf {at|mol} expression
 
 %prog prints out atom or molecule indexes that satisfy the expression. The
 last argument is a standard python expression. It is recommended to quote this

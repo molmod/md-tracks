@@ -26,7 +26,7 @@ import numpy, os
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] prefix connectivity.psf
+usage = """%prog [options] prefix connectivity.psf
 
 %prog computes all the internal coordinates for the Cartesian tracks with the
 given prefix. The list of internal coordinates is taken from the connectivity

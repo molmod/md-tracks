@@ -26,7 +26,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] {y0|x0 y0 [e0]} [- {y1|x1 y1 [e1]} - ...] image
+usage = """%prog [options] {y0|x0 y0 [e0]} [- {y1|x1 y1 [e1]} - ...] image
 
 %prog is a generic plotting script that plots data from multiple tracks. Each
 line-plot argument is given in the following format: {y|x y [e]}. Multiple
