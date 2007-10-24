@@ -23,7 +23,7 @@ from ccio.xyz import XYZReader, XYZWriter
 from molmod.data import periodic
 from molmod.units import angstrom, fs, parse_unit
 
-import numpy, cPickle, os, glob, sys
+import numpy, os, glob, sys
 
 __all__ = [
     "xyz_to_tracks", "cp2k_ener_to_tracks", "cpmd_traj_to_tracks",
@@ -107,7 +107,7 @@ class TracksSplitter(object):
         log(str(self.rowcount), False)
         for filename, b in zip(self.filenames, self.buffers.transpose()):
             f = file(filename, 'a')
-            cPickle.dump(b[:self.counter], f)
+            b[:self.counter].dump(f)
             f.close()
         self.counter = 0
         self.flushcount += 1
@@ -118,12 +118,12 @@ class TracksSplitter(object):
             blocks = []
             try:
                 while True:
-                    blocks.append(cPickle.load(f))
+                    blocks.append(numpy.load(f))
             except EOFError:
                 pass
             f.close()
             f = file(filename, 'w')
-            cPickle.dump(numpy.concatenate(blocks), f)
+            numpy.concatenate(blocks).dump(f)
             f.close()
             log("serialized %s" % filename)
 
@@ -213,7 +213,7 @@ class TracksJoiner(object):
         track_length = None
         for f_index, filename in enumerate(self.filenames):
             f = file(filename, 'r')
-            t = cPickle.load(f)
+            t = numpy.load(f)
             f.close()
             if track_length is None:
                 track_length = len(t)
@@ -229,7 +229,7 @@ class TracksJoiner(object):
                 block = t[b_index*self.buffer_length:(b_index+1)*self.buffer_length]
                 block_filename = "%s/%i.%i" % (self.prefix, f_index, b_index)
                 f = file(block_filename, 'w')
-                cPickle.dump(block, f)
+                block.dump(f)
                 f.close()
             log("de-serialized %s" % filename)
         self.num_blocks = num_blocks
