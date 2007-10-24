@@ -99,6 +99,7 @@ class TracksSplitter(object):
             self._serialize()
         else:
             log("No further serialization required.")
+        log.finalize()
 
     def _flush_buffers(self):
         if self.counter == 0:
@@ -194,8 +195,10 @@ class TracksJoiner(object):
                 log(" %s " % self.rowcount, False)
         except:
             self.cleanup()
+            log.finalize()
             raise
         self.cleanup()
+        log.finalize()
 
     def yield_rows(self, sub=slice(None)):
         """Yield rows of corresponding values from each track in self.filenames."""
