@@ -66,6 +66,7 @@ class TracksSplitter(object):
         self.buffers = numpy.zeros((self.buffer_length, len(names)), float)
         self.counter = 0
         self.rowcount = 0
+        self.flushcount = 0
         # cleanup existing stuff
         for filename in self.filenames:
             if os.path.isfile(filename):
@@ -92,7 +93,10 @@ class TracksSplitter(object):
         track is transformed into a single continuous pickled numpy array.
         """
         self._flush_buffers()
-        self._serialize()
+        if self.flushcount > 1:
+            self._serialize()
+        else:
+            log("No further serialization required.")
 
     def _flush_buffers(self):
         if self.counter == 0:
@@ -103,6 +107,7 @@ class TracksSplitter(object):
             cPickle.dump(b[:self.counter], f)
             f.close()
         self.counter = 0
+        self.flushcount += 1
 
     def _serialize(self):
         for filename in self.filenames:
