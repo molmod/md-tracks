@@ -38,12 +38,12 @@ parser = OptionParser(usage)
 parser.add_option(
     "--plot_error",
     help="Plot the relation between blocksize and statistical error on "
-         "the mean, and save the figure as ${PLOT_ERROR}.png.",
+         "the mean, and save the figure as ${PLOT_ERROR}.",
 )
 parser.add_option(
     "--plot_ctime",
     help="Plot the relation between blocksize and the correlation time, and "
-         "save the figure as ${PLOT_CTIME}.png.",
+         "save the figure as ${PLOT_CTIME}.",
 )
 parser.add_option(
     "-u", "--unit", default='au',
@@ -106,7 +106,7 @@ if options.plot_error is not None:
     pylab.ylabel("Error on the mean [%s]" % options.unit)
     pylab.plot(x/time_unit,y/unit,"k+")
     pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
-    pylab.savefig("%s.png" % options.plot_error)
+    pylab.savefig(options.plot_error)
 
 if options.plot_ctime is not None:
     import pylab
@@ -117,4 +117,4 @@ if options.plot_ctime is not None:
     pylab.ylabel("Correlation time [%s]" % options.time_unit)
     pylab.plot(x/time_unit,s/time_unit,"k+")
     pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
-    pylab.savefig("%s.png" % options.plot_ctime)
+    pylab.savefig(options.plot_ctime)

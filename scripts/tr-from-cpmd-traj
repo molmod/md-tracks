@@ -36,7 +36,7 @@ atom.${middle_word}.${index}.${c} where
  * ${index} is the atom index, seven characters wide, padded with zeros.
    Counting starts at zero.
  * ${c} is x, y or z.
-The tracks are stored in atomic units in the ${output_directory}. If the 
+The tracks are stored in atomic units in the ${output_directory}. If the
 ${output_directory} argument is not given, it defaults to 'tracks'.
 
 %prog -h prints out all available options."""

@@ -36,7 +36,7 @@ be given for each line plot:
                  automatically generated: x=0..N-1 au.
  * Two: x y      A standard line plot.
  * Three: x y e  Similar to the previous case, but also y+e and y-e are plotted.
-The figure is saved to ${image}.png.
+The figure is saved to ${image}.
 
 %prog -h prints out all available options."""
 
@@ -201,4 +201,4 @@ pylab.xlim(parse_lim(options.xlim))
 pylab.ylim(parse_lim(options.ylim))
 if options.legend:
     pylab.legend(loc=0)
-pylab.savefig("%s.png" % image)
+pylab.savefig(image)

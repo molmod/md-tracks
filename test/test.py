@@ -266,12 +266,12 @@ class CommandsTestCase(unittest.TestCase):
         self.execute("tr-plot", [
             "tracks/time_sliced", "tracks/vac_a1", "tracks/vac_a1.error",
             "-x", "delta t", "-y", "VAC", "-t", "Velocity autocorrelation function (thf01)",
-            "--xunit=ps", os.path.join(output_dir, "ac_vac_a1")
+            "--xunit=ps", os.path.join(output_dir, "ac_vac_a1.png")
         ])
         self.execute("tr-plot", [
             "tracks/time_sliced", "tracks/vac_a1.normalized", "tracks/vac_a1.normalized.error",
             "--ylim=-1,1", "-x", "delta t", "-y", "VAC", "-t", "Normalized velocity autocorrelation function (thf01)",
-            "--xunit=ps", os.path.join(output_dir, "ac_vac_a1.normalized")
+            "--xunit=ps", os.path.join(output_dir, "ac_vac_a1.normalized.png")
         ])
         tmp1 = load_track("tracks/vac_a1")
         tmp2 = load_track("tracks/vac_a2")
@@ -297,12 +297,12 @@ class CommandsTestCase(unittest.TestCase):
         self.execute("tr-plot", [
             "tracks/time_sliced", "tracks/vac_b1", "tracks/vac_b1.error",
             "-x", "delta t", "-y", "VAC", "-t", "Velocity autocorrelation function (thf01)",
-            "--xunit=ps", os.path.join(output_dir, "ac_vac_b1")
+            "--xunit=ps", os.path.join(output_dir, "ac_vac_b1.png")
         ])
         self.execute("tr-plot", [
             "tracks/time_sliced", "tracks/vac_b1.normalized", "tracks/vac_b1.normalized.error",
             "--ylim=-1,1", "-x", "delta t", "-y", "VAC", "-t", "Normalized velocity autocorrelation function (thf01)",
-            "--xunit=ps", os.path.join(output_dir, "ac_vac_b1.normalized")
+            "--xunit=ps", os.path.join(output_dir, "ac_vac_b1.normalized.png")
         ])
         tmp1 = load_track("tracks/vac_b1")
         tmp2 = load_track("tracks/vac_b2")
@@ -337,12 +337,12 @@ class CommandsTestCase(unittest.TestCase):
         self.execute("tr-plot", [
             "tracks/time_sliced", "tracks/vac.normalized", "tracks/vac.normalized.error",
             "--ylim=-1,1", "-x", "delta t", "-y", "VAC", "-t", "Normalized velocity autocorrelation function (thf01)",
-            "--xunit=ps", os.path.join(output_dir, "integrate_vac.normalized")
+            "--xunit=ps", os.path.join(output_dir, "integrate_vac.normalized.png")
         ])
         self.execute("tr-plot", [
             "tracks/time_sliced", "tracks/vac.normalized.int", "tracks/vac.normalized.int.error",
             "-x", "delta t", "-y", "Int(VAC)", "-t", "Integral of the normalized velocity autocorrelation function (thf01)",
-            "--xunit=ps", "--yunit=fs", os.path.join(output_dir, "integrate_vac.normalized.int")
+            "--xunit=ps", "--yunit=fs", os.path.join(output_dir, "integrate_vac.normalized.int.png")
         ])
 
     def test_rfft_irfft(self):
@@ -375,17 +375,17 @@ class CommandsTestCase(unittest.TestCase):
         self.execute("tr-plot", [
             "--xlabel=Wavenumber", "-s1::", "--ylabel=Amplitude", "--xunit=1/cm",
             "tracks/wavenumbers", "tracks/spectrum",
-            os.path.join(output_dir, "make_spectrum_wavenumbers")]
+            os.path.join(output_dir, "make_spectrum_wavenumbers.png")]
         )
         self.execute("tr-plot", [
             "--xlabel=Frequency", "-s1::", "--ylabel=Amplitude", "--xunit=1/fs",
             "tracks/freqs", "tracks/spectrum",
-            os.path.join(output_dir, "make_spectrum_freqs")]
+            os.path.join(output_dir, "make_spectrum_freqs.png")]
         )
         self.execute("tr-plot", [
             "--xlabel=Time", "-s1::", "--ylabel=Amplitude", "--xunit=fs", "--xinv",
             "tracks/freqs", "tracks/spectrum",
-            os.path.join(output_dir, "make_spectrum_freqs_inv")]
+            os.path.join(output_dir, "make_spectrum_freqs_inv.png")]
         )
 
     def test_fit_peaks(self):
@@ -406,7 +406,7 @@ class CommandsTestCase(unittest.TestCase):
             "--xunit=1/cm",
             "tracks/wavenumbers", "tracks/spectrum", "-",
             "tracks/wavenumbers", "tracks/model",
-            os.path.join(output_dir, "fit_peaks_spectrum"),
+            os.path.join(output_dir, "fit_peaks_spectrum.png"),
         ])
 
     def test_freq_axis(self):
@@ -554,8 +554,8 @@ class CommandsTestCase(unittest.TestCase):
         self.execute("tr-blav", ["tracks/temperature", "tracks/time", "-b10", "-tfs"])
         self.execute("tr-blav", [
             "tracks/temperature", "tracks/time", "-b5", "-tfs",
-            "--plot_error=%s" % os.path.join(output_dir, "blav_error"),
-            "--plot_ctime=%s" % os.path.join(output_dir, "blav_ctime"),
+            "--plot_error=%s" % os.path.join(output_dir, "blav_error.png"),
+            "--plot_ctime=%s" % os.path.join(output_dir, "blav_ctime.png"),
         ])
 
     def test_split_com(self):
