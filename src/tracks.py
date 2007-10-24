@@ -145,36 +145,68 @@ class TracksJoiner(object):
         self.buffer_length = self.total_buffer_size/len(filenames)
         self.filenames = filenames
 
-    def yield_rows(self, sub=slice(None)):
-        """Yield a row of corresponding values from each track in self.filenames.
+    def cleanup(self):
+        import shutil
+        if os.path.isdir(self.prefix):
+            shutil.rmtree(self.prefix)
+
+    def _in_slice(self, b_index, sub):
+        row_start = b_index*self.buffer_length
+        if row_start + self.buffer_length < sub.start: return False
+        if row_start >= sub.stop: return False
+        return True
+
+    def yield_blocks(self, sub=slice(None)):
+        """Yield blocks of rows of corresponding values from each track in self.filenames.
 
         First each track is de-serialized in small files stored into a temporary
         subdirectory. Then, one by one the temporary files are loaded into
-        memory and the buffers from the TracksJoiner are reconstructed. Given
-        these buffers, the individual rows are reconstructed and yielded.
+        memory and the buffers from the TracksJoiner are reconstructed.
         """
-        # interpret the slice
-        start = sub.start or 0
-        stop = sub.stop or sys.maxint
-        step = sub.step or 1
+        # complete the slice
+        sub = complete_slice(sub)
         # a temporary working directory
         os.mkdir(self.prefix)
         # first de-serialize the track files
-        self._de_serialize()
-        counter = 0
-        for b_index in xrange(self.num_blocks):
-            blocks = [load_track("%s/%i.%i" % (self.prefix, f_index, b_index)) for f_index in xrange(len(self.filenames))]
-            for row in zip(*blocks):
-                if counter >= start and counter < stop and (counter - start) % step == 0:
-                    yield row
-                    if counter % self.dot_interval == 0:
-                        log(".", False)
-                counter += 1
-            log(".", False)
-        import shutil
-        shutil.rmtree(self.prefix)
+        try:
+            self._de_serialize(sub)
+            self.rowcount = 0
+            for b_index in xrange(self.num_blocks):
+                old_rowcount = self.rowcount
+                # at which row does this block start:
+                row_start = b_index*self.buffer_length
+                # is this block included in the slice? If not, continue with the next loop
+                if not self._in_slice(b_index, sub): continue
+                # transform the total slice to a block slice
+                block_start = sub.start - row_start
+                if block_start < 0:
+                    block_start += (-block_start/sub.step+1)*sub.step
+                block_stop = sub.stop - row_start # always positive
+                if self.num_blocks == 1:
+                    filenames = self.filenames
+                else:
+                    filenames = ["%s/%i.%i" % (self.prefix, f_index, b_index) for f_index in xrange(len(self.filenames))]
+                block = numpy.array([load_track(filename) for filename in self.filenames])
+                block = block.transpose()
+                block = block[block_start:block_stop:sub.step]
+                yield block
+                self.rowcount = old_rowcount + len(block)
+                log(" %s " % self.rowcount, False)
+        except:
+            self.cleanup()
+            raise
+        self.cleanup()
 
-    def _de_serialize(self):
+    def yield_rows(self, sub=slice(None)):
+        """Yield rows of corresponding values from each track in self.filenames."""
+        for block in self.yield_blocks(sub):
+            for row in block:
+                yield row
+                if self.rowcount % self.dot_interval == 0:
+                    log(".", False)
+                self.rowcount += 1
+
+    def _de_serialize(self, sub=slice(None)):
         track_length = None
         for f_index, filename in enumerate(self.filenames):
             f = file(filename, 'r')
@@ -185,8 +217,12 @@ class TracksJoiner(object):
             elif track_length != len(t):
                 raise Error("Not all tracks are of the same length. (%s)" % filename)
 
-            num_blocks = len(t)/self.buffer_length+1
+            num_blocks = track_length/self.buffer_length+1
+            if num_blocks == 1:
+                log("De-serialization is not needed. The buffers are large enough.")
+                break
             for b_index in xrange(num_blocks):
+                if not self._in_slice(b_index, sub): continue
                 block = t[b_index*self.buffer_length:(b_index+1)*self.buffer_length]
                 block_filename = "%s/%i.%i" % (self.prefix, f_index, b_index)
                 f = file(block_filename, 'w')
@@ -281,6 +317,10 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
     for row in tracks_joiner.yield_rows(sub):
         xyz_writer.dump("None", numpy.array(row).reshape((-1,3)))
     f.close()
+
+
+def complete_slice(sub):
+    return slice(sub.start or 0, sub.stop or sys.maxint, sub.step or 1)
 
 
 def dump_track(path, array):

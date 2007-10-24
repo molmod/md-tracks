@@ -37,7 +37,7 @@ from ccio.xyz import XYZReader, XYZFile
 from molmod.units import angstrom, fs
 from molmod.constants import lightspeed
 from molmod.data import periodic
-from tracks import load_track, dist_track, bend_track, dihed_track, dump_track
+from tracks import load_track, dist_track, bend_track, dihed_track, dump_track, parse_slice
 import numpy
 
 
@@ -245,15 +245,30 @@ class CommandsTestCase(unittest.TestCase):
         self.assert_((tmp1==tmp2).all())
 
     def test_read_write_multiple(self):
-        self.from_cp2k_ener("water32")
-        t1 = load_track("tracks/time")
-        k1 = load_track("tracks/kinetic_energy")
-        lines = self.execute("tr-read", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
-        self.execute("tr-write", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
-        t2 = load_track("tracks/time")
-        k2 = load_track("tracks/kinetic_energy")
-        self.assert_(abs(t1-t2).max()/abs(t1).max() < 1e-5)
-        self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
+        def check(subs):
+            sub = parse_slice(subs)
+            # slice in read
+            self.from_cp2k_ener("thf01")
+            t1 = load_track("tracks/time")[sub]
+            k1 = load_track("tracks/kinetic_energy")[sub]
+            lines = self.execute("tr-read", ["-s%s" % subs, "ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
+            self.execute("tr-write", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
+            t2 = load_track("tracks/time")
+            k2 = load_track("tracks/kinetic_energy")
+            self.assert_(abs(t1-t2).max()/abs(t1).max() < 1e-5)
+            self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
+            # slice in write
+            self.from_cp2k_ener("thf01")
+            t1 = load_track("tracks/time")[sub]
+            k1 = load_track("tracks/kinetic_energy")[sub]
+            lines = self.execute("tr-read", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
+            self.execute("tr-write", ["-s%s" % subs, "ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
+            t2 = load_track("tracks/time")
+            k2 = load_track("tracks/kinetic_energy")
+            self.assert_(abs(t1-t2).max()/abs(t1).max() < 1e-5)
+            self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
+        check("::")
+        check("20:601:5")
 
     def test_ac(self):
         self.from_xyz("thf01", "vel", "-u1")
