@@ -21,7 +21,7 @@
 
 
 from molmod.units import parse_unit
-from tracks import TracksJoiner, parse_slice
+from tracks import TracksJoiner, parse_slice, log
 import numpy
 from optparse import OptionParser
 
@@ -44,9 +44,14 @@ parser.add_option(
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
 )
+parser.add_option(
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
+)
 (options, args) = parser.parse_args()
 
 
+log.verbose = options.verbose
 if len(args) >= 1:
     units = []
     paths_in = []

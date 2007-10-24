@@ -472,7 +472,7 @@ class Logger(object):
 
     It can be muted by setting log.verbose=False (see below).
     """
-    def __init__(self, verbose=False, f=sys.stdout, old_newline=True):
+    def __init__(self, verbose=True, f=sys.stderr, old_newline=True):
         self.verbose = verbose
         self.f = f
         self.old_newline = old_newline

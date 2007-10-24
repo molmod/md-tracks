@@ -70,17 +70,19 @@ class CommandsTestCase(unittest.TestCase):
         from subprocess import Popen, PIPE, STDOUT
         p = Popen(
             ["/usr/bin/python", os.path.join(scripts_dir, command)] + args,
-            stdin=PIPE, stdout=PIPE, stderr=STDOUT, env={"PYTHONPATH": lib_dir},
+            stdin=PIPE, stdout=PIPE, stderr=PIPE, env={"PYTHONPATH": lib_dir},
         )
         if stdin is not None:
             for line in stdin:
                 print >> p.stdin, line
         p.stdin.close()
         output = list(line[:-1] for line in p.stdout)
+        error = list(line[:-1] for line in p.stderr)
         retcode = p.wait()
-        self.assertEqual(retcode, 0, "Something went wrong with this command:\n%s %s\n. The output is:\n%s" % (command, " ".join(args), "".join(output)))
+        self.assertEqual(retcode, 0, "Something went wrong with this command:\n%s %s\n. The output is:\n%s The error is:\n%s" % (command, " ".join(args), "\n".join(output), "\n".join(error)))
         if verbose:
             print "\n".join(output)
+            print "\n".join(error)
         return output
 
     def test_from_xyz(self):
