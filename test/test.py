@@ -76,11 +76,11 @@ class CommandsTestCase(unittest.TestCase):
             for line in stdin:
                 print >> p.stdin, line
         p.stdin.close()
-        output = list(p.stdout)
+        output = list(line[:-1] for line in p.stdout)
         retcode = p.wait()
         self.assertEqual(retcode, 0, "Something went wrong with this command:\n%s %s\n. The output is:\n%s" % (command, " ".join(args), "".join(output)))
         if verbose:
-            print "".join(output)
+            print "\n".join(output)
         return output
 
     def test_from_xyz(self):
@@ -241,6 +241,17 @@ class CommandsTestCase(unittest.TestCase):
         self.execute("tr-write", ["tracks/tmp"], stdin=lines)
         tmp2 = load_track("tracks/tmp")
         self.assert_((tmp1==tmp2).all())
+
+    def test_read_write_multiple(self):
+        self.from_cp2k_ener("water32")
+        t1 = load_track("tracks/time")
+        k1 = load_track("tracks/kinetic_energy")
+        lines = self.execute("tr-read", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
+        self.execute("tr-write", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
+        t2 = load_track("tracks/time")
+        k2 = load_track("tracks/kinetic_energy")
+        self.assert_(abs(t1-t2).max()/abs(t1).max() < 1e-5)
+        self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
 
     def test_ac(self):
         self.from_xyz("thf01", "vel", "-u1")

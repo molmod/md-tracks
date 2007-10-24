@@ -49,7 +49,7 @@ class TracksSplitter(object):
     total_buffer_size = 10*1024*1024 # the size of the buffers, defaults to 1MB
     dot_interval = 50 # print a dot on screen, each 50 steps.
 
-    def __init__(self, directory, names):
+    def __init__(self, filenames):
         """Initialize the serialization procedure.
 
         Arguments:
@@ -59,11 +59,13 @@ class TracksSplitter(object):
         This function creates the directory and initializes the buffers for the
         serialization procedure.
         """
-        if not os.path.exists(directory):
-            os.mkdir(directory)
-        self.filenames = [os.path.join(directory, name) for name in names]
-        self.buffer_length = self.total_buffer_size/len(names)
-        self.buffers = numpy.zeros((self.buffer_length, len(names)), float)
+        for filename in filenames:
+            directory = os.path.dirname(filename)
+            if not os.path.exists(directory):
+                os.mkdir(directory)
+        self.filenames = filenames
+        self.buffer_length = self.total_buffer_size/len(filenames)
+        self.buffers = numpy.zeros((self.buffer_length, len(filenames)), float)
         self.counter = 0
         self.rowcount = 0
         self.flushcount = 0
@@ -198,16 +200,16 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
     """Convert an xyz file into separate tracks."""
     xyz_reader = XYZReader(filename, sub, file_unit=file_unit)
 
-    names = []
+    filenames = []
     if atom_indexes is None:
         atom_indexes = range(len(xyz_reader.numbers))
     else:
         atom_indexes = list(atom_indexes)
     for index in atom_indexes:
         for cor in ["x", "y", "z"]:
-            names.append("atom.%s.%07i.%s" % (middle_word, index, cor))
+            filenames.append(os.path.join(destination, "atom.%s.%07i.%s" % (middle_word, index, cor)))
 
-    tracks_splitter = TracksSplitter(destination, names)
+    tracks_splitter = TracksSplitter(filenames)
     for title, coordinates in xyz_reader:
         tracks_splitter.dump_row(coordinates[atom_indexes].ravel())
     tracks_splitter.finalize()
@@ -216,7 +218,9 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
 def cp2k_ener_to_tracks(filename, destination, sub=slice(None)):
     """Convert a cp2k energy file into separate tracks."""
     import itertools
-    tracks_splitter = TracksSplitter(destination, ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy"])
+    names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy"]
+    filenames = list(os.path.join(destination, name) for name in names)
+    tracks_splitter = TracksSplitter(filenames)
     f = file(filename)
     for line in itertools.islice(f, sub.start, sub.stop, sub.step):
         row = [float(word) for word in line.split()[:6]]
@@ -235,10 +239,12 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
         atom_indexes = range(num_atoms)
     else:
         atom_indexes = list(atom_indexes)
-    tracks_splitter = TracksSplitter(destination, sum((
+    names = sum((
         ["atom.pos.%07i.x", "atom.pos.%07i.y", "atom.pos.%07i.z", "atom.vel.%07i.x", "atom.vel.%07i.y", "atom.vel.%07i.z"]
         for index in atom_indexes
-    ), []))
+    ), [])
+    filenames = list(os.path.join(destination, name) for name in names)
+    tracks_splitter = TracksSplitter(filenames)
 
     f = file(filename)
     counter = 0

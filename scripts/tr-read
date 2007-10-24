@@ -21,14 +21,19 @@
 
 
 from molmod.units import parse_unit
-from tracks import load_track, parse_slice
+from tracks import TracksJoiner, parse_slice
 import numpy
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] input
+usage = """Usage: %prog [options] [unit1] input1 [[unit2] input2 ...]
 
-%prog prints out the contents of the track ${input}.
+%prog prints the contents of the tracks ${input*} to stdout, one column per
+input track, one row per time step. The values are tab separated. Optionally
+each input track can be prepended with a unit that will be used to write the
+data on screen. (The tracks store the data in atomic units.) The first unit
+defaults to au. If an input has no unit defined, the unit for the previous
+input is used.
 
 %prog -h prints out all available options."""
 
@@ -39,20 +44,32 @@ parser.add_option(
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
 )
-parser.add_option(
-    "-u", "--unit", default='au',
-    help="The output values are printed in the given UNIT. [default=%default]",
-)
 (options, args) = parser.parse_args()
 
 
-if len(args) == 1:
-    path_in = args[0]
+if len(args) >= 1:
+    units = []
+    paths_in = []
+    for arg in args:
+        try:
+            units.append(parse_unit(arg))
+            if len(units) > len(paths_in)+1:
+                parser.error("Two subsequent units found without an input track in between.")
+        except ValueError:
+            paths_in.append(arg)
+            if len(units) < len(paths_in):
+                if len(units) == 0:
+                    units.append(1)
+                else:
+                    units.append(units[-1])
+    if len(units) > len(paths_in):
+        parser.error("The arguments list ends with a unit.")
 else:
-    parser.error("Expecting one argument.")
+    parser.error("Expecting at least one argument.")
 
 sub = parse_slice(options.slice)
-unit = parse_unit(options.unit)
-f = load_track(path_in)
-for val in f[sub]:
-    print val/unit
+tracks_joiner = TracksJoiner(paths_in)
+units = numpy.array(units)
+for row in tracks_joiner.yield_rows(sub):
+    print "\t".join(str(value) for value in row/units)
+

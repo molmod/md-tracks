@@ -21,15 +21,20 @@
 
 
 from molmod.units import parse_unit
-from tracks import dump_track, parse_slice
+from tracks import TracksSplitter, parse_slice
 import numpy, sys, itertools
 from optparse import OptionParser
 
 
-usage = """Usage: %prog [options] output
+usage = """Usage: %prog [options] [unit1] output1 [[unit2] output2 ...]
 
-%prog stores the data from stdin in the track ${output}. The program expects one
-floating point value per line on stdin.
+%prog stores the data from stdin in the tracks ${output*}. The data on stdin
+must be formatted as follows: one line contains all data that belong to one
+time step. On each line the values are white-space separated. Optionally, each
+output* argument can be prepended with a unit. %prog will interpret the data on
+stdin using the these units. The data in the tracks are always stored in
+atomic units. unit1 defaults to au. The other unit arguments default to the unit
+of the previous input.
 
 %prog -h prints out all available options."""
 
@@ -40,22 +45,33 @@ parser.add_option(
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
 )
-parser.add_option(
-    "-u", "--unit", default='au',
-    help="The values from stdin are interpreted in the given UNIT. [default=%default]",
-)
 (options, args) = parser.parse_args()
 
 
-if len(args) == 1:
-    path_out = args[0]
+if len(args) >= 1:
+    units = []
+    paths_out = []
+    for arg in args:
+        try:
+            units.append(parse_unit(arg))
+            if len(units) > len(paths_out)+1:
+                parser.error("Two subsequent units found without an input track in between.")
+        except ValueError:
+            paths_out.append(arg)
+            if len(units) < len(paths_out):
+                if len(units) == 0:
+                    units.append(1)
+                else:
+                    units.append(units[-1])
+    if len(units) > len(paths_out):
+        parser.error("The arguments list ends with a unit.")
 else:
-    parser.error("Expecting one argument.")
+    parser.error("Expecting at least one argument.")
 
 sub = parse_slice(options.slice)
-unit = parse_unit(options.unit)
-
-result = []
+units = numpy.array(units)
+tracks_splitter = TracksSplitter(paths_out)
 for line in itertools.islice(sys.stdin, sub.start, sub.stop, sub.step):
-    result.append(float(line)*unit)
-dump_track(path_out, numpy.array(result))
+    row = numpy.array(list(float(word) for word in line.split()))
+    tracks_splitter.dump_row(row*units)
+tracks_splitter.finalize()
