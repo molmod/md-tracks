@@ -569,8 +569,8 @@ class CommandsTestCase(unittest.TestCase):
         self.execute("tr-blav", ["tracks/temperature", "tracks/time", "-b10", "-tfs"])
         self.execute("tr-blav", [
             "tracks/temperature", "tracks/time", "-b5", "-tfs",
-            "--plot_error=%s" % os.path.join(output_dir, "blav_error.png"),
-            "--plot_ctime=%s" % os.path.join(output_dir, "blav_ctime.png"),
+            "--plot-error=%s" % os.path.join(output_dir, "blav_error.png"),
+            "--plot-ctime=%s" % os.path.join(output_dir, "blav_ctime.png"),
         ])
 
     def test_split_com(self):

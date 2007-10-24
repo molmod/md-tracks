@@ -36,12 +36,12 @@ correlation time.
 
 parser = OptionParser(usage)
 parser.add_option(
-    "--plot_error",
+    "--plot-error",
     help="Plot the relation between blocksize and statistical error on "
          "the mean, and save the figure as ${PLOT_ERROR}.",
 )
 parser.add_option(
-    "--plot_ctime",
+    "--plot-ctime",
     help="Plot the relation between blocksize and the correlation time, and "
          "save the figure as ${PLOT_CTIME}.",
 )
