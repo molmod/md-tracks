@@ -49,7 +49,7 @@ class Logger(object):
             self.old_newline = newline
 
     def finalize(self):
-        if self.old_newline and self.verbose:
+        if not self.old_newline and self.verbose:
             self.f.write("\n")
 
 log = Logger()
