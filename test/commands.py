@@ -161,6 +161,10 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(tmp[0], 0.045570459, 5)
         self.assertAlmostEqual(tmp[1], 0.045686571, 5)
         self.assertAlmostEqual(tmp[-1], 0.045663267, 5)
+        tmp = load_track("tracks/conserved_quantity")
+        self.assertAlmostEqual(tmp[0], 0.000000000, 5)
+        self.assertAlmostEqual(tmp[1], 0.015600000, 5)
+        self.assertAlmostEqual(tmp[-1], 0.015900000, 5)
         # Load the energy file
         self.from_cp2k_ener("thf01", ["-s20:601:5"])
         # Test some values
@@ -188,6 +192,10 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(tmp[0], 0.045696413, 5)
         self.assertAlmostEqual(tmp[1], 0.045703436, 5)
         self.assertAlmostEqual(tmp[-1], 0.045589252, 5)
+        tmp = load_track("tracks/conserved_quantity")
+        self.assertAlmostEqual(tmp[0], 0.015900000, 5)
+        self.assertAlmostEqual(tmp[1], 0.015700000, 5)
+        self.assertAlmostEqual(tmp[-1], 0.015700000, 5)
 
     def test_to_xyz(self):
         self.from_xyz("thf01", "pos")

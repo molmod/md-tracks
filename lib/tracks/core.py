@@ -183,6 +183,8 @@ class MultiTracksWriter(object):
         self.current_row = 0
 
     def dump_row(self, row):
+        if len(row) != len(self.buffers):
+            raise Error("The row must contain len(self.buffers)=%i values." % len(self.buffers))
         for index, value in enumerate(row):
             self.buffers[index][self.current_row] = value
         self.current_row += 1
