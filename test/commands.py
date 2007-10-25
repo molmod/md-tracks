@@ -30,36 +30,28 @@ from molmod.units import angstrom, fs
 from molmod.constants import lightspeed
 from molmod.data import periodic
 
-import numpy, os, unittest, shutil, glob
+import numpy, os, glob, shutil
 
 
 __all__ = ["CommandsTestCase"]
 
 
-class CommandsTestCase(unittest.TestCase):
-    def setUp(self):
-        os.makedirs(tmp_dir)
-        os.chdir(tmp_dir)
-
-    def tearDown(self):
-        os.chdir(orig_dir)
-        shutil.rmtree(tmp_dir)
-
-    def from_xyz(self, case, middle_word, *extra_args):
+class CommandsTestCase(BaseTestCase):
+    def from_xyz(self, case, middle_word, extra_args=[]):
         self.execute("tr-from-xyz", [
             os.path.join(input_dir, case, "md-%s-1.xyz" % middle_word),
             middle_word
-        ] + list(extra_args))
+        ] + extra_args)
 
-    def from_cp2k_ener(self, case, *extra_args):
+    def from_cp2k_ener(self, case, extra_args=[], verbose=False):
         self.execute("tr-from-cp2k-ener", [
             os.path.join(input_dir, case, "md-1.ener"),
-        ] + list(extra_args))
+        ] + extra_args, verbose=verbose)
 
-    def from_cpmd_traj(self, filename="cpmd_traj", *extra_args):
+    def from_cpmd_traj(self, filename, extra_args=[], verbose=False):
         self.execute("tr-from-cpmd-traj", [
             os.path.join(input_dir, filename),
-        ] + list(extra_args))
+        ] + extra_args, verbose=verbose)
 
     def execute(self, command, args, verbose=False, stdin=None):
         from subprocess import Popen, PIPE, STDOUT
@@ -93,7 +85,7 @@ class CommandsTestCase(unittest.TestCase):
         self.assertAlmostEqual(tmp[1]/angstrom, 1.0193867160, 5)
         self.assertAlmostEqual(tmp[-1]/angstrom, -0.5994763399, 5)
         # Load
-        self.from_xyz("thf01", "pos", "-s20:601:5")
+        self.from_xyz("thf01", "pos", ["-s20:601:5"])
         # Test some values
         tmp = load_track("tracks/atom.pos.0000000.x")
         self.assertAlmostEqual(tmp[0]/angstrom, 1.1643775386, 5)
@@ -104,7 +96,7 @@ class CommandsTestCase(unittest.TestCase):
         self.assertAlmostEqual(tmp[1]/angstrom, 1.7383838088, 5)
         self.assertAlmostEqual(tmp[-1]/angstrom, -0.6220795393, 5)
         # Load the xyz file
-        self.from_xyz("thf01", "vel", "-u1")
+        self.from_xyz("thf01", "vel", ["-u1"])
         # Test some values
         tmp = load_track("tracks/atom.vel.0000000.x")
         self.assertAlmostEqual(tmp[0], 0.0002092059, 5)
@@ -115,7 +107,7 @@ class CommandsTestCase(unittest.TestCase):
         self.assertAlmostEqual(tmp[1], 0.0004487963, 5)
         self.assertAlmostEqual(tmp[-1], 0.0000859001, 5)
         # Load the xyz file
-        self.from_xyz("thf01", "vel", "-u1", "-s20:601:5")
+        self.from_xyz("thf01", "vel", ["-u1", "-s20:601:5"])
         # Test some values
         tmp = load_track("tracks/atom.vel.0000000.x")
         self.assertAlmostEqual(tmp[0], 0.0000503137, 5)
@@ -128,7 +120,7 @@ class CommandsTestCase(unittest.TestCase):
         # clean up
         shutil.rmtree("tracks")
         # Load the xyz file
-        self.from_xyz("thf01", "pos", "-a2,5")
+        self.from_xyz("thf01", "pos", ["-a2,5"])
         # Test the number of files
         self.assertEqual(len(glob.glob("tracks/atom.pos.*")), 6)
         # Test some values
@@ -170,7 +162,7 @@ class CommandsTestCase(unittest.TestCase):
         self.assertAlmostEqual(tmp[1], 0.045686571, 5)
         self.assertAlmostEqual(tmp[-1], 0.045663267, 5)
         # Load the energy file
-        self.from_cp2k_ener("thf01", "-s20:601:5")
+        self.from_cp2k_ener("thf01", ["-s20:601:5"])
         # Test some values
         tmp = load_track("tracks/step")
         self.assertEqual(tmp[0], 100)
@@ -266,7 +258,7 @@ class CommandsTestCase(unittest.TestCase):
         check("20:601:5")
 
     def test_ac(self):
-        self.from_xyz("thf01", "vel", "-u1")
+        self.from_xyz("thf01", "vel", ["-u1"])
         self.from_cp2k_ener("thf01")
         self.execute("tr-ac", glob.glob("tracks/atom.vel.*") + ["--tau=200*fs", "5.0*fs", "tracks/vac_a1"])
         self.execute("tr-ac", glob.glob("tracks/atom.vel.*") + ["--tau=200*fs", "tracks/time", "tracks/vac_a2"])
@@ -331,7 +323,7 @@ class CommandsTestCase(unittest.TestCase):
         self.assert_((tmp1/tmp1[0] == 1.0).all())
 
     def test_integrate(self):
-        self.from_xyz("thf01", "vel", "-u1")
+        self.from_xyz("thf01", "vel", ["-u1"])
         self.from_cp2k_ener("thf01")
         self.execute("tr-ac", glob.glob("tracks/atom.vel.*") + ["--tau=200*fs", "-m3000*fs", "tracks/time", "tracks/vac"])
         self.execute("tr-integrate", ["tracks/vac.normalized", "tracks/time"])
@@ -356,7 +348,7 @@ class CommandsTestCase(unittest.TestCase):
         ])
 
     def test_rfft_irfft(self):
-        self.from_xyz("thf01", "vel", "-s:1000:", "-u1") # irrft always results in an even number of datapoints
+        self.from_xyz("thf01", "vel", ["-s:1000:", "-u1"]) # irrft always results in an even number of datapoints
         self.from_cp2k_ener("thf01")
         self.execute("tr-rfft", glob.glob("tracks/atom.vel.*.?"))
         self.execute("tr-irfft", glob.glob("tracks/atom.vel.*.rfft"))
@@ -370,7 +362,7 @@ class CommandsTestCase(unittest.TestCase):
             self.assert_(abs(tmp1-tmp2).max() < 1e-7)
 
     def test_make_spectrum(self):
-        self.from_xyz("thf01", "vel", "-u1")
+        self.from_xyz("thf01", "vel", ["-u1"])
         self.from_cp2k_ener("thf01")
         self.execute("tr-rfft", glob.glob("tracks/atom.vel.*") + ["-whamming", "-d 5"])
         self.execute("tr-make-spectrum", glob.glob("tracks/atom.vel.*.rfft") + ["tracks/spectrum"])
@@ -399,7 +391,7 @@ class CommandsTestCase(unittest.TestCase):
         )
 
     def test_fit_peaks(self):
-        self.from_xyz("thf01", "vel", "-u1")
+        self.from_xyz("thf01", "vel", ["-u1"])
         self.from_cp2k_ener("thf01")
         self.execute("tr-rfft", glob.glob("tracks/atom.vel.*") + ["-whamming", "-d 5"])
         self.execute("tr-make-spectrum", glob.glob("tracks/atom.vel.*.rfft") + ["tracks/spectrum"])
@@ -538,7 +530,7 @@ class CommandsTestCase(unittest.TestCase):
         check_ic_psf(4,10,18)
 
     def test_mean_std(self):
-        self.from_xyz("thf01", "vel", "-u1")
+        self.from_xyz("thf01", "vel", ["-u1"])
         self.from_cp2k_ener("thf01")
         molecule = XYZFile(os.path.join(input_dir, "thf01/init.xyz")).get_molecule()
         # A1) compute the kinetic energy per atom:
@@ -569,7 +561,7 @@ class CommandsTestCase(unittest.TestCase):
         ])
 
     def test_split_com(self):
-        self.from_xyz("water32", "vel", "-u1")
+        self.from_xyz("water32", "vel", ["-u1"])
         self.from_cp2k_ener("water32")
         # first test the --filter-molecules
         self.execute("tr-split-com", ["-m2,5", "--no-rel", "tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])

@@ -21,11 +21,14 @@
 
 from tracks.log import log
 
-import numpy, os
+import numpy, os, struct
 
 
 __all__ = [
-    "dump_track", "TrackNotFoundError", "load_track",
+    "Error", "TrackNotFoundError",
+    "Track",
+    "load_track", "dump_track",
+    "MultiTracksReader", "MultiTracksWriter",
 ]
 
 
@@ -37,213 +40,167 @@ class TrackNotFoundError(Error):
     pass
 
 
-def complete_slice(sub):
-    return slice(sub.start or 0, sub.stop or sys.maxint, sub.step or 1)
+class Track(object):
+    header_size = 14
 
-class TracksSplitter(object):
-    """Efficiently convert any kind of trajectory file into separate tracks.
+    def __init__(self, filename, clear=False):
+        self.filename = filename
+        if clear:
+            self.clear()
 
-    After creating an object of this class, one calls the method dump_row
-    for each record in the trajectory. When done, one calls the method finalize.
-    """
-    total_buffer_size = 10*1024*1024 # the size of the buffers, defaults to 1MB
-    dot_interval = 50 # print a dot on screen, each 50 steps.
+    def _init_buffer(self, dtype):
+        f = file(self.filename, "wb")
+        # write the header
+        f.write("TRACKS_1") # file format and version
+        f.write(dtype.str[:2]) # byte order and data type
+        f.write("%04i" % dtype.itemsize) # the itemsize of the array in text format
+        if f.tell() != self.header_size:
+            raise Error("Inconsistent header size!")
+        return f
 
-    def __init__(self, filenames):
-        """Initialize the serialization procedure.
+    def _get_header_dtype(self):
+        f = file(self.filename, "rb")
+        header = f.read(self.header_size)
+        f.close()
+        if header[:8] != "TRACKS_1":
+            raise Error("Wrong header: %s is not a correct track filename" % self.filename)
+        return numpy.dtype(header[8:].replace("0",""))
 
-        Arguments:
-            directory -- the directory where the tracks are stored
-            filenames -- the file names of the individual tracks
+    def _get_read_buffer(self, start):
+        if not os.path.isfile(self.filename):
+            raise TrackNotFoundError("File not found: %s" % self.filename)
+        dtype = self._get_header_dtype()
+        f = file(self.filename, "rb")
+        f.seek(start*dtype.itemsize+14)
+        return dtype, f
 
-        This function creates the directory and initializes the buffers for the
-        serialization procedure.
-        """
+    def _get_append_buffer(self, dtype):
+        if not os.path.isfile(self.filename):
+            return self._init_buffer(dtype)
+        else:
+            dtype_file = self._get_header_dtype()
+            if dtype != dtype_file:
+                raise Error("The given data has dtype=%s, while the data in the track has dtype=%s" % (dtype, dtype_file))
+            return file(self.filename, "ab")
+
+    def clear(self):
+        if os.path.isfile(self.filename):
+            os.remove(self.filename)
+
+    def read(self, start=0, length=-1):
+        dtype, f = self._get_read_buffer(start)
+        #return numpy.fromfile(f, dtype, length, '')
+        # Don't use numpy.fromfile because it print annoying warning messages
+        # on stderr when reading behind the end of the file.
+        size = length*dtype.itemsize
+        data = f.read(length*dtype.itemsize)
+        if len(data) < size:
+            length = len(data)/dtype.itemsize
+        return numpy.ndarray(shape=(length,), dtype=dtype, buffer=data)
+
+    def append(self, data):
+        if len(data.shape) != 1:
+            raise Error("Only 1-dimensional arrays can be stored in tracks.")
+        f = self._get_append_buffer(data.dtype)
+        data.tofile(f)
+
+
+def load_track(filename):
+    return Track(filename).read()
+
+
+def dump_track(filename, data):
+    Track(filename, clear=True).append(data)
+
+
+class MultiTracksReader(object):
+    def __init__(self, filenames, buffer_size=100*1024*1024, dot_interval=50):
+        self.tracks = [Track(filename) for filename in filenames]
+        self.dtypes = [track._get_header_dtype() for track in self.tracks]
+        self.buffer_length = buffer_size/sum(dtype.itemsize for dtype in self.dtypes)
+        self.dot_interval = dot_interval
+        self.row_counter = 0
+
+    def yield_buffers(self):
+        buffer_counter = 0
+        while True:
+            start = buffer_counter*self.buffer_length
+            log(" %i " % start, False)
+            buffers = [track.read(start, self.buffer_length) for track in self.tracks]
+            shortest = min(len(b) for b in buffers)
+            if shortest == self.buffer_length:
+                yield buffers
+            else:
+                buffers = [b[:shortest] for b in buffers]
+                yield buffers
+                break
+            buffer_counter += 1
+        end = buffer_counter*self.buffer_length + shortest
+        log(" %i " % end, False)
+        log.finalize()
+
+    def yield_rows(self):
+        for buffers in self.yield_buffers():
+            for row in zip(*buffers):
+                self.row_counter += 1
+                if self.row_counter % self.dot_interval == 0:
+                    log(".", False)
+                yield row
+
+    def next(self):
+        return self
+
+    __iter__ = yield_rows
+
+
+class MultiTracksWriter(object):
+    def __init__(self, filenames, dtypes=None, buffer_size=100*1024*1024, dot_interval=50):
+        # make sure the files can be created
         for filename in filenames:
             directory = os.path.dirname(filename)
-            if not os.path.exists(directory):
-                os.mkdir(directory)
-        self.filenames = filenames
-        self.buffer_length = self.total_buffer_size/len(filenames)
-        self.buffers = numpy.zeros((self.buffer_length, len(filenames)), float)
-        self.counter = 0
-        self.rowcount = 0
-        self.flushcount = 0
-        # cleanup existing stuff
-        for filename in self.filenames:
-            if os.path.isfile(filename):
-                os.remove(filename)
-
-    def dump_row(self, row):
-        """Dump a record to the track files.
-
-        The elements from row correspons to the file names in self.filenames.
-        Each time the buffers are filled, they are written to disk and emptied.
-        """
-        self.rowcount += 1
-        if self.rowcount % self.dot_interval == 0:
-            log(".", False)
-        self.buffers[self.counter] = row
-        self.counter += 1
-        if self.counter == self.buffer_length:
-            self._flush_buffers()
-
-    def finalize(self):
-        """Finalize the tracks created by this TracksSplitter instance.
-
-        First the buffers are written to disk and emptied. Consequently each
-        track is transformed into a single continuous pickled numpy array.
-        """
-        self._flush_buffers()
-        if self.flushcount > 1:
-            self._serialize()
+            if len(directory) > 0 and not os.path.exists(directory):
+                os.makedirs(directory)
+        if dtypes is None:
+            self.dtypes = [numpy.dtype(float) for index in xrange(len(filenames))]
         else:
-            log("No further serialization required.")
-        log.finalize()
+            if len(dtypes) != len(filenames):
+                raise Error("len(dtypes) != len(filenames)")
+            self.dtypes = dtypes
+        self.tracks = [Track(filename, clear=True) for filename in filenames]
+        self.buffer_length = buffer_size/sum(dtype.itemsize for dtype in self.dtypes)
+        self.buffers = [numpy.zeros(self.buffer_length, dtype) for dtype in self.dtypes]
+        self.current_row = 0
+        self.dot_interval = dot_interval
+        self.row_counter = 0
+        log(" 0 ", False)
 
     def _flush_buffers(self):
-        if self.counter == 0:
+        if self.current_row == 0:
             return
-        log(str(self.rowcount), False)
-        for filename, b in zip(self.filenames, self.buffers.transpose()):
-            f = file(filename, 'a')
-            b[:self.counter].dump(f)
-            f.close()
-        self.counter = 0
-        self.flushcount += 1
+        for b, t in zip(self.buffers, self.tracks):
+            t.append(b[:self.current_row])
+        log(" %i " % self.row_counter, False)
+        self.current_row = 0
 
-    def _serialize(self):
-        for filename in self.filenames:
-            f = file(filename, 'r')
-            blocks = []
-            try:
-                while True:
-                    blocks.append(numpy.load(f))
-            except EOFError:
-                pass
-            f.close()
-            f = file(filename, 'w')
-            numpy.concatenate(blocks).dump(f)
-            f.close()
-            log("serialized %s" % filename)
+    def dump_row(self, row):
+        for index, value in enumerate(row):
+            self.buffers[index][self.current_row] = value
+        self.current_row += 1
+        self.row_counter += 1
+        if self.row_counter % self.dot_interval == 0:
+            log(".", False)
+        if self.current_row == self.buffer_length:
+            self._flush_buffers()
 
+    def dump_buffers(self, buffers):
+        self._flush_buffers()
+        for b, t in zip(buffers, self.tracks):
+            t.append(b)
 
-class TracksJoiner(object):
-    """Performs essentially the inverse operation of TracksSplitter, i.e. it
-    converts a set of tracks into a single trajectory file.
-
-    Instances of this class are initialized with a set of track objects, and
-    behave like an iterator that yields a rows containing corresponding values
-    from each track.
-    """
-    total_buffer_size = 10*1024*1024
-    dot_interval = 50
-
-    def __init__(self, filenames):
-        """Initializes a TracksJoiner object."""
-        import sha, time, os
-        self.prefix = sha.new(str(os.getpid())+" "+str(time.time())).hexdigest()
-        self.buffer_length = self.total_buffer_size/len(filenames)
-        self.filenames = filenames
-
-    def cleanup(self):
-        import shutil
-        if os.path.isdir(self.prefix):
-            shutil.rmtree(self.prefix)
-
-    def _in_slice(self, b_index, sub):
-        row_start = b_index*self.buffer_length
-        if row_start + self.buffer_length < sub.start: return False
-        if row_start >= sub.stop: return False
-        return True
-
-    def yield_blocks(self, sub=slice(None)):
-        """Yield blocks of rows of corresponding values from each track in self.filenames.
-
-        First each track is de-serialized in small files stored into a temporary
-        subdirectory. Then, one by one the temporary files are loaded into
-        memory and the buffers from the TracksJoiner are reconstructed.
-        """
-        # complete the slice
-        sub = complete_slice(sub)
-        # a temporary working directory
-        os.mkdir(self.prefix)
-        # first de-serialize the track files
-        try:
-            self._de_serialize(sub)
-            self.rowcount = 0
-            for b_index in xrange(self.num_blocks):
-                old_rowcount = self.rowcount
-                # at which row does this block start:
-                row_start = b_index*self.buffer_length
-                # is this block included in the slice? If not, continue with the next loop
-                if not self._in_slice(b_index, sub): continue
-                # transform the total slice to a block slice
-                block_start = sub.start - row_start
-                if block_start < 0:
-                    block_start += (-block_start/sub.step+1)*sub.step
-                block_stop = sub.stop - row_start # always positive
-                if self.num_blocks == 1:
-                    filenames = self.filenames
-                else:
-                    filenames = ["%s/%i.%i" % (self.prefix, f_index, b_index) for f_index in xrange(len(self.filenames))]
-                block = numpy.array([load_track(filename) for filename in self.filenames])
-                block = block.transpose()
-                block = block[block_start:block_stop:sub.step]
-                yield block
-                self.rowcount = old_rowcount + len(block)
-                log(" %s " % self.rowcount, False)
-        except:
-            self.cleanup()
-            log.finalize()
-            raise
-        self.cleanup()
+    def finalize(self):
+        self._flush_buffers()
         log.finalize()
 
-    def yield_rows(self, sub=slice(None)):
-        """Yield rows of corresponding values from each track in self.filenames."""
-        for block in self.yield_blocks(sub):
-            for row in block:
-                yield row
-                if self.rowcount % self.dot_interval == 0:
-                    log(".", False)
-                self.rowcount += 1
 
-    def _de_serialize(self, sub=slice(None)):
-        track_length = None
-        for f_index, filename in enumerate(self.filenames):
-            f = file(filename, 'r')
-            t = numpy.load(f)
-            f.close()
-            if track_length is None:
-                track_length = len(t)
-            elif track_length != len(t):
-                raise Error("Not all tracks are of the same length. (%s)" % filename)
-
-            num_blocks = track_length/self.buffer_length+1
-            if num_blocks == 1:
-                log("De-serialization is not needed. The buffers are large enough.")
-                break
-            for b_index in xrange(num_blocks):
-                if not self._in_slice(b_index, sub): continue
-                block = t[b_index*self.buffer_length:(b_index+1)*self.buffer_length]
-                block_filename = "%s/%i.%i" % (self.prefix, f_index, b_index)
-                f = file(block_filename, 'w')
-                block.dump(f)
-                f.close()
-            log("de-serialized %s" % filename)
-        self.num_blocks = num_blocks
-
-
-def dump_track(path, array):
-    """Dump a numpy array into a track file, which is simply a pickled array."""
-    array.dump(path)
-
-
-def load_track(path):
-    """Loads a track from file."""
-    if not os.path.isfile(path):
-        raise TrackNotFoundError("Track %s could not be found." % path)
-    return numpy.load(path)
 
 

@@ -20,12 +20,12 @@
 # --
 
 
-from tracks.core import TracksJoiner
+from tracks.core import MultiTracksReader
 from tracks.parse import parse_slice
 from tracks.log import log
 from molmod.units import parse_unit
 
-import numpy
+import numpy, itertools
 from optparse import OptionParser
 
 
@@ -76,8 +76,7 @@ else:
     parser.error("Expecting at least one argument.")
 
 sub = parse_slice(options.slice)
-tracks_joiner = TracksJoiner(paths_in)
-units = numpy.array(units)
-for row in tracks_joiner.yield_rows(sub):
-    print "\t".join(str(value) for value in row/units)
+mtr = MultiTracksReader(paths_in)
+for row in itertools.islice(mtr, sub.start, sub.stop, sub.step):
+    print "\t".join(str(value/unit) for value, unit in zip(row, units))
 

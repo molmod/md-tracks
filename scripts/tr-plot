@@ -148,9 +148,9 @@ def load_parts(input_expr):
         label = parts[1]
     else:
         parser.error("A line plot description should at most contain three tracks.")
-    if x is not None: x /= xunit
-    if y is not None: y /= yunit
-    if error is not None: error /= yunit
+    if x is not None: x = x/xunit
+    if y is not None: y = y/yunit
+    if error is not None: error = error/yunit
     return x, y, error, label
 
 def parse_lim(s):

@@ -101,7 +101,7 @@ for m_index, a_indexes in molecules.iteritems():
         if options.relative:
             for a_index in a_indexes:
                 tmp = load_track("%s.%07i.%s" % (prefix, a_index, c))
-                tmp -= com
+                tmp = tmp - com
                 name = "%s.%s.%07i.%s" % (os.path.join(directory, "rel"), middle_word, a_index, c)
                 log("WRITTEN %s" % name)
                 dump_track(name, tmp)

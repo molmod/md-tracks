@@ -20,7 +20,7 @@
 # --
 
 
-from tracks.core import TracksSplitter
+from tracks.core import MultiTracksWriter
 from tracks.parse import parse_slice
 from tracks.log import log
 from molmod.units import parse_unit
@@ -78,8 +78,8 @@ else:
 
 sub = parse_slice(options.slice)
 units = numpy.array(units)
-tracks_splitter = TracksSplitter(paths_out)
+mtw = MultiTracksWriter(paths_out)
 for line in itertools.islice(sys.stdin, sub.start, sub.stop, sub.step):
     row = numpy.array(list(float(word) for word in line.split()))
-    tracks_splitter.dump_row(row*units)
-tracks_splitter.finalize()
+    mtw.dump_row(row*units)
+mtw.finalize()

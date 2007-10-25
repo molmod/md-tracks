@@ -37,7 +37,7 @@ def parse_slice(s):
         if word == '':
             result.append(default)
         else:
-            result.append(float(word))
+            result.append(int(word))
     return slice(*result)
 
 

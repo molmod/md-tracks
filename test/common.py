@@ -19,11 +19,12 @@
 # --
 
 
-import os, sys
+import os, sys, unittest, shutil
 
 
 __all__ = [
-    "orig_dir", "scripts_dir", "lib_dir", "tmp_dir", "input_dir", "output_dir"
+    "orig_dir", "scripts_dir", "lib_dir", "tmp_dir", "input_dir", "output_dir",
+    "BaseTestCase",
 ]
 
 
@@ -37,3 +38,15 @@ if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
 sys.path.insert(0, lib_dir)
+
+
+class BaseTestCase(unittest.TestCase):
+    def setUp(self):
+        if os.path.isdir(tmp_dir):
+            shutil.rmtree(tmp_dir)
+        os.makedirs(tmp_dir)
+        os.chdir(tmp_dir)
+
+    def tearDown(self):
+        os.chdir(orig_dir)
+        shutil.rmtree(tmp_dir)

@@ -19,11 +19,11 @@
 # --
 
 
-from tracks.core import TracksJoiner, TracksSplitter
+from tracks.core import MultiTracksReader, MultiTracksWriter
 from ccio.xyz import XYZReader, XYZWriter
 from molmod.units import angstrom, fs
 
-import os, numpy
+import os, numpy, itertools
 
 
 __all__ = [
@@ -44,10 +44,10 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
         for cor in ["x", "y", "z"]:
             filenames.append(os.path.join(destination, "atom.%s.%07i.%s" % (middle_word, index, cor)))
 
-    tracks_splitter = TracksSplitter(filenames)
+    mtw = MultiTracksWriter(filenames)
     for title, coordinates in xyz_reader:
-        tracks_splitter.dump_row(coordinates[atom_indexes].ravel())
-    tracks_splitter.finalize()
+        mtw.dump_row(coordinates[atom_indexes].ravel())
+    mtw.finalize()
 
 
 def cp2k_ener_to_tracks(filename, destination, sub=slice(None)):
@@ -55,14 +55,15 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None)):
     import itertools
     names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy"]
     filenames = list(os.path.join(destination, name) for name in names)
-    tracks_splitter = TracksSplitter(filenames)
+    dtypes = [int, float, float, float, float, float]
+    mtw = MultiTracksWriter(filenames)
     f = file(filename)
     for line in itertools.islice(f, sub.start, sub.stop, sub.step):
         row = [float(word) for word in line.split()[:6]]
         row[1] = row[1]*fs
-        tracks_splitter.dump_row(row)
+        mtw.dump_row(row)
     f.close()
-    tracks_splitter.finalize()
+    mtw.finalize()
 
 
 def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_indexes=None):
@@ -79,7 +80,7 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
         for index in atom_indexes
     ), [])
     filenames = list(os.path.join(destination, name) for name in names)
-    tracks_splitter = TracksSplitter(filenames)
+    mtw = MultiTracksWriter(filenames)
 
     f = file(filename)
     counter = 0
@@ -90,11 +91,11 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
             row.append(float(word))
         counter += 1
         if counter == num_atoms:
-            tracks_splitter.dump_row(row)
+            mtw.dump_row(row)
             row = []
             counter = 0
     f.close()
-    tracks_splitter.finalize()
+    mtw.finalize()
 
 
 def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angstrom, atom_indexes=None):
@@ -112,7 +113,7 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
 
     f = file(destination, 'w')
     xyz_writer = XYZWriter(f, symbols, file_unit=file_unit)
-    tracks_joiner = TracksJoiner(filenames)
-    for row in tracks_joiner.yield_rows(sub):
+    mtr = MultiTracksReader(filenames)
+    for row in itertools.islice(mtr, sub.start, sub.stop, sub.step):
         xyz_writer.dump("None", numpy.array(row).reshape((-1,3)))
     f.close()

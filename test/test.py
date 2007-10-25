@@ -25,6 +25,7 @@ import import_test
 
 import unittest
 from commands import *
+from core import *
 unittest.main()
 
 
