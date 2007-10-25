@@ -19,12 +19,9 @@
 # --
 
 
-import common
-
-import import_test
-
-import unittest
-from commands import *
-unittest.main()
-
+from tracks.core import *
+from tracks.parse import *
+from tracks.util import *
+from tracks.convert import *
+from tracks.log import *
 

@@ -25,7 +25,7 @@ import numpy
 
 
 __all__ = [
-    "dist_track", "bend_track", "dihed_track"
+    "dist_track", "bend_track", "dihed_track",
     "AtomFilter",
 ]
 
