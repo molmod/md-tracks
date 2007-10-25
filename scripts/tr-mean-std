@@ -20,7 +20,10 @@
 # --
 
 
-from tracks import load_track, parse_slice, dump_track, log
+from tracks.core import load_track, dump_track
+from tracks.parse import parse_slice
+from tracks.log import log
+
 import numpy
 from optparse import OptionParser
 

@@ -20,8 +20,11 @@
 # --
 
 
+from tracks.core import TracksSplitter
+from tracks.parse import parse_slice
+from tracks.log import log
 from molmod.units import parse_unit
-from tracks import TracksSplitter, parse_slice, log
+
 import numpy, sys, itertools
 from optparse import OptionParser
 

@@ -20,9 +20,11 @@
 # --
 
 
-from tracks import load_track, dump_track, parse_x_last, parse_x_length
+from tracks.core import load_track, dump_track
+from tracks.parse import parse_x_last, parse_x_length
 from molmod.units import parse_unit
 from molmod.constants import lightspeed
+
 import numpy
 from optparse import OptionParser
 

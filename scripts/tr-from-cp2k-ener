@@ -20,7 +20,10 @@
 # --
 
 
-from tracks import cp2k_ener_to_tracks, parse_slice, log
+from tracks.convert import cp2k_ener_to_tracks
+from tracks.parse import parse_slice
+from tracks.log import log
+
 from optparse import OptionParser
 
 

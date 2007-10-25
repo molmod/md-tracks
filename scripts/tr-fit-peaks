@@ -152,7 +152,8 @@ class FitCostFunction(object):
 
 
 import sys
-from tracks import load_track, dump_track, log
+from tracks.core import load_track, dump_track
+from tracks.log import log
 from optparse import OptionParser
 from molmod.units import parse_unit
 

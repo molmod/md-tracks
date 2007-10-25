@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # Tracks provides tools for analyzing large trajectory files.
 # Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
@@ -18,33 +17,3 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
-
-
-from tracks.core import load_track, dump_track
-from tracks.parse import parse_slice
-
-import numpy
-from optparse import OptionParser
-
-
-usage = """%prog [options] input slice output
-
-%prog slices the track ${input} and writes the result to ${output}.
-
-The ${slice} argument has the following format: 'start:stop:step' where start,
-stop and step must be integers or can be omitted. The slice interpretation is
-pythonic.
-
-%prog -h prints out all available options."""
-
-parser = OptionParser(usage)
-(options, args) = parser.parse_args()
-
-
-if len(args) == 3:
-    path_in, sub, path_out = args
-else:
-    parser.error("Expecting three arguments.")
-
-sub = parse_slice(sub)
-dump_track(path_out, load_track(path_in)[sub])

@@ -20,9 +20,14 @@
 # --
 
 
+from tracks.util import dist_track, bend_track, dihed_track
+from tracks.core import dump_track, TrackNotFoundError
+from tracks.parse import parse_slice
+from tracks.util import AtomFilter
+from tracks.log import log
 from ccio.psf import PSFFile
-from tracks import dist_track, bend_track, dihed_track, dump_track, parse_slice, AtomFilter, TrackNotFoundError, log
-import numpy, os
+
+import numpy
 from optparse import OptionParser
 
 

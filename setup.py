@@ -31,8 +31,8 @@ if __name__ == "__main__":
         author='Toon Verstraelen',
         author_email='Toon.Verstraelen@UGent.be',
         url='https://molmod.ugent.be/zeobuilder',
-        package_dir = {'': 'src'},
-        py_modules = ['tracks'],
+        package_dir = {'tracks': 'lib/tracks'},
+        packages = ['tracks'],
         scripts=glob("scripts/*"),
         classifiers=[
             'Development Status :: 3 - Alpha',

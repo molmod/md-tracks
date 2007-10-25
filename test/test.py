@@ -18,11 +18,12 @@
 #
 # --
 
+
 import os, sys
 
 orig_dir = os.getcwd()
 scripts_dir = os.path.join(os.path.dirname(os.getcwd()), "scripts")
-lib_dir = os.path.join(os.path.dirname(os.getcwd()), "src")
+lib_dir = os.path.join(os.path.dirname(os.getcwd()), "lib")
 tmp_dir = os.path.join(os.getcwd(), "tmp")
 input_dir = os.path.join(os.getcwd(), "input")
 output_dir = os.path.join(os.getcwd(), "output")
@@ -31,14 +32,17 @@ if not os.path.isdir(output_dir):
 
 sys.path.insert(0, lib_dir)
 
-import unittest, os, shutil, glob
+from tracks.core import load_track, dump_track
+from tracks.parse import parse_slice
+from tracks.util import dist_track, bend_track, dihed_track
 from ccio.psf import PSFFile
 from ccio.xyz import XYZReader, XYZFile
 from molmod.units import angstrom, fs
 from molmod.constants import lightspeed
 from molmod.data import periodic
-from tracks import load_track, dist_track, bend_track, dihed_track, dump_track, parse_slice
+
 import numpy
+import unittest, shutil, glob
 
 
 class CommandsTestCase(unittest.TestCase):

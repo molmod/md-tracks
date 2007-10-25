@@ -20,8 +20,12 @@
 # --
 
 
-from tracks import cpmd_traj_to_tracks, parse_slice, AtomFilter, log
+from tracks.convert import cpmd_traj_to_tracks
+from tracks.parser import parse_slice
+from tracks.util import AtomFilter
+from tracks.log import log
 from ccio.psf import PSFFile
+
 from optparse import OptionParser
 
 

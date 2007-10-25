@@ -22,8 +22,9 @@
 
 from ccio.psf import PSFFile
 from molmod.data import periodic
-from optparse import OptionParser
+
 import numpy
+from optparse import OptionParser
 
 
 usage = """%prog [options] connectivity.psf {at|mol} expression

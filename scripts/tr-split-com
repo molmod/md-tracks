@@ -20,9 +20,11 @@
 # --
 
 
+from tracks.core import load_track, dump_track
+from tracks.log import log
 from molmod.data import periodic
 from ccio.psf import PSFFile
-from tracks import load_track, dump_track, log
+
 import numpy, os
 from optparse import OptionParser
 

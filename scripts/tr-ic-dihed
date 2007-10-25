@@ -20,8 +20,11 @@
 # --
 
 
-from tracks import dihed_track, dump_track, parse_slice
-import numpy, glob, os
+from tracks.core import dump_track
+from tracks.util import dihed_track
+from tracks.parse import parse_slice
+
+import numpy
 from optparse import OptionParser
 
 

@@ -20,9 +20,13 @@
 # --
 
 
+from tracks.convert import xyz_to_tracks
+from tracks.parse import parse_slice
+from tracks.util import AtomFilter
+from tracks.log import log
 from molmod.units import parse_unit
-from tracks import xyz_to_tracks, parse_slice, AtomFilter, log
 from ccio.psf import PSFFile
+
 from optparse import OptionParser
 
 

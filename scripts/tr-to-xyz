@@ -20,11 +20,15 @@
 # --
 
 
+from tracks.convert import tracks_to_xyz
+from tracks.parse import parse_slice
+from tracks.util import AtomFilter
+from tracks.log import log
 from molmod.units import parse_unit
-from tracks import tracks_to_xyz, parse_slice, AtomFilter, log
-from optparse import OptionParser
 from ccio.xyz import XYZFile
 from ccio.psf import PSFFile
+
+from optparse import OptionParser
 
 
 usage = """%prog [options] ref.xyz prefix output.xyz
