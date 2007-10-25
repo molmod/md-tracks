@@ -1,1 +1,4 @@
 include COPYING
+include test/*.py
+include test/input/thf01/*
+include test/input/water32/*
