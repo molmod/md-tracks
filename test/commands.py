@@ -293,6 +293,13 @@ class CommandsTestCase(BaseTestCase):
             k2 = load_track("tracks/kinetic_energy")
             self.assert_(abs(t1-t2).max()/abs(t1).max() < 1e-5)
             self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
+            # - in write, no slice
+            self.from_cp2k_ener("thf01")
+            k1 = load_track("tracks/kinetic_energy")
+            lines = self.execute("tr-read", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
+            self.execute("tr-write", ["ps", "-", "kjmol", "tracks/test"], stdin=lines)
+            k2 = load_track("tracks/test")
+            self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
         check("::")
         check("20:601:5")
 
