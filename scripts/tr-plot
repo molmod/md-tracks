@@ -24,134 +24,228 @@ from tracks.core import load_track
 from tracks.parse import parse_slice
 from molmod.units import parse_unit
 
-import numpy
+import numpy, sys
 from optparse import OptionParser
 
 
-usage = """%prog [options] {y0|x0 y0 [e0]} [- {y1|x1 y1 [e1]} - ...] image
+# A) Specify the parameters and the usage
 
-%prog is a generic plotting script that plots data from multiple tracks. Each
-line-plot argument is given in the following format: {y|x y [e]}. Multiple
-line-plot arguments are separated by a minus sign. One, two or three tracks can
-be given for each line plot:
- * One: y        The track is interpreted as y values. The x values are
-                 automatically generated: x=0..N-1 au.
- * Two: x y      A standard line plot.
- * Three: x y e  Similar to the previous case, but also y+e and y-e are plotted.
-The figure is saved to ${image}.
+global_usage = """%prog [global_options] line0 [line1 ...] image
 
-%prog -h prints out all available options."""
+%prog is a generic plotting script that plots data from multiple tracks. The
+global options must precede the line specifications. The result is saved to the
+file ${image}, which must always be the last argument. A line specification has
+the following structure:
 
-parser = OptionParser(usage)
-parser.add_option(
-    "-s", "--slice", default="::",
-    help="Subsample the input track(s) with the given slice start:stop:step "
-         "where start, stop and step must be integers or can be omitted. "
-         "The slice interpretation is pythonic. [default=%default]",
+ :kind [options] {y|x y [e]}
+
+where ${kind} is 'line' or 'bar', x is the track with the x-data, y is the track
+with the y-data and e is the track with the error on the y-data. A line
+specification must start with a colon, i.e. ':'.
+
+%prog -h prints the global options.
+%prog --line-help print the options for the line specifications."""
+
+global_parser = OptionParser(global_usage)
+global_parser.add_option(
+    "--line-help",
+    help="Print the options for the line specification.",
+    default=False, action="store_true",
 )
-parser.add_option(
+global_parser.add_option(
     "-t", "--title", default="Quick and dirty plot",
     help="The plot title. [default=%default]",
 )
-parser.add_option(
+global_parser.add_option(
     "-x", "--xlabel", default="X",
     help="The plot xlabel. [default=%default]",
 )
-parser.add_option(
+global_parser.add_option(
     "-y", "--ylabel", default="Y",
     help="The plot ylabel. [default=%default]",
 )
-parser.add_option(
+global_parser.add_option(
     "--xlog", default=False, action="store_true",
     help="This option activates a logarithmic scale for the x-axis.",
 )
-parser.add_option(
+global_parser.add_option(
     "--ylog", default=False, action="store_true",
     help="This option activates a logarithmic scale for the y-axis.",
 )
-parser.add_option(
+global_parser.add_option(
     "--xinv",
     help="Use the inverse values as labels on the x-axis.",
     default=False, action="store_true",
 )
-parser.add_option(
+global_parser.add_option(
     "--yinv", default=False, action="store_true",
     help="Use the inverse values as labels on the x-axis.",
 )
-parser.add_option(
+global_parser.add_option(
     "--xunit", default='au',
     help="The unit for the x-axis. [default=%default]",
 )
-parser.add_option(
+global_parser.add_option(
     "--yunit", default='au',
     help="The unit for the y-axis. [default=%default]",
 )
-parser.add_option(
+global_parser.add_option(
     "--xlim", default=",",
     help="The range for the x-axis in the unit defined by XUNIT. "
          "Format: [min],[max]. If min and/or max are omitted, they are set "
          "automatically. [default=%default]",
 )
-parser.add_option(
+global_parser.add_option(
     "--ylim", default=",",
     help="The range for the y-axis in the unit defined by YUNIT. "
          "Format: [min],[max]. If min and/or max are omitted, they are set "
          "automatically. [default=%default]",
 )
-parser.add_option(
+global_parser.add_option(
     "--no-legend", action="store_false", dest="legend", default=True,
     help="Hide the legend.",
 )
-(options, args) = parser.parse_args()
+global_parser.add_option(
+    "--no-grid", action="store_false", dest="grid", default=True,
+    help="Hide the grid.",
+)
 
 
-sub = parse_slice(options.slice)
+line_usage = """A line specification has the following structure:
 
-# parse the arguments
-if len(args) >= 2:
-    inputs = " ".join(args[:-1]).split(" - ")
-    image = args[-1]
-else:
-    parser.error("Expecting at least two arguments.")
+ :kind [options] {y|x y [e]}
 
-# parse the units:
-xunit = parse_unit(options.xunit)
-if options.xinv: xunit = 1/xunit
-yunit = parse_unit(options.yunit)
-if options.yinv: yunit = 1/yunit
+where ${kind} is 'line' or 'bar', x is the track with the x-data, y is the track
+with the y-data and e is the track with the error on the y-data. A line
+specification must start with a colon, i.e. ':'.
+"""
 
-def load_parts(input_expr):
-    parts = input_expr.split(' ')
-    if len(parts) == 1:
-        y = load_track(parts[0])[sub]
-        x = None
-        error = None
-        label = parts[0]
-    elif len(parts) == 2:
-        if len(parts[0]) == 0:
-            x = None
+line_parser = OptionParser(line_usage)
+line_parser.add_option(
+    "-c", "--color",
+    help="Specifiy the color for this line",
+)
+line_parser.add_option(
+    "-l", "--label",
+    help="Specifiy a label for this line",
+)
+line_parser.add_option(
+    "-s", "--slice", default="::",
+    help="Subsample the input tracks with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+)
+
+# B) Define the Data descriptors
+
+
+class Error(Exception):
+    pass
+
+
+class DataDescriptor(object):
+    kinds = {}
+
+    def __new__(type, args):
+        result = object.__new__(type, args)
+        cls = kinds.get(args[0].lower())
+        if cls is None:
+            raise Error("line type '%s' not recognized." % args[0])
         else:
-            x = load_track(parts[0])[sub]
-        y = load_track(parts[1])[sub]
-        error = None
-        label = parts[1]
-    elif len(parts) == 3:
-        if len(parts[0]) == 0:
-            x = None
+            result.__class__ = cls
+        return result
+
+    def __init__(self, args):
+        (options, args) = line_parser.parse_args(args)
+        sub = parse_slice(options.slice)
+        del args[0]
+        if len(args) == 1:
+            self.y = load_track(args[0])[sub]
+            self.x = None
+            self.error = None
+            self.label = args[0]
+        elif len(args) == 2:
+            if len(args[0]) == 0:
+                self.x = None
+            else:
+                self.x = load_track(args[0])[sub]
+            self.y = load_track(args[1])[sub]
+            self.error = None
+            self.label = args[1]
+        elif len(args) == 3:
+            if len(args[0]) == 0:
+                self.x = None
+            else:
+                self.x = load_track(args[0])[sub]
+            self.y = load_track(args[1])[sub]
+            if len(args[2]) == 0:
+                self.error = None
+            else:
+                self.error = load_track(args[2])[sub]
+            self.label = args[1]
         else:
-            x = load_track(parts[0])[sub]
-        y = load_track(parts[1])[sub]
-        if len(parts[2]) == 0:
-            error = None
-        else:
-            error = load_track(parts[2])[sub]
-        label = parts[1]
+            line_parser.error("A line description should at most contain three tracks. Got:\n%s" % " ".join(args))
+        if self.x is None:
+            self.x = numpy.arange(len(y), dtype=float)[sub]
+        self.x = self.x/xunit
+        self.y = self.y/yunit
+        if self.error is not None: self.error = self.error/yunit
+        self.color = options.color
+        if options.label is not None:
+            self.label = options.label
+
+
+class LineDescriptor(DataDescriptor):
+
+    def plot(self):
+        kwargs = {}
+        if self.color is not None: kwargs["color"] = self.color
+        if self.label is not None: kwargs["label"] = self.label
+        line = pylab.plot(self.x, self.y, linewidth=1, **kwargs)[0]
+        if self.error is not None:
+            pylab.plot(self.x, self.y+self.error, label='error on %s' % self.label, linestyle=':', color=line.get_color())
+            pylab.plot(self.x, self.y-self.error, label='_nolegend_', linestyle=':', color=line.get_color())
+
+DataDescriptor.kinds["line"] = LineDescriptor
+
+
+class BarDescriptor(DataDescriptor):
+
+    def plot(self):
+        fraction = 0.7
+        delta = self.x[1:] - self.x[:-1]
+        left = numpy.zeros(len(self.x), float)
+        left[1:] = self.x[1:] - 0.5*fraction*delta
+        left[0] = self.x[0] - 0.5*fraction*delta[0]
+        right = numpy.zeros(len(self.x), float)
+        right[:-1] = self.x[:-1] + 0.5*fraction*delta
+        right[-1] = self.x[-1] + 0.5*fraction*delta[-1]
+        width = right-left
+        pylab.bar(left, self.y, width, color=self.color, label=self.label, yerr=self.error)
+
+DataDescriptor.kinds["bar"] = BarDescriptor
+
+
+# C) parse the arguments
+blocks = [[]]
+for word in sys.argv[1]:
+    if word[0] == ":" and word[1:] in DataDescriptor.kinds:
+        blocks.append([word])
     else:
-        parser.error("A line plot description should at most contain three tracks.")
-    if x is not None: x = x/xunit
-    if y is not None: y = y/yunit
-    if error is not None: error = error/yunit
-    return x, y, error, label
+        blocks[-1].append(word)
+
+(global_options, global_args) = global_parser.parse_args(blocks[0])
+if global_options.line_help:
+    line_parser.print_help()
+
+image = blocks[-1][-1]
+del blocks[-1][-1]
+
+# D) parse stuff:
+xunit = parse_unit(global_options.xunit)
+if global_options.xinv: xunit = 1/xunit
+yunit = parse_unit(global_options.yunit)
+if global_options.yinv: yunit = 1/yunit
 
 def parse_lim(s):
     if s.count(",") != 1:
@@ -175,32 +269,25 @@ class InvScalarFormatter(ScalarFormatter):
         return ScalarFormatter.__call__(self, 1/x, pos)
 
 pylab.clf()
-pylab.title(options.title)
-pylab.xlabel("%s [%s]" % (options.xlabel, options.xunit))
-pylab.ylabel("%s [%s]" % (options.ylabel, options.yunit))
-for input_expr in inputs:
-    x,y,error,label = load_parts(input_expr)
-    if x is None:
-        line = pylab.plot(y, label=label, linewidth=1)[0]
-        if error is not None:
-            pylab.plot(y+error, label='error on %s' % label, linestyle=':', color=line.get_color())
-            pylab.plot(y-error, label='_nolegend_', linestyle=':', color=line.get_color())
-    else:
-        line = pylab.plot(x, y, label=label, linewidth=1)[0]
-        if error is not None:
-            pylab.plot(x, y+error, label='error on %s' % label, linestyle=':', color=line.get_color())
-            pylab.plot(x, y-error, label='_nolegend_', linestyle=':', color=line.get_color())
-pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
-if options.xlog:
+pylab.title(global_options.title)
+pylab.xlabel("%s [%s]" % (global_options.xlabel, global_options.xunit))
+pylab.ylabel("%s [%s]" % (global_options.ylabel, global_options.yunit))
+
+for line_block in blocks[1:]:
+    dd = DataDescriptor(line_block)
+    dd.plot()
+if global_options.grid:
+    pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
+if global_options.xlog:
     pylab.gca().set_xscale("log")
-if options.ylog:
+if global_options.ylog:
     pylab.gca().set_yscale("log")
-if options.xinv:
+if global_options.xinv:
     pylab.gca().get_xaxis().set_major_formatter(InvScalarFormatter())
-if options.yinv:
+if global_options.yinv:
     pylab.gca().get_yaxis().set_major_formatter(InvScalarFormatter())
-pylab.xlim(parse_lim(options.xlim))
-pylab.ylim(parse_lim(options.ylim))
-if options.legend:
+pylab.xlim(parse_lim(global_options.xlim))
+pylab.ylim(parse_lim(global_options.ylim))
+if global_options.legend:
     pylab.legend(loc=0)
 pylab.savefig(image)
