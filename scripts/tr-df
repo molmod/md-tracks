@@ -1,0 +1,108 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import load_track, dump_track, MultiTracksReader, MultiTracksWriter
+from tracks.parse import parse_slice
+from tracks.log import log
+from molmod.units import parse_unit
+
+import numpy, itertools
+from optparse import OptionParser
+
+
+usage = """%prog [options] input1 [input2 ...] xmin xmax nbins output_prefix
+
+%prog generates a histogram of the data in the ${input*} tracks. Values below
+${xmin} and above ${xmax} are neglected. the histogram contains ${nbins} bins
+distributed over the range ${xmin},${xmax}. The output is written to two files:
+
+* ${output_prefix}.bins: contains the equidistant centers of the bins.
+
+* ${output_prefix}.hist: contains the number of occurrences in the
+  corresponding bins, divided by the total number of data points. This is
+  typically the y-value for a histogram plot
+
+If --bin-tracks is used, ${output_prefix}.hist will not be created, but a series
+of files ${output_prefix}.bin.${bin_index}, which contains the count of the
+corresponding bin at each time step. This can be used to compute a correct error
+estimate on each bin count with tr-blav.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-s", "--slice", default="::",
+    help="Subsample the input track with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+)
+parser.add_option(
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
+)
+parser.add_option(
+    "--bin-tracks", action="store_true", default=False,
+    help="Create a separate track for each bin, to be processed with tr-blav."
+)
+(options, args) = parser.parse_args()
+
+
+log.verbose = options.verbose
+if len(args) >= 5:
+    paths_in = args[:-4]
+    xmin = parse_unit(args[-4])
+    xmax = parse_unit(args[-3])
+    nbins = int(args[-2])
+    if nbins < 2:
+        parser.error("Expecting at least two bins.")
+    output_prefix = args[-1]
+else:
+    parser.error("Expecting at least five arguments.")
+
+sub = parse_slice(options.slice)
+bin_width = (xmax-xmin)/nbins
+bins = numpy.arange(nbins)*bin_width + xmin + bin_width*0.5
+filename = "%s.bins" % output_prefix
+dump_track("%s.bins" % output_prefix, bins)
+log("WRITTEN %s" % filename)
+
+if options.bin_tracks:
+    mtr = MultiTracksReader(paths_in)
+    # create empty bin_tracks:
+    bin_filenames = ["%s.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
+    bin_ranges = numpy.array([numpy.arange(nbins), numpy.arange(nbins)+1]).transpose()
+    bin_ranges *= bin_width
+    bin_ranges += xmin
+
+    mtw = MultiTracksWriter(bin_filenames)
+    for row in itertools.islice(mtr, sub.start, sub.stop, sub.step):
+        counts = numpy.histogram(row, nbins, (xmin,xmax), False)[0]/float(len(paths_in))
+        mtw.dump_row(counts)
+    mtw.finalize()
+else:
+    counts = 0.0
+    for path_in in paths_in:
+        counts += numpy.histogram(load_track(path_in), nbins, (xmin,xmax), False)[0]
+    counts /= float(counts.sum())
+    filename = "%s.hist" % output_prefix
+    dump_track(filename, counts)
+    log("WRITTEN %s" % filename)

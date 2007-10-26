@@ -148,7 +148,7 @@ class DataDescriptor(object):
 
     def __new__(type, args):
         result = object.__new__(type, args)
-        cls = kinds.get(args[0].lower())
+        cls = DataDescriptor.kinds.get(args[0].lower()[1:])
         if cls is None:
             raise Error("line type '%s' not recognized." % args[0])
         else:
@@ -201,10 +201,10 @@ class LineDescriptor(DataDescriptor):
         kwargs = {}
         if self.color is not None: kwargs["color"] = self.color
         if self.label is not None: kwargs["label"] = self.label
-        line = pylab.plot(self.x, self.y, linewidth=1, **kwargs)[0]
+        self.patch = line = pylab.plot(self.x, self.y, linewidth=1, **kwargs)[0]
         if self.error is not None:
-            pylab.plot(self.x, self.y+self.error, label='error on %s' % self.label, linestyle=':', color=line.get_color())
-            pylab.plot(self.x, self.y-self.error, label='_nolegend_', linestyle=':', color=line.get_color())
+            pylab.plot(self.x, self.y+self.error, linestyle=':', color=line.get_color())
+            pylab.plot(self.x, self.y-self.error, linestyle=':', color=line.get_color())
 
 DataDescriptor.kinds["line"] = LineDescriptor
 
@@ -221,18 +221,19 @@ class BarDescriptor(DataDescriptor):
         right[:-1] = self.x[:-1] + 0.5*fraction*delta
         right[-1] = self.x[-1] + 0.5*fraction*delta[-1]
         width = right-left
-        pylab.bar(left, self.y, width, color=self.color, label=self.label, yerr=self.error)
+        self.patch = pylab.bar(left, self.y, width, color=self.color, yerr=self.error, ecolor="k")[0]
 
 DataDescriptor.kinds["bar"] = BarDescriptor
 
 
 # C) parse the arguments
 blocks = [[]]
-for word in sys.argv[1]:
+for word in sys.argv[1:]:
     if word[0] == ":" and word[1:] in DataDescriptor.kinds:
         blocks.append([word])
     else:
         blocks[-1].append(word)
+print blocks
 
 (global_options, global_args) = global_parser.parse_args(blocks[0])
 if global_options.line_help:
@@ -273,11 +274,16 @@ pylab.title(global_options.title)
 pylab.xlabel("%s [%s]" % (global_options.xlabel, global_options.xunit))
 pylab.ylabel("%s [%s]" % (global_options.ylabel, global_options.yunit))
 
+patches = []
+labels = []
+if global_options.grid:
+    pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
 for line_block in blocks[1:]:
     dd = DataDescriptor(line_block)
     dd.plot()
-if global_options.grid:
-    pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
+    patches.append(dd.patch)
+    labels.append(dd.label)
+    del dd
 if global_options.xlog:
     pylab.gca().set_xscale("log")
 if global_options.ylog:
@@ -289,5 +295,5 @@ if global_options.yinv:
 pylab.xlim(parse_lim(global_options.xlim))
 pylab.ylim(parse_lim(global_options.ylim))
 if global_options.legend:
-    pylab.legend(loc=0)
+    pylab.legend(patches, labels, loc=0)
 pylab.savefig(image)

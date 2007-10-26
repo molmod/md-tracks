@@ -692,3 +692,27 @@ class CommandsTestCase(BaseTestCase):
     def test_fluct(self):
         self.from_cp2k_ener("thf01")
         self.execute("tr-fluct", ["tracks/temperature", "tracks/temperature", "tracks/test"])
+
+    def test_df(self):
+        self.from_xyz("thf01", "pos")
+        self.from_cp2k_ener("thf01")
+        atoms = self.execute("tr-filter", [os.path.join(input_dir, "thf01/init.psf"), "at", 'a.number==1'])[0]
+        self.execute("tr-ic-psf", ['--filter-atoms=%s' % atoms, 'tracks/atom.pos', os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-df", glob.glob("tracks/atom.pos.dist.???????.???????") + ["1.0*A", "1.2*A", "20", "tracks/atom.pos.dist.df"])
+        self.execute("tr-plot", [
+            "--title='C-H bond length distribution'", "--xlabel='C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
+            ":bar", "tracks/atom.pos.dist.df.bins", "tracks/atom.pos.dist.df.hist",
+            os.path.join(output_dir, "df_noerror.png"),
+        ])
+        self.execute("tr-df", glob.glob("tracks/atom.pos.dist.???????.???????") + ["--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.pos.dist.df"])
+        lines = []
+        for bin_filename in sorted(glob.glob("tracks/atom.pos.dist.df.bin.???????")):
+            output = self.execute("tr-blav", [bin_filename, "tracks/time"])
+            lines.append(output[0])
+        self.execute("tr-write", ["tracks/atom.pos.dist.df.hist", "tracks/atom.pos.dist.df.hist.error"], stdin=lines)
+        self.execute("tr-plot", [
+            "--title='C-H bond length distribution'", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
+            ":bar", "tracks/atom.pos.dist.df.bins", "tracks/atom.pos.dist.df.hist", "tracks/atom.pos.dist.df.hist.error",
+            os.path.join(output_dir, "df_error.png"),
+        ])
+
