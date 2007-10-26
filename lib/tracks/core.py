@@ -147,9 +147,6 @@ class MultiTracksReader(object):
                     log(".", False)
                 yield row
 
-    def next(self):
-        return self
-
     __iter__ = yield_rows
 
 
