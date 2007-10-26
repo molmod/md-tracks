@@ -57,7 +57,8 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy", "conserved_quantity"]
     filenames = list(os.path.join(destination, name) for name in names)
     dtypes = [int, float, float, float, float, float, float]
-    mtw = MultiTracksWriter(filenames, clear=clear)
+    dtypes = [numpy.dtype(d) for d in dtypes]
+    mtw = MultiTracksWriter(filenames, dtypes, clear=clear)
     f = file(filename)
     for line in itertools.islice(f, sub.start, sub.stop, sub.step):
         row = [float(word) for word in line.split()]
