@@ -61,6 +61,10 @@ parser.add_option(
     "-q", "--quiet", action="store_false", dest="verbose", default=True,
     help="Don't print any output."
 )
+parser.add_option(
+    "--append", action="store_false", dest="clear", default=True,
+    help="Append to existing tracks if possible."
+)
 (options, args) = parser.parse_args()
 
 
@@ -90,5 +94,5 @@ for line in f:
 f.close()
 
 # then do the conversion
-cpmd_traj_to_tracks(filename, num_atoms, output_dir, sub, atom_filter.filter_atoms)
+cpmd_traj_to_tracks(filename, num_atoms, output_dir, sub, atom_filter.filter_atoms, clear=options.clear)
 

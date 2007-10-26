@@ -31,7 +31,7 @@ __all__ = [
 ]
 
 
-def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit=angstrom, atom_indexes=None):
+def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit=angstrom, atom_indexes=None, clear=True):
     """Convert an xyz file into separate tracks."""
     xyz_reader = XYZReader(filename, sub, file_unit=file_unit)
 
@@ -44,19 +44,19 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
         for cor in ["x", "y", "z"]:
             filenames.append(os.path.join(destination, "atom.%s.%07i.%s" % (middle_word, index, cor)))
 
-    mtw = MultiTracksWriter(filenames)
+    mtw = MultiTracksWriter(filenames, clear=clear)
     for title, coordinates in xyz_reader:
         mtw.dump_row(coordinates[atom_indexes].ravel())
     mtw.finalize()
 
 
-def cp2k_ener_to_tracks(filename, destination, sub=slice(None)):
+def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     """Convert a cp2k energy file into separate tracks."""
     import itertools
     names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy", "conserved_quantity"]
     filenames = list(os.path.join(destination, name) for name in names)
     dtypes = [int, float, float, float, float, float, float]
-    mtw = MultiTracksWriter(filenames)
+    mtw = MultiTracksWriter(filenames, clear=clear)
     f = file(filename)
     for line in itertools.islice(f, sub.start, sub.stop, sub.step):
         row = [float(word) for word in line.split()]
@@ -66,7 +66,7 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None)):
     mtw.finalize()
 
 
-def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_indexes=None):
+def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_indexes=None, clear=True):
     """Convert a cpmd trajectory file into separate tracks.
 
     num_atoms must be the number of atoms in the system.
@@ -80,7 +80,7 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
         for index in atom_indexes
     ), [])
     filenames = list(os.path.join(destination, name) for name in names)
-    mtw = MultiTracksWriter(filenames)
+    mtw = MultiTracksWriter(filenames, clear=clear)
 
     f = file(filename)
     counter = 0

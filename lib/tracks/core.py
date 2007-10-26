@@ -154,7 +154,7 @@ class MultiTracksReader(object):
 
 
 class MultiTracksWriter(object):
-    def __init__(self, filenames, dtypes=None, buffer_size=100*1024*1024, dot_interval=50):
+    def __init__(self, filenames, dtypes=None, buffer_size=100*1024*1024, dot_interval=50, clear=True):
         # make sure the files can be created
         for filename in filenames:
             directory = os.path.dirname(filename)
@@ -166,7 +166,7 @@ class MultiTracksWriter(object):
             if len(dtypes) != len(filenames):
                 raise Error("len(dtypes) != len(filenames)")
             self.dtypes = dtypes
-        self.tracks = [Track(filename, clear=True) for filename in filenames]
+        self.tracks = [Track(filename, clear=clear) for filename in filenames]
         self.buffer_length = buffer_size/sum(dtype.itemsize for dtype in self.dtypes)
         self.buffers = [numpy.zeros(self.buffer_length, dtype) for dtype in self.dtypes]
         self.current_row = 0

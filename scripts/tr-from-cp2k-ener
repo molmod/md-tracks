@@ -48,6 +48,10 @@ parser.add_option(
     "-q", "--quiet", action="store_false", dest="verbose", default=True,
     help="Don't print any output."
 )
+parser.add_option(
+    "--append", action="store_false", dest="clear", default=True,
+    help="Append to existing tracks if possible."
+)
 (options, args) = parser.parse_args()
 
 
@@ -61,5 +65,5 @@ else:
     parser.error("Expecting one or two arguments.")
 
 sub = parse_slice(options.slice)
-cp2k_ener_to_tracks(filename, output_dir, sub=sub)
+cp2k_ener_to_tracks(filename, output_dir, sub=sub, clear=options.clear)
 
