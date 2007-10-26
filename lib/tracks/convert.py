@@ -21,6 +21,7 @@
 
 from tracks.core import MultiTracksReader, MultiTracksWriter
 from ccio.xyz import XYZReader, XYZWriter
+from ccio.cp2k import CellReader
 from molmod.units import angstrom, fs
 
 import os, numpy, itertools
@@ -63,6 +64,21 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
         row[1] = row[1]*fs
         mtw.dump_row(row)
     f.close()
+    mtw.finalize()
+
+
+def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
+    import itertools
+    names = ["cell.a.x", "cell.a.y", "cell.a.z", "cell.b.x", "cell.b.y", "cell.b.z", "cell.c.x", "cell.c.y", "cell.c.z", "cell.a", "cell.b", "cell.c", "cell.alpha", "cell.beta", "cell.gamma"]
+    filenames = list(os.path.join(destination, name) for name in names)
+    mtw = MultiTracksWriter(filenames, clear=clear)
+    cr = CellReader(filename)
+    for cell in itertools.islice(cr, sub.start, sub.stop, sub.step):
+        norms = numpy.sqrt((cell**2).sum(axis=0))
+        alpha = numpy.arccos(numpy.clip(numpy.dot(cell[:,1],cell[:,2])/norms[1]/norms[2], -1,1))
+        beta = numpy.arccos(numpy.clip(numpy.dot(cell[:,2],cell[:,0])/norms[2]/norms[0], -1,1))
+        gamma = numpy.arccos(numpy.clip(numpy.dot(cell[:,0],cell[:,1])/norms[0]/norms[1], -1,1))
+        mtw.dump_row(numpy.concatenate([cell.transpose().ravel(), norms, [alpha, beta, gamma]]))
     mtw.finalize()
 
 
