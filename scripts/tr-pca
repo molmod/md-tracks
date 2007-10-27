@@ -1,0 +1,113 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import MultiTracksReader, Track, dump_track, MultiTracksWriter
+from tracks.parse import parse_slice
+from tracks.log import log
+
+import numpy
+from optparse import OptionParser
+
+
+usage = """%prog [options] input1 input2 [input 3...]
+
+%prog applies principal component analysis to the input tracks. An overview
+of the eigenvalues and eigenvectors is printed on screen.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output.",
+)
+parser.add_option(
+    "-n", "--non-zero-mean", action="store_true", default=False,
+    help="Substract the mean from the input tracks prior to pca.",
+)
+parser.add_option(
+    "-c", "--corr-coeff", action="store_true", default=False,
+    help="Perform pca on the correlation coefficient matrix instead of the "
+         "covariance matrix.",
+)
+parser.add_option(
+    "-e", "--dump-evals",
+    help="Dump the eigenvalues to ${DUMP_EVALS}.",
+)
+parser.add_option(
+    "-m", "--dump-modes",
+    help="Dump the linear combinations of input tracks corresponding to each"
+         "pca mode to a series of files ${DUMP_MODES}.${index}",
+)
+(options, args) = parser.parse_args()
+
+if len(args) >= 2:
+    paths_in = args
+else:
+    parser.error("Expecting at least two arguments.")
+
+mtr = MultiTracksReader(paths_in)
+
+cov = 0
+means = 0
+length = 0
+
+for block in mtr.yield_buffers():
+    block = numpy.array(block).transpose()
+    length += len(block)
+    means += block.sum(axis=0)
+    cov += numpy.dot(block.transpose(), block)
+
+means /= length
+cov /= length
+
+if options.non_zero_mean:
+    cov -= numpy.outer(means, means)
+if options.corr_coeff:
+    diag_sqrt = numpy.sqrt(numpy.diag(cov))
+    cov /= numpy.outer(diag_sqrt, diag_sqrt)
+
+evals, evecs = numpy.linalg.eigh(cov)
+order = evals.argsort()[::-1]
+evals = evals[order]
+evecs = evecs[:,order]
+
+width_col1 = max(len(path_in) for path_in in paths_in)
+# print a nice table with the results
+print "% *s:" % (width_col1, "evals") + "".join("% 12.3e" % v for v in evals)
+print "-"*(width_col1+1+12*len(evals))
+for t_index, path_in in enumerate(paths_in):
+    print "% *s:" % (width_col1, path_in) + "".join("% 12.3e" % v for v in evecs[t_index])
+
+if options.dump_evals is not None:
+    dump_track(options.dump_evals, evals)
+
+if options.dump_modes is not None:
+    mtr = MultiTracksReader(paths_in)
+    paths_out = ["%s.%07i" % (options.dump_modes, index) for index in xrange(len(paths_in))]
+    mtw = MultiTracksWriter(paths_out)
+    for block in mtr.yield_buffers():
+        block = numpy.array(block)
+        modes = numpy.dot(evecs.transpose(), block)
+        mtw.dump_buffers(modes)
+
+

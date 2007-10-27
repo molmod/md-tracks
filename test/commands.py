@@ -742,4 +742,15 @@ class CommandsTestCase(BaseTestCase):
                 equal += (closest_distances == distances)
         self.assert_((equal > 0).all())
 
+    def test_pca(self):
+        self.from_xyz("thf01", "pos")
+        self.from_cp2k_ener("thf01")
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "bond", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-pca", glob.glob("tracks/atom.pos.bond.*") + ["-n", "-e", "tracks/pca.evals", "-m", "tracks/pca.mode"], verbose=True)
+        self.execute("tr-plot", [
+            "--xunit=ps", "--yunit=A", "--xlabel=Time", "--ylabel=Amplitude", "--title='First principal bond stretch mode'",
+            ":line", "tracks/time", "tracks/pca.mode.0000000",
+            os.path.join(output_dir, "pca_first_time"),
+        ])
+
 
