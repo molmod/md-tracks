@@ -147,14 +147,11 @@ class MultiTracksReader(object):
                     log(".", False)
                 yield row
 
-    def next(self):
-        return self
-
     __iter__ = yield_rows
 
 
 class MultiTracksWriter(object):
-    def __init__(self, filenames, dtypes=None, buffer_size=100*1024*1024, dot_interval=50):
+    def __init__(self, filenames, dtypes=None, buffer_size=100*1024*1024, dot_interval=50, clear=True):
         # make sure the files can be created
         for filename in filenames:
             directory = os.path.dirname(filename)
@@ -166,7 +163,7 @@ class MultiTracksWriter(object):
             if len(dtypes) != len(filenames):
                 raise Error("len(dtypes) != len(filenames)")
             self.dtypes = dtypes
-        self.tracks = [Track(filename, clear=True) for filename in filenames]
+        self.tracks = [Track(filename, clear=clear) for filename in filenames]
         self.buffer_length = buffer_size/sum(dtype.itemsize for dtype in self.dtypes)
         self.buffers = [numpy.zeros(self.buffer_length, dtype) for dtype in self.dtypes]
         self.current_row = 0
@@ -183,6 +180,8 @@ class MultiTracksWriter(object):
         self.current_row = 0
 
     def dump_row(self, row):
+        if len(row) != len(self.buffers):
+            raise Error("The row must contain len(self.buffers)=%i values." % len(self.buffers))
         for index, value in enumerate(row):
             self.buffers[index][self.current_row] = value
         self.current_row += 1

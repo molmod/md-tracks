@@ -20,42 +20,29 @@
 # --
 
 
-from tracks.convert import cpmd_traj_to_tracks
-from tracks.parser import parse_slice
-from tracks.util import AtomFilter
+from tracks.convert import cp2k_cell_to_tracks
+from tracks.parse import parse_slice
 from tracks.log import log
-from ccio.psf import PSFFile
 
 from optparse import OptionParser
 
 
-usage = """%prog [options] filename [output_directory]
+usage = """%prog filename [output_directory]
 
-%prog transforms the given CPMD trajectory file into separate tracks.
+%prog transforms the given cp2k cell file into separate tracks.
 
-Each track is associated with one Cartesian coordinate with the name
-atom.${middle_word}.${index}.${c} where
- * ${middle_word} is pos or vel, to indicate the kind of data stored in the
-   track file, i.e. positions or velocities.
- * ${index} is the atom index, seven characters wide, padded with zeros.
-   Counting starts at zero.
- * ${c} is x, y or z.
-The tracks are stored in atomic units in the ${output_directory}. If the
-${output_directory} argument is not given, it defaults to 'tracks'.
+Each track is associated with a column of the file:
+cell.a.x, cell.a.y, cell.a.z, cell.b.x, cell.b.z, cell.c.x, cell.c.y, cell.c.z, cell.a, cell.b, cell.c, cell.alpha, cell.beta, cell.gamma
+The tracks are stored in atomic units.
 
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
 parser.add_option(
     "-s", "--slice", default="::",
-    help="Subsample the trajectory with the given slice start:stop:step "
+    help="Subsample the energy file with the given slice start:stop:step "
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
-)
-parser.add_option(
-    "-a", "--filter-atoms",
-    help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
-         "comma separated list of of integers. Counting starts at zero.",
 )
 parser.add_option(
     "-q", "--quiet", action="store_false", dest="verbose", default=True,
@@ -78,21 +65,5 @@ else:
     parser.error("Expecting one or two arguments.")
 
 sub = parse_slice(options.slice)
-atom_filter = AtomFilter(options.filter_atoms)
-
-# first find out how many atoms the system has:
-first_index = None
-num_atoms = 0
-f = file(filename)
-for line in f:
-    index = int(line.split()[0])
-    if first_index is None:
-        first_index = index
-    elif first_index != index:
-        break
-    num_atoms += 1
-f.close()
-
-# then do the conversion
-cpmd_traj_to_tracks(filename, num_atoms, output_dir, sub, atom_filter.filter_atoms, clear=options.clear)
+cp2k_cell_to_tracks(filename, output_dir, sub=sub, clear=options.clear)
 

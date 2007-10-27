@@ -161,6 +161,10 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(tmp[0], 0.045570459, 5)
         self.assertAlmostEqual(tmp[1], 0.045686571, 5)
         self.assertAlmostEqual(tmp[-1], 0.045663267, 5)
+        tmp = load_track("tracks/conserved_quantity")
+        self.assertAlmostEqual(tmp[0], 0.000000000, 5)
+        self.assertAlmostEqual(tmp[1], 0.015600000, 5)
+        self.assertAlmostEqual(tmp[-1], 0.015900000, 5)
         # Load the energy file
         self.from_cp2k_ener("thf01", ["-s20:601:5"])
         # Test some values
@@ -188,6 +192,41 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(tmp[0], 0.045696413, 5)
         self.assertAlmostEqual(tmp[1], 0.045703436, 5)
         self.assertAlmostEqual(tmp[-1], 0.045589252, 5)
+        tmp = load_track("tracks/conserved_quantity")
+        self.assertAlmostEqual(tmp[0], 0.015900000, 5)
+        self.assertAlmostEqual(tmp[1], 0.015700000, 5)
+        self.assertAlmostEqual(tmp[-1], 0.015700000, 5)
+        # Load the energy file
+        self.from_cp2k_ener("thf01", ["--append"])
+        # Test some values
+        tmp = load_track("tracks/step")
+        self.assertEqual(tmp[117], 0)
+        self.assertEqual(tmp[118], 5)
+        self.assertEqual(tmp[-1], 5000)
+        tmp = load_track("tracks/time")
+        self.assertAlmostEqual(tmp[117]/fs, 0.0, 5)
+        self.assertAlmostEqual(tmp[118]/fs, 5.0, 5)
+        self.assertAlmostEqual(tmp[-1]/fs, 5000.0, 5)
+        tmp = load_track("tracks/kinetic_energy")
+        self.assertAlmostEqual(tmp[117], 0.015675735, 5)
+        self.assertAlmostEqual(tmp[118], 0.008711175, 5)
+        self.assertAlmostEqual(tmp[-1], 0.011256845, 5)
+        tmp = load_track("tracks/temperature")
+        self.assertAlmostEqual(tmp[117], 300.000000000, 5)
+        self.assertAlmostEqual(tmp[118], 166.713237534, 5)
+        self.assertAlmostEqual(tmp[-1], 215.431909415, 5)
+        tmp = load_track("tracks/potential_energy")
+        self.assertAlmostEqual(tmp[117], 0.029894724, 5)
+        self.assertAlmostEqual(tmp[118], 0.036975396, 5)
+        self.assertAlmostEqual(tmp[-1], 0.034406422, 5)
+        tmp = load_track("tracks/total_energy")
+        self.assertAlmostEqual(tmp[117], 0.045570459, 5)
+        self.assertAlmostEqual(tmp[118], 0.045686571, 5)
+        self.assertAlmostEqual(tmp[-1], 0.045663267, 5)
+        tmp = load_track("tracks/conserved_quantity")
+        self.assertAlmostEqual(tmp[117], 0.000000000, 5)
+        self.assertAlmostEqual(tmp[118], 0.015600000, 5)
+        self.assertAlmostEqual(tmp[-1], 0.015900000, 5)
 
     def test_to_xyz(self):
         self.from_xyz("thf01", "pos")
@@ -254,6 +293,13 @@ class CommandsTestCase(BaseTestCase):
             k2 = load_track("tracks/kinetic_energy")
             self.assert_(abs(t1-t2).max()/abs(t1).max() < 1e-5)
             self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
+            # - in write, no slice
+            self.from_cp2k_ener("thf01")
+            k1 = load_track("tracks/kinetic_energy")
+            lines = self.execute("tr-read", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
+            self.execute("tr-write", ["ps", "-", "kjmol", "tracks/test"], stdin=lines)
+            k2 = load_track("tracks/test")
+            self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
         check("::")
         check("20:601:5")
 
@@ -266,14 +312,14 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(length, 501)
         self.execute("tr-slice", ["tracks/time", ":%i:" % length, "tracks/time_sliced"])
         self.execute("tr-plot", [
-            "tracks/time_sliced", "tracks/vac_a1", "tracks/vac_a1.error",
-            "-x", "delta t", "-y", "VAC", "-t", "Velocity autocorrelation function (thf01)",
-            "--xunit=ps", os.path.join(output_dir, "ac_vac_a1.png")
+            "-x", "delta t", "-y", "VAC", "-t", "Velocity autocorrelation function (thf01)", "--xunit=ps",
+            ":line", "tracks/time_sliced", "tracks/vac_a1", "tracks/vac_a1.error",
+            os.path.join(output_dir, "ac_vac_a1.png")
         ])
         self.execute("tr-plot", [
-            "tracks/time_sliced", "tracks/vac_a1.normalized", "tracks/vac_a1.normalized.error",
-            "--ylim=-1,1", "-x", "delta t", "-y", "VAC", "-t", "Normalized velocity autocorrelation function (thf01)",
-            "--xunit=ps", os.path.join(output_dir, "ac_vac_a1.normalized.png")
+            "--ylim=-1,1", "-x", "delta t", "-y", "VAC", "-t", "Normalized velocity autocorrelation function (thf01)", "--xunit=ps",
+            ":line", "tracks/time_sliced", "tracks/vac_a1.normalized", "tracks/vac_a1.normalized.error",
+            os.path.join(output_dir, "ac_vac_a1.normalized.png")
         ])
         tmp1 = load_track("tracks/vac_a1")
         tmp2 = load_track("tracks/vac_a2")
@@ -297,14 +343,14 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(length, 801)
         self.execute("tr-slice", ["tracks/time", ":%i:" % length, "tracks/time_sliced"])
         self.execute("tr-plot", [
-            "tracks/time_sliced", "tracks/vac_b1", "tracks/vac_b1.error",
-            "-x", "delta t", "-y", "VAC", "-t", "Velocity autocorrelation function (thf01)",
-            "--xunit=ps", os.path.join(output_dir, "ac_vac_b1.png")
+            "-x", "delta t", "-y", "VAC", "-t", "Velocity autocorrelation function (thf01)", "--xunit=ps",
+            ":line", "tracks/time_sliced", "tracks/vac_b1", "tracks/vac_b1.error",
+            os.path.join(output_dir, "ac_vac_b1.png")
         ])
         self.execute("tr-plot", [
-            "tracks/time_sliced", "tracks/vac_b1.normalized", "tracks/vac_b1.normalized.error",
-            "--ylim=-1,1", "-x", "delta t", "-y", "VAC", "-t", "Normalized velocity autocorrelation function (thf01)",
-            "--xunit=ps", os.path.join(output_dir, "ac_vac_b1.normalized.png")
+            "--ylim=-1,1", "-x", "delta t", "-y", "VAC", "-t", "Normalized velocity autocorrelation function (thf01)", "--xunit=ps",
+            ":line", "tracks/time_sliced", "tracks/vac_b1.normalized", "tracks/vac_b1.normalized.error",
+            os.path.join(output_dir, "ac_vac_b1.normalized.png")
         ])
         tmp1 = load_track("tracks/vac_b1")
         tmp2 = load_track("tracks/vac_b2")
@@ -337,14 +383,14 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(length, 601)
         self.execute("tr-slice", ["tracks/time", ":%i:" % length, "tracks/time_sliced"])
         self.execute("tr-plot", [
-            "tracks/time_sliced", "tracks/vac.normalized", "tracks/vac.normalized.error",
-            "--ylim=-1,1", "-x", "delta t", "-y", "VAC", "-t", "Normalized velocity autocorrelation function (thf01)",
-            "--xunit=ps", os.path.join(output_dir, "integrate_vac.normalized.png")
+            "--ylim=-1,1", "-x", "delta t", "-y", "VAC", "-t", "Normalized velocity autocorrelation function (thf01)", "--xunit=ps",
+            ":line", "tracks/time_sliced", "tracks/vac.normalized", "tracks/vac.normalized.error",
+            os.path.join(output_dir, "integrate_vac.normalized.png")
         ])
         self.execute("tr-plot", [
-            "tracks/time_sliced", "tracks/vac.normalized.int", "tracks/vac.normalized.int.error",
-            "-x", "delta t", "-y", "Int(VAC)", "-t", "Integral of the normalized velocity autocorrelation function (thf01)",
-            "--xunit=ps", "--yunit=fs", os.path.join(output_dir, "integrate_vac.normalized.int.png")
+            "-x", "delta t", "-y", "Int(VAC)", "-t", "Integral of the normalized velocity autocorrelation function (thf01)", "--xunit=ps", "--yunit=fs",
+            ":line", "tracks/time_sliced", "tracks/vac.normalized.int", "tracks/vac.normalized.int.error",
+            os.path.join(output_dir, "integrate_vac.normalized.int.png")
         ])
 
     def test_rfft_irfft(self):
@@ -375,18 +421,18 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(freqs[0], 0.0)
         self.assert_((abs(freqs[1:]/wavenumbers[1:]-lightspeed)/lightspeed).max() < 1e-7)
         self.execute("tr-plot", [
-            "--xlabel=Wavenumber", "-s1::", "--ylabel=Amplitude", "--xunit=1/cm",
-            "tracks/wavenumbers", "tracks/spectrum",
+            "--xlabel=Wavenumber", "--ylabel=Amplitude", "--xunit=1/cm",
+            ":line", "-s1::", "tracks/wavenumbers", "tracks/spectrum",
             os.path.join(output_dir, "make_spectrum_wavenumbers.png")]
         )
         self.execute("tr-plot", [
-            "--xlabel=Frequency", "-s1::", "--ylabel=Amplitude", "--xunit=1/fs",
-            "tracks/freqs", "tracks/spectrum",
+            "--xlabel=Frequency", "--ylabel=Amplitude", "--xunit=1/fs",
+            ":line", "-s1::", "tracks/freqs", "tracks/spectrum",
             os.path.join(output_dir, "make_spectrum_freqs.png")]
         )
         self.execute("tr-plot", [
-            "--xlabel=Time", "-s1::", "--ylabel=Amplitude", "--xunit=fs", "--xinv",
-            "tracks/freqs", "tracks/spectrum",
+            "--xlabel=Time", "--ylabel=Amplitude", "--xunit=fs", "--xinv",
+            ":line", "-s1::", "tracks/freqs", "tracks/spectrum",
             os.path.join(output_dir, "make_spectrum_freqs_inv.png")]
         )
 
@@ -404,10 +450,9 @@ class CommandsTestCase(BaseTestCase):
         f.writelines(output)
         f.close()
         self.execute("tr-plot", [
-            "--xlabel=Wavenumber", "-s3::", "--ylabel=Amplitude",
-            "--xunit=1/cm",
-            "tracks/wavenumbers", "tracks/spectrum", "-",
-            "tracks/wavenumbers", "tracks/model",
+            "--xlabel=Wavenumber", "--ylabel=Amplitude", "--xunit=1/cm",
+            ":line", "-s3::", "tracks/wavenumbers", "tracks/spectrum",
+            ":line", "-s3::", "tracks/wavenumbers", "tracks/model",
             os.path.join(output_dir, "fit_peaks_spectrum.png"),
         ])
 
@@ -647,3 +692,27 @@ class CommandsTestCase(BaseTestCase):
     def test_fluct(self):
         self.from_cp2k_ener("thf01")
         self.execute("tr-fluct", ["tracks/temperature", "tracks/temperature", "tracks/test"])
+
+    def test_df(self):
+        self.from_xyz("thf01", "pos")
+        self.from_cp2k_ener("thf01")
+        atoms = self.execute("tr-filter", [os.path.join(input_dir, "thf01/init.psf"), "at", 'a.number==1'])[0]
+        self.execute("tr-ic-psf", ['--filter-atoms=%s' % atoms, 'tracks/atom.pos', os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-df", glob.glob("tracks/atom.pos.dist.???????.???????") + ["1.0*A", "1.2*A", "20", "tracks/atom.pos.dist.df"])
+        self.execute("tr-plot", [
+            "--title='C-H bond length distribution'", "--xlabel='C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
+            ":bar", "tracks/atom.pos.dist.df.bins", "tracks/atom.pos.dist.df.hist",
+            os.path.join(output_dir, "df_noerror.png"),
+        ])
+        self.execute("tr-df", glob.glob("tracks/atom.pos.dist.???????.???????") + ["--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.pos.dist.df"])
+        lines = []
+        for bin_filename in sorted(glob.glob("tracks/atom.pos.dist.df.bin.???????")):
+            output = self.execute("tr-blav", [bin_filename, "tracks/time"])
+            lines.append(output[0])
+        self.execute("tr-write", ["tracks/atom.pos.dist.df.hist", "tracks/atom.pos.dist.df.hist.error"], stdin=lines)
+        self.execute("tr-plot", [
+            "--title='C-H bond length distribution'", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
+            ":bar", "tracks/atom.pos.dist.df.bins", "tracks/atom.pos.dist.df.hist", "tracks/atom.pos.dist.df.hist.error",
+            os.path.join(output_dir, "df_error.png"),
+        ])
+

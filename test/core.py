@@ -120,6 +120,25 @@ class MultiTrackTestCase(BaseTestCase):
             self.assert_((b==b_check).all())
             self.assert_((b.dtype==b_check.dtype))
 
+    def test_append(self):
+        buffers, names = self.get_buffers()
+
+        mtw = MultiTracksWriter(names, [b.dtype for b in buffers], buffer_size=5*1024)
+        for row in zip(*buffers):
+            mtw.dump_row(row)
+        mtw.finalize()
+        mtw = MultiTracksWriter(names, [b.dtype for b in buffers], buffer_size=5*1024, clear=False)
+        for row in zip(*buffers):
+            mtw.dump_row(row)
+        mtw.finalize()
+
+        buffers_check = [load_track(name) for name in names]
+
+        for b, b_check in zip(buffers, buffers_check):
+            b = numpy.concatenate([b,b])
+            self.assert_((b==b_check).all())
+            self.assert_((b.dtype==b_check.dtype))
+
     def test_read(self):
         buffers, names = self.get_buffers()
 

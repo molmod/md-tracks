@@ -21,6 +21,7 @@
 
 from tracks.core import MultiTracksReader, MultiTracksWriter
 from ccio.xyz import XYZReader, XYZWriter
+from ccio.cp2k import CellReader
 from molmod.units import angstrom, fs
 
 import os, numpy, itertools
@@ -31,7 +32,7 @@ __all__ = [
 ]
 
 
-def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit=angstrom, atom_indexes=None):
+def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit=angstrom, atom_indexes=None, clear=True):
     """Convert an xyz file into separate tracks."""
     xyz_reader = XYZReader(filename, sub, file_unit=file_unit)
 
@@ -44,29 +45,45 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
         for cor in ["x", "y", "z"]:
             filenames.append(os.path.join(destination, "atom.%s.%07i.%s" % (middle_word, index, cor)))
 
-    mtw = MultiTracksWriter(filenames)
+    mtw = MultiTracksWriter(filenames, clear=clear)
     for title, coordinates in xyz_reader:
         mtw.dump_row(coordinates[atom_indexes].ravel())
     mtw.finalize()
 
 
-def cp2k_ener_to_tracks(filename, destination, sub=slice(None)):
+def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     """Convert a cp2k energy file into separate tracks."""
     import itertools
-    names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy"]
+    names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy", "conserved_quantity"]
     filenames = list(os.path.join(destination, name) for name in names)
-    dtypes = [int, float, float, float, float, float]
-    mtw = MultiTracksWriter(filenames)
+    dtypes = [int, float, float, float, float, float, float]
+    dtypes = [numpy.dtype(d) for d in dtypes]
+    mtw = MultiTracksWriter(filenames, dtypes, clear=clear)
     f = file(filename)
     for line in itertools.islice(f, sub.start, sub.stop, sub.step):
-        row = [float(word) for word in line.split()[:6]]
+        row = [float(word) for word in line.split()]
         row[1] = row[1]*fs
         mtw.dump_row(row)
     f.close()
     mtw.finalize()
 
 
-def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_indexes=None):
+def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
+    import itertools
+    names = ["cell.a.x", "cell.a.y", "cell.a.z", "cell.b.x", "cell.b.y", "cell.b.z", "cell.c.x", "cell.c.y", "cell.c.z", "cell.a", "cell.b", "cell.c", "cell.alpha", "cell.beta", "cell.gamma"]
+    filenames = list(os.path.join(destination, name) for name in names)
+    mtw = MultiTracksWriter(filenames, clear=clear)
+    cr = CellReader(filename)
+    for cell in itertools.islice(cr, sub.start, sub.stop, sub.step):
+        norms = numpy.sqrt((cell**2).sum(axis=0))
+        alpha = numpy.arccos(numpy.clip(numpy.dot(cell[:,1],cell[:,2])/norms[1]/norms[2], -1,1))
+        beta = numpy.arccos(numpy.clip(numpy.dot(cell[:,2],cell[:,0])/norms[2]/norms[0], -1,1))
+        gamma = numpy.arccos(numpy.clip(numpy.dot(cell[:,0],cell[:,1])/norms[0]/norms[1], -1,1))
+        mtw.dump_row(numpy.concatenate([cell.transpose().ravel(), norms, [alpha, beta, gamma]]))
+    mtw.finalize()
+
+
+def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_indexes=None, clear=True):
     """Convert a cpmd trajectory file into separate tracks.
 
     num_atoms must be the number of atoms in the system.
@@ -80,7 +97,7 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
         for index in atom_indexes
     ), [])
     filenames = list(os.path.join(destination, name) for name in names)
-    mtw = MultiTracksWriter(filenames)
+    mtw = MultiTracksWriter(filenames, clear=clear)
 
     f = file(filename)
     counter = 0

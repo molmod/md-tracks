@@ -37,7 +37,9 @@ time step. On each line the values are white-space separated. Optionally, each
 output* argument can be prepended with a unit. %prog will interpret the data on
 stdin using the these units. The data in the tracks are always stored in
 atomic units. unit1 defaults to au. The other unit arguments default to the unit
-of the previous input.
+of the previous input. Instead of a track filename, one can also give a bare
+minus sign as argument, indicating that the corresponding column on the stdin
+has to be ignored.
 
 %prog -h prints out all available options."""
 
@@ -76,10 +78,17 @@ if len(args) >= 1:
 else:
     parser.error("Expecting at least one argument.")
 
+columns = [index for index, path_out in enumerate(paths_out) if path_out != '-']
+print columns
+paths_out = [path_out for path_out in paths_out if path_out != '-']
+print paths_out
+
 sub = parse_slice(options.slice)
-units = numpy.array(units)
+units = numpy.array(units)[columns]
 mtw = MultiTracksWriter(paths_out)
 for line in itertools.islice(sys.stdin, sub.start, sub.stop, sub.step):
-    row = numpy.array(list(float(word) for word in line.split()))
+    words = line.split()
+    row = numpy.array(list(float(words[index]) for index in columns))
+    print row
     mtw.dump_row(row*units)
 mtw.finalize()

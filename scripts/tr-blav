@@ -98,7 +98,7 @@ s = numpy.array(s)*time_step
 l = len(y)/10
 unit = parse_unit(options.unit)
 time_unit = parse_unit(options.time_unit)
-log("%s %s %s" % (f.mean()/unit, y[-l:].mean()/unit, s[-l:].mean()/time_unit))
+print "%s %s %s" % (f.mean()/unit, y[-l:].mean()/unit, s[-l:].mean()/time_unit)
 
 if options.plot_error is not None:
     import pylab

@@ -67,6 +67,10 @@ parser.add_option(
     "-q", "--quiet", action="store_false", dest="verbose", default=True,
     help="Don't print any output."
 )
+parser.add_option(
+    "--append", action="store_false", dest="clear", default=True,
+    help="Append to existing tracks if possible."
+)
 (options, args) = parser.parse_args()
 
 
@@ -83,5 +87,5 @@ file_unit = parse_unit(options.unit)
 sub = parse_slice(options.slice)
 atom_filter = AtomFilter(options.filter_atoms)
 
-xyz_to_tracks(filename, middle_word, output_dir, sub, file_unit, atom_filter.filter_atoms)
+xyz_to_tracks(filename, middle_word, output_dir, sub, file_unit, atom_filter.filter_atoms, clear=options.clear)
 

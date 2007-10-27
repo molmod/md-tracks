@@ -61,8 +61,7 @@ def bend_track(prefix1, prefix2, prefix3, sub):
         delta_b /= norm_b
     # calculate the dot product
     dot = sum(delta_a*delta_b for delta_a, delta_b in zip(deltas_a, deltas_b))
-    dot[dot > 1] = 1
-    dot[dot < -1] = -1
+    dot = numpy.clip(dot, -1, 1)
     angle = numpy.arccos(dot)
     return angle
 
@@ -102,8 +101,7 @@ def dihed_track(prefix1, prefix2, prefix3, prefix4, sub):
         delta_c /= norm_c
     # calculate the dot product and the angle
     dot = sum(delta_a*delta_c for delta_a, delta_c in zip(deltas_a, deltas_c))
-    dot[dot > 1] = 1
-    dot[dot < -1] = -1
+    dot = numpy.clip(dot, -1, 1)
     angle = numpy.arccos(dot)
     swap = ((
         deltas_b[0] * (deltas_a[1] * deltas_c[2] - deltas_a[2] * deltas_c[1]) +
