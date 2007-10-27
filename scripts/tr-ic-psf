@@ -31,16 +31,37 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] prefix connectivity.psf
+usage = """%prog [options] prefix kind [atoms1 atoms2 [atoms3 [atoms4]]] connectivity.psf
 
-%prog computes all the internal coordinates for the Cartesian tracks with the
-given prefix. The list of internal coordinates is taken from the connectivity
-file. Currently only the psf format is supported for the latter. The output is
-written to the following kinds of files:
+%prog computes all the internal coordinates of the given ${kind} for the
+Cartesian tracks with the given ${prefix}. ${kind} can be one of 'bond', 'bend'
+or 'dihed'. The cartesian tracks are supposed to have the following filenames:
+${prefix}.${index}.${c}, where ${index} is the atom index padded with zeros up
+to 7 characters and ${x} is x, y or z.
 
-prefix.dist.${index1}.${index2}
-prefix.bend.${index1}.${index2}.${index3}
-prefix.dihed.${index1}.${index2}.${index3}.${index4}
+The list of internal coordinates is taken from the file ${connectivity.psf}.
+Optionally one can reduce the internal coordinates to those that belong to the
+given set of atoms. Each ${atoms*} argument is a comma-separated list of atom
+indexes.
+
+Case ${kind}=bond
+
+The output is written to: ${prefix}.bond.${index1}.${index2}
+Only two or none ${atoms*} arguments are allowed. If the ${atoms1} and ${atoms2}
+arguments are given, only bond lengths between an atom from ${atoms1} and and
+atom from ${atoms2} are considered.
+
+Case ${kind}=bend
+
+The output is written to ${prefix}.bend.${index1}.${index2}.${index3}
+Only three or none ${atoms*} arguments are allowed. Their interpretation is
+similar to the bond case.
+
+Case ${kind}=dihed
+
+The output is written to ${prefix}.dihed.${index1}.${index2}.${index3}.${index4}
+Only four or none ${atoms*} arguments are allowed. Their interpretation is
+similar to the bond case.
 
 %prog -h prints out all available options."""
 
@@ -52,10 +73,9 @@ parser.add_option(
          "The slice interpretation is pythonic. [default=%default]",
 )
 parser.add_option(
-    "-a", "--filter-atoms",
-    help="Only consider internal coordinates in which on of the atoms indexes "
-         "is listed in FILTER_ATOMS. FILTER_ATOMS is a comma separated list of "
-         "of integers. Counting starts at zero.",
+    "-o", "--output-prefix",
+    help="Use this prefix for the output files, if not given the prefix of the"
+         "Cartesian coordinate tracks is used.",
 )
 parser.add_option(
     "-q", "--quiet", action="store_false", dest="verbose", default=True,
@@ -65,40 +85,87 @@ parser.add_option(
 
 
 log.verbose = options.verbose
-if len(args) == 2:
-    prefix, path_psf = args
+if len(args) >= 3:
+    prefix = args[0]
+    kind = args[1].lower()
+    path_psf = args[-1]
 else:
-    parser.error("Expecting two arguments.")
+    parser.error("Expecting at least three arguments.")
 
 sub = parse_slice(options.slice)
 psf = PSFFile(path_psf)
-atom_filter = AtomFilter(options.filter_atoms)
+if options.output_prefix is None:
+    output_prefix = prefix
+else:
+    output_prefix = options.output_prefix
 
-for index1, index2 in psf.bonds:
-    if atom_filter(index1, index2):
-        try:
-            name = '%s.dist.%07i.%07i' % (prefix, index1, index2)
-            dump_track(name, dist_track("%s.%07i" % (prefix, index1), "%s.%07i" % (prefix, index2), sub))
-            log("DONE %s" % name)
-        except TrackNotFoundError, e:
-            log("WARNING %s" % str(e))
+if kind == 'bond':
+    if len(args) == 3:
+        atom_filter1 = AtomFilter()
+        atom_filter2 = AtomFilter()
+    elif len(args) == 5:
+        atom_filter1 = AtomFilter(args[-3])
+        atom_filter2 = AtomFilter(args[-2])
+    else:
+        parser.error("When kind is bond, three or five arguments are expected, got %i." % len(args))
 
-for index1, index2, index3 in psf.bends:
-    if atom_filter(index1, index2, index3):
-        try:
-            name = '%s.bend.%07i.%07i.%07i' % (prefix, index1, index2, index3)
-            dump_track(name, bend_track("%s.%07i" % (prefix, index1), "%s.%07i" % (prefix, index2), "%s.%07i" % (prefix, index3), sub))
-            log("DONE %s" % name)
-        except TrackNotFoundError, e:
-            log("WARNING %s" % str(e))
+    for index1, index2 in psf.bonds:
+        if ((atom_filter1(index1) and atom_filter2(index2)) or
+            (atom_filter1(index2) and atom_filter2(index1))):
+            try:
+                name = '%s.bond.%07i.%07i' % (output_prefix, index1, index2)
+                dump_track(name, dist_track("%s.%07i" % (prefix, index1), "%s.%07i" % (prefix, index2), sub))
+                log("DONE %s" % name)
+            except TrackNotFoundError, e:
+                log("WARNING %s" % str(e))
 
-for index1, index2, index3, index4 in psf.dihedrals:
-    if atom_filter(index1, index2, index3, index4):
-        try:
-            name = '%s.dihed.%07i.%07i.%07i.%07i' % (prefix, index1, index2, index3, index4)
-            dump_track(name, dihed_track("%s.%07i" % (prefix, index1), "%s.%07i" % (prefix, index2), "%s.%07i" % (prefix, index3), "%s.%07i" % (prefix, index4), sub))
-            log("DONE %s" % name)
-        except TrackNotFoundError, e:
-            log("WARNING %s" % str(e))
+elif kind == 'bend':
+    if len(args) == 3:
+        atom_filter1 = AtomFilter()
+        atom_filter2 = AtomFilter()
+        atom_filter3 = AtomFilter()
+    elif len(args) == 6:
+        atom_filter1 = AtomFilter(args[-4])
+        atom_filter2 = AtomFilter(args[-3])
+        atom_filter3 = AtomFilter(args[-2])
+    else:
+        parser.error("When kind is bond, three or six arguments are expected, got %i." % len(args))
+
+    for index1, index2, index3 in psf.bends:
+        if ((atom_filter1(index1) and atom_filter2(index2) and atom_filter3(index3)) or
+            (atom_filter1(index3) and atom_filter2(index2) and atom_filter3(index1))):
+            try:
+                name = '%s.bend.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
+                dump_track(name, bend_track("%s.%07i" % (prefix, index1), "%s.%07i" % (prefix, index2), "%s.%07i" % (prefix, index3), sub))
+                log("DONE %s" % name)
+            except TrackNotFoundError, e:
+                log("WARNING %s" % str(e))
+
+elif kind == 'dihed':
+    if len(args) == 3:
+        atom_filter1 = AtomFilter()
+        atom_filter2 = AtomFilter()
+        atom_filter3 = AtomFilter()
+        atom_filter4 = AtomFilter()
+    elif len(args) == 7:
+        atom_filter1 = AtomFilter(args[-5])
+        atom_filter2 = AtomFilter(args[-4])
+        atom_filter3 = AtomFilter(args[-3])
+        atom_filter4 = AtomFilter(args[-2])
+    else:
+        parser.error("When kind is bond, three or seven arguments are expected, got %i." % len(args))
+
+    for index1, index2, index3, index4 in psf.dihedrals:
+        if ((atom_filter1(index1) and atom_filter2(index2) and atom_filter3(index3) and atom_filter4(index4)) or
+            (atom_filter1(index4) and atom_filter2(index3) and atom_filter3(index2) and atom_filter4(index1))):
+            try:
+                name = '%s.dihed.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
+                dump_track(name, dihed_track("%s.%07i" % (prefix, index1), "%s.%07i" % (prefix, index2), "%s.%07i" % (prefix, index3), "%s.%07i" % (prefix, index4), sub))
+                log("DONE %s" % name)
+            except TrackNotFoundError, e:
+                log("WARNING %s" % str(e))
+
+else:
+    parser.error("Unknown kind: %s" % kind)
 
 

@@ -212,7 +212,7 @@ DataDescriptor.kinds["line"] = LineDescriptor
 class BarDescriptor(DataDescriptor):
 
     def plot(self):
-        fraction = 0.7
+        fraction = 0.8
         delta = self.x[1:] - self.x[:-1]
         left = numpy.zeros(len(self.x), float)
         left[1:] = self.x[1:] - 0.5*fraction*delta
@@ -221,7 +221,19 @@ class BarDescriptor(DataDescriptor):
         right[:-1] = self.x[:-1] + 0.5*fraction*delta
         right[-1] = self.x[-1] + 0.5*fraction*delta[-1]
         width = right-left
-        self.patch = pylab.bar(left, self.y, width, color=self.color, yerr=self.error, ecolor="k")[0]
+        self.patch = pylab.bar(left, self.y, width, color=self.color, ecolor="k", linewidth=1)[0]
+        if self.error is not None:
+            fraction = 0.5
+            left[1:] = self.x[1:] - 0.5*fraction*delta
+            left[0] = self.x[0] - 0.5*fraction*delta[0]
+            right[:-1] = self.x[:-1] + 0.5*fraction*delta
+            right[-1] = self.x[-1] + 0.5*fraction*delta[-1]
+            from matplotlib.patches import Polygon
+            for l, r, x, y, e in zip(left, right, self.x, self.y, self.error):
+                pylab.gca().add_patch(Polygon([(l, y+e),(r,y+e)], ec='k', linewidth=1, fill=False))
+                pylab.gca().add_patch(Polygon([(l, y-e),(r,y-e)], ec='k', linewidth=1, fill=False))
+                pylab.gca().add_patch(Polygon([(x, y-e),(x,y+e)], ec='k', linewidth=1, fill=False))
+
 
 DataDescriptor.kinds["bar"] = BarDescriptor
 
@@ -233,7 +245,6 @@ for word in sys.argv[1:]:
         blocks.append([word])
     else:
         blocks[-1].append(word)
-print blocks
 
 (global_options, global_args) = global_parser.parse_args(blocks[0])
 if global_options.line_help:
@@ -278,6 +289,7 @@ patches = []
 labels = []
 if global_options.grid:
     pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
+    pylab.gca().set_axisbelow(True)
 for line_block in blocks[1:]:
     dd = DataDescriptor(line_block)
     dd.plot()

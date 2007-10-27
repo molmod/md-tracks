@@ -115,7 +115,7 @@ def dihed_track(prefix1, prefix2, prefix3, prefix4, sub):
 class AtomFilter(object):
     """A tool to test whether some atoms belong to a user defined set."""
 
-    def __init__(self, filter_atoms):
+    def __init__(self, filter_atoms=None):
         """Initialize the atom filter.
 
         The argument filter_atoms can be a list of atom indexes or a string with

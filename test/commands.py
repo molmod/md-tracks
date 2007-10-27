@@ -542,7 +542,7 @@ class CommandsTestCase(BaseTestCase):
     def test_ic_psf(self):
         def check_ic_psf(nbonds, nbends, ndiheds):
             # bond
-            bond_filenames = glob.glob("tracks/atom.pos.dist*")
+            bond_filenames = glob.glob("tracks/atom.pos.bond*")
             self.assertEqual(len(bond_filenames), nbonds)
             for bond_filename in bond_filenames:
                 bond = load_track(bond_filename)
@@ -566,13 +566,17 @@ class CommandsTestCase(BaseTestCase):
                 dihed_check = dihed_track("tracks/atom.pos.%07i" % index1, "tracks/atom.pos.%07i" % index2, "tracks/atom.pos.%07i" % index3, "tracks/atom.pos.%07i" % index4, slice(None))
                 self.assert_((dihed==dihed_check).all())
         self.from_xyz("thf01", "pos")
-        self.execute("tr-ic-psf", ["tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "bond", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "bend", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "dihed", os.path.join(input_dir, "thf01/init.psf")])
         check_ic_psf(13,25,33)
         # clean up and start again with --filter-atoms
         shutil.rmtree("tracks")
         self.from_xyz("thf01", "pos")
-        self.execute("tr-ic-psf", ["-a2,5", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
-        check_ic_psf(4,10,18)
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "bond", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "bend", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "dihed", "5,6,7,8,9,10,11,12", "1,2,3,4", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
+        check_ic_psf(8,5,12)
 
     def test_mean_std(self):
         self.from_xyz("thf01", "vel", ["-u1"])
@@ -697,22 +701,22 @@ class CommandsTestCase(BaseTestCase):
         self.from_xyz("thf01", "pos")
         self.from_cp2k_ener("thf01")
         atoms = self.execute("tr-filter", [os.path.join(input_dir, "thf01/init.psf"), "at", 'a.number==1'])[0]
-        self.execute("tr-ic-psf", ['--filter-atoms=%s' % atoms, 'tracks/atom.pos', os.path.join(input_dir, "thf01/init.psf")])
-        self.execute("tr-df", glob.glob("tracks/atom.pos.dist.???????.???????") + ["1.0*A", "1.2*A", "20", "tracks/atom.pos.dist.df"])
+        self.execute("tr-ic-psf", ['tracks/atom.pos', 'bond', '1,2,3,4', '5,6,7,8,9,10,11,12', os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.df"])
         self.execute("tr-plot", [
             "--title='C-H bond length distribution'", "--xlabel='C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
-            ":bar", "tracks/atom.pos.dist.df.bins", "tracks/atom.pos.dist.df.hist",
+            ":bar", "tracks/atom.pos.bond.df.bins", "tracks/atom.pos.bond.df.hist",
             os.path.join(output_dir, "df_noerror.png"),
         ])
-        self.execute("tr-df", glob.glob("tracks/atom.pos.dist.???????.???????") + ["--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.pos.dist.df"])
+        self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.df"])
         lines = []
-        for bin_filename in sorted(glob.glob("tracks/atom.pos.dist.df.bin.???????")):
+        for bin_filename in sorted(glob.glob("tracks/atom.pos.bond.df.bin.???????")):
             output = self.execute("tr-blav", [bin_filename, "tracks/time"])
             lines.append(output[0])
-        self.execute("tr-write", ["tracks/atom.pos.dist.df.hist", "tracks/atom.pos.dist.df.hist.error"], stdin=lines)
+        self.execute("tr-write", ["tracks/atom.pos.bond.df.hist", "tracks/atom.pos.bond.df.hist.error"], stdin=lines)
         self.execute("tr-plot", [
             "--title='C-H bond length distribution'", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
-            ":bar", "tracks/atom.pos.dist.df.bins", "tracks/atom.pos.dist.df.hist", "tracks/atom.pos.dist.df.hist.error",
+            ":bar", "tracks/atom.pos.bond.df.bins", "tracks/atom.pos.bond.df.hist", "tracks/atom.pos.bond.df.hist.error",
             os.path.join(output_dir, "df_error.png"),
         ])
 
