@@ -728,4 +728,18 @@ class CommandsTestCase(BaseTestCase):
         tcheck = load_track("tracks/tcheck")
         self.assert_((t==tcheck).all())
 
+    def test_closest_distance(self):
+        self.from_xyz("thf01", "pos")
+        group_a = ["tracks/atom.pos.0000005", "tracks/atom.pos.0000003", "tracks/atom.pos.0000007", "tracks/atom.pos.0000008"]
+        group_b = ["tracks/atom.pos.0000009", "tracks/atom.pos.0000010", "tracks/atom.pos.0000011", "tracks/atom.pos.0000012"]
+        self.execute("tr-closest-distance", group_a + ["-"] + group_b + ["tracks/atom.pos.cd"])
+        closest_distances = load_track("tracks/atom.pos.cd")
+        equal = numpy.zeros(len(closest_distances), int)
+        for atom_a in group_a:
+            for atom_b in group_b:
+                distances = dist_track(atom_a, atom_b)
+                self.assert_((distances >= closest_distances).all())
+                equal += (closest_distances == distances)
+        self.assert_((equal > 0).all())
+
 

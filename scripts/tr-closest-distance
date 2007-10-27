@@ -1,0 +1,78 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import MultiTracksReader, Track
+from tracks.parse import parse_slice
+from tracks.log import log
+
+import numpy, itertools
+from optparse import OptionParser
+
+
+usage = """%prog [options] prefix_a1 [prefix_a2 ...] - prefix_b1 [prefix_b2] output
+
+%prog computes the closest distance at each time step between the Cartesian
+coordinates in the files ${prefix_a*}.${c} and ${prefix_b*}.${c}, where ${c}
+is x, y or z. The result is written to ${output}.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
+)
+(options, args) = parser.parse_args()
+
+path_out = args[-1]
+prefixes_a, prefixes_b = " ".join(args[:-1]).split(" - ")
+def get_mtr(prefixes):
+    prefixes = prefixes.split()
+    if len(prefixes) == 0: parser.error("Expecting at least one coordinate in each group.")
+    filenames = sum((["%s.x" % prefix, "%s.y" % prefix,"%s.z" % prefix] for prefix in prefixes), [])
+    return MultiTracksReader(filenames), prefixes
+
+mtr_a, prefixes_a = get_mtr(prefixes_a)
+mtr_b, prefixes_b = get_mtr(prefixes_b)
+
+if len(set(prefixes_a) & set(prefixes_b)) > 0:
+    parser.error("The two sets of prefixes must be disjoint.")
+
+n_a = len(prefixes_a)
+n_b = len(prefixes_b)
+
+track_out = Track(path_out)
+for block_a, block_b in itertools.izip(mtr_a.yield_buffers(), mtr_b.yield_buffers()):
+    block_a = numpy.array(block_a)
+    block_b = numpy.array(block_b)
+    closest_distances = None
+    for i_a in xrange(n_a):
+        for i_b in xrange(n_b):
+            distances = numpy.sqrt(((block_a[i_a*3:(i_a+1)*3] - block_b[i_b*3:(i_b+1)*3])**2).sum(axis=0))
+            if closest_distances is None:
+                closest_distances = distances
+            else:
+                closer = distances < closest_distances
+                closest_distances[closer] = distances[closer]
+    track_out.append(closest_distances)
+
+
