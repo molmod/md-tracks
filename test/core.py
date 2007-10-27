@@ -32,22 +32,35 @@ log.verbose = False
 
 class TrackTestCase(BaseTestCase):
     def get_arrays(self):
+        floats = [numpy.float32, numpy.float64]
+        try:
+            floats.append(numpy.float128)
+        except AttributeError:
+            pass
+        try:
+            floats.append(numpy.float96)
+        except AttributeError:
+            pass
+
+        complexes = [numpy.complex64, numpy.complex128]
+        try:
+            complexes.append(numpy.complex256)
+        except AttributeError:
+            pass
+        try:
+            complexes.append(numpy.complex192)
+        except AttributeError:
+            pass
+
+        ints = [numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64]
+
         # return a list of different types of arrays, one-dimensional and len=50
         return [
-            numpy.random.normal(0,1,50).astype(numpy.float32),
-            numpy.random.normal(0,1,50).astype(numpy.float64),
-            numpy.random.normal(0,1,50).astype(numpy.float128),
-            numpy.random.randint(0,10,50).astype(numpy.int8),
-            numpy.random.randint(0,10,50).astype(numpy.int16),
-            numpy.random.randint(0,10,50).astype(numpy.int32),
-            numpy.random.randint(0,10,50).astype(numpy.int64),
-            numpy.random.randint(0,10,50).astype(numpy.uint8),
-            numpy.random.randint(0,10,50).astype(numpy.uint16),
-            numpy.random.randint(0,10,50).astype(numpy.uint32),
-            numpy.random.randint(0,10,50).astype(numpy.uint64),
-            (numpy.random.normal(0,1,50)+numpy.random.normal(0,1,50)*1.0j).astype(numpy.complex64),
-            (numpy.random.normal(0,1,50)+numpy.random.normal(0,1,50)*1.0j).astype(numpy.complex128),
-            (numpy.random.normal(0,1,50)+numpy.random.normal(0,1,50)*1.0j).astype(numpy.complex256),
+            numpy.random.normal(0,1,50).astype(f) for f in floats
+        ] + [
+            numpy.random.randint(0,10,50).astype(f) for f in ints
+        ] + [
+            (numpy.random.normal(0,1,50)+numpy.random.normal(0,1,50)*1.0j).astype(c) for c in complexes
         ]
 
     def test_load_dump(self):
