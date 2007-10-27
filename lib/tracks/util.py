@@ -30,7 +30,7 @@ __all__ = [
 ]
 
 
-def dist_track(prefix1, prefix2, sub):
+def dist_track(prefix1, prefix2, sub=slice(None)):
     """Compute the distance between two atoms at each time step."""
     deltas = []
     for c in ['x','y','z']:
@@ -41,7 +41,7 @@ def dist_track(prefix1, prefix2, sub):
     return distances
 
 
-def bend_track(prefix1, prefix2, prefix3, sub):
+def bend_track(prefix1, prefix2, prefix3, sub=slice(None)):
     """Compute the bending angle of three atoms at each time step."""
     deltas_a = []
     deltas_b = []
@@ -66,7 +66,7 @@ def bend_track(prefix1, prefix2, prefix3, sub):
     return angle
 
 
-def dihed_track(prefix1, prefix2, prefix3, prefix4, sub):
+def dihed_track(prefix1, prefix2, prefix3, prefix4, sub=slice(None)):
     """Compute the dihedral angle of three atoms at each time step."""
     deltas_a = []
     deltas_b = []
