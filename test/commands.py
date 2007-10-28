@@ -696,6 +696,11 @@ class CommandsTestCase(BaseTestCase):
         check_filter('water32', 'mol', 'm.index==5', '5')
         check_filter('water32', 'mol', 'a.index==6', '2')
 
+    def test_filter_rings(self):
+        output = self.execute("tr-filter-rings", [os.path.join(input_dir, "thf01/init.psf"), "5"])
+        self.assert_(len(output)==1)
+        self.assertEqual(set([0,1,2,3,4]), set(int(word) for word in output[0].split(",")))
+
     def test_format_indexes(self):
         output = self.execute("tr-format-indexes", ["none", "0,1,2,3"])[0]
         self.assertEqual(output, "0,1,2,3")

@@ -1,0 +1,60 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from ccio.psf import PSFFile
+from molmod.graphs import MatchGenerator, RingMatchDefinition
+
+import numpy
+from optparse import OptionParser
+
+
+usage = """%prog [options] connectivity.psf ring_size
+
+%prog prints out all the ring structures in the psf file, one line per ring
+structure. Each line consists of a comma-separated list of atom indexes that
+form a ring. The order of the atom indexes correspons to the order of the
+atoms in the rings."""
+
+parser = OptionParser(usage)
+(options, args) = parser.parse_args()
+
+
+if len(args) == 2:
+    path_psf, ring_size = args
+    ring_size = int(ring_size)
+else:
+    parser.error("Expecting two arguments.")
+
+
+# Initialize the atom and molecule objects:
+psf = PSFFile(path_psf)
+graph = psf.get_graph()
+graph.init_neighbors()
+
+match_generator = MatchGenerator(
+    RingMatchDefinition(ring_size),
+)
+for ring_match in match_generator(graph):
+    if len(ring_match.forward) == ring_size:
+        # ignore smaller rings
+        print ",".join([str(atom_index) for key, atom_index in sorted(ring_match.forward.items())])
+
