@@ -47,22 +47,22 @@ if len(args) == 2 or len(args) == 3:
     path_in = args[0]
     x_step = parse_x_step(args[1], "x")
     if len(args) == 3:
-        path_in_error = args[2]
+        path_error = args[2]
     else:
-        path_in_error = "%s.error" % path_in
-        if not os.path.isfile(path_in_error):
-            path_in_error = None
+        path_error = "%s.error" % path_in
+        if not os.path.isfile(path_error):
+            path_error = None
 else:
     parser.error("Expecting two or three arguments.")
 
 f = load_track(path_in)
-fint = numpy.cumsum(f)*x_step
+fint = f.cumsum()*x_step
 name = "%s.int" % path_in
 dump_track(name, fint)
 log("WRITTEN %s" % name)
 
-if path_in_error is not None:
-    e = load_track(path_in_error)
+if path_error is not None:
+    e = load_track(path_error)
     var = e**2
     varint = numpy.cumsum(var)*x_step
     eint = numpy.sqrt(varint)
