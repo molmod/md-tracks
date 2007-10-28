@@ -1,0 +1,129 @@
+PSF
+
+      1 !NTITLE
+None
+
+    108 !NATOM
+      1 NM00    1 NAME Ar    AR 0.0    39.948000 0
+      2 NM01    2 NAME Ar    AR 0.0    39.948000 0
+      3 NM02    3 NAME Ar    AR 0.0    39.948000 0
+      4 NM03    4 NAME Ar    AR 0.0    39.948000 0
+      5 NM04    5 NAME Ar    AR 0.0    39.948000 0
+      6 NM05    6 NAME Ar    AR 0.0    39.948000 0
+      7 NM06    7 NAME Ar    AR 0.0    39.948000 0
+      8 NM07    8 NAME Ar    AR 0.0    39.948000 0
+      9 NM08    9 NAME Ar    AR 0.0    39.948000 0
+     10 NM09   10 NAME Ar    AR 0.0    39.948000 0
+     11 NM10   11 NAME Ar    AR 0.0    39.948000 0
+     12 NM11   12 NAME Ar    AR 0.0    39.948000 0
+     13 NM12   13 NAME Ar    AR 0.0    39.948000 0
+     14 NM13   14 NAME Ar    AR 0.0    39.948000 0
+     15 NM14   15 NAME Ar    AR 0.0    39.948000 0
+     16 NM15   16 NAME Ar    AR 0.0    39.948000 0
+     17 NM16   17 NAME Ar    AR 0.0    39.948000 0
+     18 NM17   18 NAME Ar    AR 0.0    39.948000 0
+     19 NM18   19 NAME Ar    AR 0.0    39.948000 0
+     20 NM19   20 NAME Ar    AR 0.0    39.948000 0
+     21 NM20   21 NAME Ar    AR 0.0    39.948000 0
+     22 NM21   22 NAME Ar    AR 0.0    39.948000 0
+     23 NM22   23 NAME Ar    AR 0.0    39.948000 0
+     24 NM23   24 NAME Ar    AR 0.0    39.948000 0
+     25 NM24   25 NAME Ar    AR 0.0    39.948000 0
+     26 NM25   26 NAME Ar    AR 0.0    39.948000 0
+     27 NM26   27 NAME Ar    AR 0.0    39.948000 0
+     28 NM27   28 NAME Ar    AR 0.0    39.948000 0
+     29 NM28   29 NAME Ar    AR 0.0    39.948000 0
+     30 NM29   30 NAME Ar    AR 0.0    39.948000 0
+     31 NM30   31 NAME Ar    AR 0.0    39.948000 0
+     32 NM31   32 NAME Ar    AR 0.0    39.948000 0
+     33 NM32   33 NAME Ar    AR 0.0    39.948000 0
+     34 NM33   34 NAME Ar    AR 0.0    39.948000 0
+     35 NM34   35 NAME Ar    AR 0.0    39.948000 0
+     36 NM35   36 NAME Ar    AR 0.0    39.948000 0
+     37 NM36   37 NAME Ar    AR 0.0    39.948000 0
+     38 NM37   38 NAME Ar    AR 0.0    39.948000 0
+     39 NM38   39 NAME Ar    AR 0.0    39.948000 0
+     40 NM39   40 NAME Ar    AR 0.0    39.948000 0
+     41 NM40   41 NAME Ar    AR 0.0    39.948000 0
+     42 NM41   42 NAME Ar    AR 0.0    39.948000 0
+     43 NM42   43 NAME Ar    AR 0.0    39.948000 0
+     44 NM43   44 NAME Ar    AR 0.0    39.948000 0
+     45 NM44   45 NAME Ar    AR 0.0    39.948000 0
+     46 NM45   46 NAME Ar    AR 0.0    39.948000 0
+     47 NM46   47 NAME Ar    AR 0.0    39.948000 0
+     48 NM47   48 NAME Ar    AR 0.0    39.948000 0
+     49 NM48   49 NAME Ar    AR 0.0    39.948000 0
+     50 NM49   50 NAME Ar    AR 0.0    39.948000 0
+     51 NM50   51 NAME Ar    AR 0.0    39.948000 0
+     52 NM51   52 NAME Ar    AR 0.0    39.948000 0
+     53 NM52   53 NAME Ar    AR 0.0    39.948000 0
+     54 NM53   54 NAME Ar    AR 0.0    39.948000 0
+     55 NM54   55 NAME Ar    AR 0.0    39.948000 0
+     56 NM55   56 NAME Ar    AR 0.0    39.948000 0
+     57 NM56   57 NAME Ar    AR 0.0    39.948000 0
+     58 NM57   58 NAME Ar    AR 0.0    39.948000 0
+     59 NM58   59 NAME Ar    AR 0.0    39.948000 0
+     60 NM59   60 NAME Ar    AR 0.0    39.948000 0
+     61 NM60   61 NAME Ar    AR 0.0    39.948000 0
+     62 NM61   62 NAME Ar    AR 0.0    39.948000 0
+     63 NM62   63 NAME Ar    AR 0.0    39.948000 0
+     64 NM63   64 NAME Ar    AR 0.0    39.948000 0
+     65 NM64   65 NAME Ar    AR 0.0    39.948000 0
+     66 NM65   66 NAME Ar    AR 0.0    39.948000 0
+     67 NM66   67 NAME Ar    AR 0.0    39.948000 0
+     68 NM67   68 NAME Ar    AR 0.0    39.948000 0
+     69 NM68   69 NAME Ar    AR 0.0    39.948000 0
+     70 NM69   70 NAME Ar    AR 0.0    39.948000 0
+     71 NM70   71 NAME Ar    AR 0.0    39.948000 0
+     72 NM71   72 NAME Ar    AR 0.0    39.948000 0
+     73 NM72   73 NAME Ar    AR 0.0    39.948000 0
+     74 NM73   74 NAME Ar    AR 0.0    39.948000 0
+     75 NM74   75 NAME Ar    AR 0.0    39.948000 0
+     76 NM75   76 NAME Ar    AR 0.0    39.948000 0
+     77 NM76   77 NAME Ar    AR 0.0    39.948000 0
+     78 NM77   78 NAME Ar    AR 0.0    39.948000 0
+     79 NM78   79 NAME Ar    AR 0.0    39.948000 0
+     80 NM79   80 NAME Ar    AR 0.0    39.948000 0
+     81 NM80   81 NAME Ar    AR 0.0    39.948000 0
+     82 NM81   82 NAME Ar    AR 0.0    39.948000 0
+     83 NM82   83 NAME Ar    AR 0.0    39.948000 0
+     84 NM83   84 NAME Ar    AR 0.0    39.948000 0
+     85 NM84   85 NAME Ar    AR 0.0    39.948000 0
+     86 NM85   86 NAME Ar    AR 0.0    39.948000 0
+     87 NM86   87 NAME Ar    AR 0.0    39.948000 0
+     88 NM87   88 NAME Ar    AR 0.0    39.948000 0
+     89 NM88   89 NAME Ar    AR 0.0    39.948000 0
+     90 NM89   90 NAME Ar    AR 0.0    39.948000 0
+     91 NM90   91 NAME Ar    AR 0.0    39.948000 0
+     92 NM91   92 NAME Ar    AR 0.0    39.948000 0
+     93 NM92   93 NAME Ar    AR 0.0    39.948000 0
+     94 NM93   94 NAME Ar    AR 0.0    39.948000 0
+     95 NM94   95 NAME Ar    AR 0.0    39.948000 0
+     96 NM95   96 NAME Ar    AR 0.0    39.948000 0
+     97 NM96   97 NAME Ar    AR 0.0    39.948000 0
+     98 NM97   98 NAME Ar    AR 0.0    39.948000 0
+     99 NM98   99 NAME Ar    AR 0.0    39.948000 0
+    100 NM99  100 NAME Ar    AR 0.0    39.948000 0
+    101 NM100  101 NAME Ar    AR 0.0    39.948000 0
+    102 NM101  102 NAME Ar    AR 0.0    39.948000 0
+    103 NM102  103 NAME Ar    AR 0.0    39.948000 0
+    104 NM103  104 NAME Ar    AR 0.0    39.948000 0
+    105 NM104  105 NAME Ar    AR 0.0    39.948000 0
+    106 NM105  106 NAME Ar    AR 0.0    39.948000 0
+    107 NM106  107 NAME Ar    AR 0.0    39.948000 0
+    108 NM107  108 NAME Ar    AR 0.0    39.948000 0
+
+      0 !NBOND
+
+      0 !NTHETA
+
+      0 !NPHI
+
+      0 !NIMPHI
+
+      0 !NDON
+
+      0 !NNB
+
+      0 !NGRP
+

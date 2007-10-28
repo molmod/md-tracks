@@ -1,0 +1,228 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import load_track, dump_track, MultiTracksReader, MultiTracksWriter
+from tracks.parse import parse_slice
+from tracks.log import log
+from molmod.units import parse_unit
+from molmod.unit_cell import UnitCell
+
+import numpy, itertools
+from optparse import OptionParser
+
+
+usage = """%prog [options] prefix_a0 [prefix_a1 ...] [- prefix_b1 [prefix_b2 ...]] cell rmax nbins output_prefix
+
+%prog generates a histogram of the radial distribution function. A first group
+of prefixes defines the Cartesian coordinates to be used. Optionally a second
+group of Cartesian coordinates can be defined. The two groups are separated by
+a minus sign. If only one group is given, the rdf is computed based on the
+distances between the coordinates in this group. If a second group is given,
+the distances between the distances between the coordinates of both groups are
+considered. For each prefix, it is assumed that three files exist: ${prefix}.x,
+${prefix}.y and ${prefix}.z. If only one group is defined, at least two prefixes
+must be given.
+
+The last four arguments have the following interpretation:
+
+* cell: The unit cell parameters. Several formats are supported:
+    - a,b,c: The parameters of an orthorhombic cell.
+    - a,b,c,alpha,beta,gamma: The parameters for a triclinic cell.
+    - ax,ay,az,bx,by,bz,cx,cy,cz: The cartesian parameters for a triclinic cell.
+    - cell_prefix: A track prefix can be used to indicate a time dependent unit cell.
+* rmax: The maximum (inter-atomic) distance for which the rdf is computed.
+* nbins: The number of bins in the histogram. (including the empty ones)
+* output_prefix: The prefix used for all the output files.
+
+In the standard operation mode, two files are generated:
+
+* ${output_prefix}.bins: A track with the bin-centers
+* ${output_prefix}.hist: A track with the y-values of the rdf
+
+If the option --bin-tracks is used, the last file is not generated, but instead
+a series of files ${output_prefix}.bin.${bin_index} are created. Each file is a
+track with the time-dependent number of counts in each corresponding bin. This
+data can be used to compute a correct statistical error on the rdf with tr-blav.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-s", "--slice", default="::",
+    help="Subsample the input track with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+)
+parser.add_option(
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
+)
+parser.add_option(
+    "-c", "--cumulative", action="store_true", default=False,
+    help="Compute a histogram of the cumulative distribution function."
+)
+parser.add_option(
+    "--bin-tracks", action="store_true", default=False,
+    help="Create a separate track for each bin, to be processed with tr-blav."
+)
+(options, args) = parser.parse_args()
+
+
+log.verbose = options.verbose
+if len(args) >= 6:
+    cell_str = args[-4]
+    rmax = parse_unit(args[-3])
+    nbins = int(args[-2])
+    output_prefix = args[-1]
+    if nbins < 2:
+        parser.error("Expecting at least two bins.")
+    prefixes_str = " ".join(args[:-4])
+    minus_count = prefixes_str.count(" - ")
+    if minus_count == 1:
+        prefixes_a, prefixes_b = prefixes_str.split(" - ")
+        prefixes_a = prefixes_a.split()
+        prefixes_b = prefixes_b.split()
+    elif  minus_count == 0:
+        prefixes_a = prefixes_str.split(" ")
+        prefixes_b = None
+    else:
+        parser.error("At most two groups of prefixes are allowed, separated by a minus sign. Got %i" % minus_count)
+else:
+    parser.error("Expecting at least six arguments.")
+
+sub = parse_slice(options.slice)
+bin_width = rmax/nbins
+bins = numpy.arange(nbins)*bin_width + bin_width*0.5
+radii = numpy.arange(nbins)*bin_width
+filename = "%s.bins" % output_prefix
+dump_track("%s.bins" % output_prefix, bins)
+log("WRITTEN %s" % filename)
+
+# the number of particles:
+N = len(prefixes_a)
+if prefixes_b is None:
+    correction = float(N)/(0.5*N*(N-1))
+else:
+    correction = 1/float(len(prefixes_b))
+
+def yield_cells():
+    if cell_str.count(",") > 0:
+        parameters = list(parse_unit(word) for word in cell_str.split(","))
+        if len(parameters) == 3:
+            a,b,c = parameters
+            uc = UnitCell(
+                numpy.array([[a,0,0],[0,b,0],[0,0,c]], float),
+                numpy.array([True, True, True]),
+            )
+        elif len(parameters) == 6:
+            a,b,c,alpha,beta,gamma = parameters
+            uc = UnitCell(
+                numpy.array([[1,0,0],[0,1,0],[0,0,1]], float),
+                numpy.array([True, True, True]),
+            )
+            uc.set_parameterst(numpy.array([a,b,c]), numpy.array([alpha,beta,gamma]))
+        elif len(parameters) == 9:
+            uc = UnitCell(
+                numpy.array(parameters, float).reshape((3,3)),
+                numpy.array([True, True, True]),
+            )
+        else:
+            parser.error("If the --cell option contains comma's, three, six or nine values are expected.")
+        rho = N/uc.generalized_volume()
+        reference_counts = rho*4*numpy.pi/3*((radii+bin_width)**3-radii**3)
+        while True:
+            yield uc, reference_counts
+    else:
+        filenames = ["%s.%s" % (cell_str, suffix) for suffix in ["a.x", "a.y", "a.z", "b.x", "b.y", "b.z", "c.x", "c.y", "c.z"]]
+        mtr = MultiTracksReader(filenames)
+        uc = UnitCell(
+            numpy.array([[1,0,0],[0,1,0],[0,0,1]], float),
+            numpy.array([True, True, True]),
+        )
+        flat = uc.cell.ravel()
+        for row in itertools.islice(mtr.yield_rows(), sub.start, sub.stop, sub.step):
+            flat[:] = row
+            uc.update_reciproke()
+            rho = N/uc.generalized_volume()
+            reference_counts = 4*numpy.pi*rho/3*((radii+bin_width)**3-radii**3)
+            yield uc, reference_counts
+
+def yield_deltas():
+    if prefixes_b is None:
+        filenames = sum([["%s.x" % prefix_a, "%s.y" % prefix_a, "%s.z" % prefix_a] for prefix_a in prefixes_a], [])
+        mtr = MultiTracksReader(filenames)
+        for row in itertools.islice(mtr.yield_rows(), sub.start, sub.stop, sub.step):
+            deltas = []
+            coordinates = numpy.array(row).reshape((-1,3))
+            for i in xrange(len(coordinates)):
+                for j in xrange(i):
+                    deltas.append(coordinates[i]-coordinates[j])
+            yield deltas
+    else:
+        filenames = sum([["%s.x" % prefix, "%s.y" % prefix, "%s.z" % prefix] for prefix in (prefixes_a + prefixes_b)], [])
+        numa = len(prefixes_a)
+        num = numa + len(prefixes_b)
+        mtr = MultiTracksReader(filenames)
+        for row in itertools.islice(mtr.yield_rows(), sub.start, sub.stop, sub.step):
+            deltas = []
+            coordinates = numpy.array(row).reshape((-1,3))
+            for i in xrange(numa):
+                for j in xrange(numa, num):
+                    deltas.append(coordinates[i]-coordinates[j])
+            yield deltas
+
+def yield_distances():
+    for (uc, reference_counts), deltas in zip(yield_cells(), yield_deltas()):
+        distances = []
+        if uc is None:
+            distances = numpy.sqrt((numpy.array(deltas)**2).sum(axis=1))
+        else:
+            deltas = numpy.array([uc.shortest_vector(delta) for delta in deltas])
+            for n in uc.get_radius_indexes(rmax):
+                distances.append(numpy.sqrt((numpy.array(deltas+numpy.dot(uc.cell, n))**2).sum(axis=1)))
+            distances = numpy.concatenate(distances)
+        yield distances[distances < rmax], reference_counts
+
+if options.bin_tracks:
+    bin_filenames = ["%s.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
+    mtw = MultiTracksWriter(bin_filenames)
+    for distances, reference_counts in yield_distances():
+        counts = correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
+        if options.cumulative:
+            counts = counts.cumsum()
+            reference_counts = reference_counts.cumsum()
+        mtw.dump_row(counts/reference_counts)
+    mtw.finalize()
+else:
+    counts = 0.0
+    row_count = 0
+    for distances, reference_counts in yield_distances():
+        counts += correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
+        row_count += 1
+
+    if options.cumulative:
+        counts = counts.cumsum()
+        reference_counts = reference_counts.cumsum()
+    filename = "%s.hist" % output_prefix
+    dump_track(filename, counts/row_count/reference_counts)
+    log("WRITTEN %s" % filename)
+

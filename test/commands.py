@@ -48,6 +48,11 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(input_dir, case, "md-1.ener"),
         ] + extra_args, verbose=verbose)
 
+    def from_cp2k_cell(self, case, extra_args=[], verbose=False):
+        self.execute("tr-from-cp2k-cell", [
+            os.path.join(input_dir, case, "md-1.cell"),
+        ] + extra_args, verbose=verbose)
+
     def from_cpmd_traj(self, filename, extra_args=[], verbose=False):
         self.execute("tr-from-cpmd-traj", [
             os.path.join(input_dir, filename),
@@ -227,6 +232,14 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(tmp[117], 0.000000000, 5)
         self.assertAlmostEqual(tmp[118], 0.015600000, 5)
         self.assertAlmostEqual(tmp[-1], 0.015900000, 5)
+
+    def test_from_cp2k_cell(self):
+        # Load the energy file
+        self.from_cp2k_cell("ar108")
+        tmp = load_track("tracks/cell.a.x")
+        self.assertEqual(tmp[0]/angstrom, 17.1580000000)
+        self.assertEqual(tmp[1]/angstrom, 17.1561767182)
+        self.assertEqual(tmp[-1]/angstrom, 17.4999478121)
 
     def test_to_xyz(self):
         self.from_xyz("thf01", "pos")
@@ -741,7 +754,7 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.df"])
         lines = []
         for bin_filename in sorted(glob.glob("tracks/atom.pos.bond.df.bin.???????")):
-            output = self.execute("tr-blav", [bin_filename, "tracks/time"])
+            output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
             lines.append(output[0])
         self.execute("tr-write", ["tracks/atom.pos.bond.df.hist", "tracks/atom.pos.bond.df.hist.error"], stdin=lines)
         df_hist_bis = load_track("tracks/atom.pos.bond.df.hist")
@@ -756,7 +769,7 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["-c", "--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.cdf"])
         lines = []
         for bin_filename in sorted(glob.glob("tracks/atom.pos.bond.cdf.bin.???????")):
-            output = self.execute("tr-blav", [bin_filename, "tracks/time"])
+            output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
             lines.append(output[0])
         self.execute("tr-write", ["tracks/atom.pos.bond.cdf.hist", "tracks/atom.pos.bond.cdf.hist.error"], stdin=lines)
         cdf_hist_bis = load_track("tracks/atom.pos.bond.cdf.hist")
@@ -801,4 +814,52 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(output_dir, "pca_first_time"),
         ])
 
+    def test_rdf_water32(self):
+        self.from_xyz("water32", "pos")
+        self.from_cp2k_ener("water32")
+
+        atoms_O = self.execute("tr-filter", [os.path.join(input_dir, "water32/init.psf"), "at", "a.number==8"])[0]
+        prefixes_O = self.execute("tr-format-indexes", ["prefix=tracks/atom.pos", atoms_O])[0].split()
+        self.execute("tr-rdf", prefixes_O + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_O_O"])
+
+        atoms_H = self.execute("tr-filter", [os.path.join(input_dir, "water32/init.psf"), "at", "a.number==1"])[0]
+        prefixes_H = self.execute("tr-format-indexes", ["prefix=tracks/atom.pos", atoms_H])[0].split()
+        self.execute("tr-rdf", prefixes_H + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_H_H"])
+
+        self.execute("tr-rdf", prefixes_H + ['-'] + prefixes_O + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_O_H"])
+
+        self.execute("tr-plot", [
+            "--xunit=A", "--yunit=1", "--xlabel=Iteratomic distance", "--ylabel=g(r)", "--title=Radial distribution functions",
+            ":bar", "tracks/rdf_O_O.bins", "tracks/rdf_O_O.hist",
+            ":bar", "tracks/rdf_H_H.bins", "tracks/rdf_H_H.hist",
+            ":bar", "tracks/rdf_O_H.bins", "tracks/rdf_O_H.hist",
+            os.path.join(output_dir, "rdf_water32_noerror")
+        ])
+
+    def test_rdf_ar108(self):
+        self.from_xyz("ar108", "pos")
+        self.from_cp2k_ener("ar108")
+        self.from_cp2k_cell("ar108")
+
+        atoms_Ar = self.execute("tr-filter", [os.path.join(input_dir, "ar108/init.psf"), "at", "a.number==18"])[0]
+        prefixes_Ar = self.execute("tr-format-indexes", ["prefix=tracks/atom.pos", atoms_Ar])[0].split()
+        # without error bars
+        self.execute("tr-rdf", prefixes_Ar + ["-s::10", "tracks/cell", "20*A", "80", "tracks/rdf"])
+        self.execute("tr-plot", [
+            "--xunit=A", "--yunit=1", "--ylim=0,", "--xlabel=Iteratomic distance", "--ylabel=g(r)", "--title=Radial distribution functions",
+            ":bar", "tracks/rdf.bins", "tracks/rdf.hist",
+            os.path.join(output_dir, "rdf_ar108_noerror")
+        ])
+        # with error bars
+        self.execute("tr-rdf", prefixes_Ar + ["-s::2", "--bin-tracks", "tracks/cell", "20*A", "80", "tracks/rdf"])
+        lines = []
+        for bin_filename in sorted(glob.glob("tracks/rdf.bin.???????")):
+            output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b5"])
+            lines.append(output[0])
+        self.execute("tr-write", ["tracks/rdf.hist", "tracks/rdf.hist.error"], stdin=lines)
+        self.execute("tr-plot", [
+            "--xunit=A", "--yunit=1", "--ylim=0,", "--xlabel=Iteratomic distance", "--ylabel=g(r)", "--title=Radial distribution functions",
+            ":bar", "tracks/rdf.bins", "tracks/rdf.hist", "tracks/rdf.hist.error",
+            os.path.join(output_dir, "rdf_ar108_error")
+        ])
 
