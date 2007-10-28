@@ -702,22 +702,53 @@ class CommandsTestCase(BaseTestCase):
         self.from_cp2k_ener("thf01")
         atoms = self.execute("tr-filter", [os.path.join(input_dir, "thf01/init.psf"), "at", 'a.number==1'])[0]
         self.execute("tr-ic-psf", ['tracks/atom.pos', 'bond', '1,2,3,4', '5,6,7,8,9,10,11,12', os.path.join(input_dir, "thf01/init.psf")])
+        # ordinary df, no error bars
         self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.df"])
+        df_hist = load_track("tracks/atom.pos.bond.df.hist")
+        self.assertAlmostEqual(df_hist.sum(), 1.0, 2)
         self.execute("tr-plot", [
             "--title='C-H bond length distribution'", "--xlabel='C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
             ":bar", "tracks/atom.pos.bond.df.bins", "tracks/atom.pos.bond.df.hist",
             os.path.join(output_dir, "df_noerror.png"),
         ])
+        # cumulative df, no error bars
+        self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["-c", "1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.cdf"])
+        cdf_hist = load_track("tracks/atom.pos.bond.cdf.hist")
+        self.assertAlmostEqual(cdf_hist[-1], 1.0, 2)
+        self.execute("tr-plot", [
+            "--title='Cumulative C-H bond length distribution'", "--xlabel='C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
+            ":bar", "tracks/atom.pos.bond.cdf.bins", "tracks/atom.pos.bond.cdf.hist",
+            os.path.join(output_dir, "df_cumul_noerror.png"),
+        ])
+        # ordinary df, with error bars
         self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.df"])
         lines = []
         for bin_filename in sorted(glob.glob("tracks/atom.pos.bond.df.bin.???????")):
             output = self.execute("tr-blav", [bin_filename, "tracks/time"])
             lines.append(output[0])
         self.execute("tr-write", ["tracks/atom.pos.bond.df.hist", "tracks/atom.pos.bond.df.hist.error"], stdin=lines)
+        df_hist_bis = load_track("tracks/atom.pos.bond.df.hist")
+        self.assertAlmostEqual(df_hist_bis.sum(), 1.0, 2)
+        self.assert_(abs(df_hist-df_hist_bis).max()/abs(df_hist).max() < 1e-5)
         self.execute("tr-plot", [
             "--title='C-H bond length distribution'", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
             ":bar", "tracks/atom.pos.bond.df.bins", "tracks/atom.pos.bond.df.hist", "tracks/atom.pos.bond.df.hist.error",
             os.path.join(output_dir, "df_error.png"),
+        ])
+        # cumulative df, with error bars
+        self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["-c", "--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.cdf"])
+        lines = []
+        for bin_filename in sorted(glob.glob("tracks/atom.pos.bond.cdf.bin.???????")):
+            output = self.execute("tr-blav", [bin_filename, "tracks/time"])
+            lines.append(output[0])
+        self.execute("tr-write", ["tracks/atom.pos.bond.cdf.hist", "tracks/atom.pos.bond.cdf.hist.error"], stdin=lines)
+        cdf_hist_bis = load_track("tracks/atom.pos.bond.cdf.hist")
+        self.assertAlmostEqual(cdf_hist_bis[-1], 1.0, 2)
+        self.assert_(abs(cdf_hist-cdf_hist_bis).max()/abs(cdf_hist).max() < 1e-5)
+        self.execute("tr-plot", [
+            "--title='C-H bond length distribution'", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
+            ":bar", "tracks/atom.pos.bond.cdf.bins", "tracks/atom.pos.bond.cdf.hist", "tracks/atom.pos.bond.cdf.hist.error",
+            os.path.join(output_dir, "df_cumul_error.png"),
         ])
 
     def test_calc(self):
