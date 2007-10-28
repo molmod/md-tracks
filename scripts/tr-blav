@@ -31,9 +31,12 @@ from optparse import OptionParser
 
 usage = """%prog [options] input {time|timestep}
 
-%prog applies the block average method track ${input}. It prints out the mean,
-(an under limit for) the error on the mean and (an under limit for) the
-correlation time.
+%prog applies the block average method track ${input}. It prints out a line with
+four values:
+ * an estimate of the mean
+ * (an under limit for) the error on the mean
+ * (an under limit for) the correlation time
+ * (an under limit for) the statistical inefficiency
 
 %prog -h prints out all available options."""
 
@@ -83,7 +86,9 @@ f = load_track(path_in)
 
 x = [] # block sizes
 y = [] # error on the mean
-s = [] # correlation time
+c = [] # correlation time
+s = [] # statistical inefficiency
+
 for block_size in xrange(1, len(f)/min_blocks):
     n_blocks = len(f)/block_size
     total_size = n_blocks * block_size
@@ -93,18 +98,35 @@ for block_size in xrange(1, len(f)/min_blocks):
 
     x.append(block_size*time_step)
     y.append(averages.std()/numpy.sqrt(n_blocks))
-    s.append(0.5*averages.var()/f[:total_size].var()*block_size)
+    c.append(0.5*averages.var()/f[:total_size].var()*block_size*time_step)
+    s.append(averages.var()/f[:total_size].var()*block_size)
 
 x = numpy.array(x)
 y = numpy.array(y)
-s = numpy.array(s)*time_step
+c = numpy.array(c)
+s = numpy.array(s)
 
-l = len(y)/10
+l = len(y)*2/3
 if l == 0:
     raise Error("Too few blocks to do a proper estimate of the error.")
 unit = parse_unit(options.unit)
 time_unit = parse_unit(options.time_unit)
-print "%s %s %s" % (f.mean()/unit, y[-l:].mean()/unit, s[-l:].mean()/time_unit)
+
+# perform a fit with a + b/t, a is an estimate of the error
+(yinf, by), resids, rank, svals = numpy.linalg.lstsq(
+    numpy.array([numpy.ones(l, float), 1/x[-l:]]).transpose(),
+    y[-l:],
+)
+(cinf, bc), resids, rank, svals = numpy.linalg.lstsq(
+    numpy.array([numpy.ones(l, float), 1/x[-l:]]).transpose(),
+    c[-l:],
+)
+(sinf, bs), resids, rank, svals = numpy.linalg.lstsq(
+    numpy.array([numpy.ones(l, float), 1/x[-l:]]).transpose(),
+    s[-l:],
+)
+
+print "%s %s %s %s" % (f.mean()/unit, yinf/unit, cinf/time_unit, sinf)
 
 if options.plot_error is not None:
     import pylab
@@ -114,6 +136,8 @@ if options.plot_error is not None:
     pylab.xlabel("Block size [%s]" % options.time_unit)
     pylab.ylabel("Error on the mean [%s]" % options.unit)
     pylab.plot(x/time_unit,y/unit,"k+")
+    pylab.plot(x[-l:]/time_unit,(yinf+by/x[-l:])/unit,"r-", alpha=0.5, linewidth=1)
+    pylab.axhline(yinf/unit, color="r", alpha=0.5, linewidth=1)
     pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
     pylab.savefig(options.plot_error)
 
@@ -124,6 +148,8 @@ if options.plot_ctime is not None:
     pylab.title("Block average plot")
     pylab.xlabel("Block size [%s]" % options.time_unit)
     pylab.ylabel("Correlation time [%s]" % options.time_unit)
-    pylab.plot(x/time_unit,s/time_unit,"k+")
+    pylab.plot(x/time_unit,c/time_unit,"k+")
+    pylab.plot(x[-l:]/time_unit,(cinf+bc/x[-l:])/time_unit,"r-", alpha=0.5, linewidth=1)
+    pylab.axhline(cinf/time_unit, color="r", alpha=0.5, linewidth=1)
     pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
     pylab.savefig(options.plot_ctime)
