@@ -203,19 +203,18 @@ class LineDescriptor(DataDescriptor):
     def plot(self):
         kwargs = {}
         if self.color is not None: kwargs["color"] = self.color
-        if self.label is not None: kwargs["label"] = self.label
-        self.patch = line = pylab.plot(self.x, self.y, linewidth=1, **kwargs)[0]
+        self.patch = pylab.plot(self.x, self.y, linewidth=1, **kwargs)[0]
+        self.color = self.patch.get_color()
         if self.error is not None:
-            pylab.plot(self.x, self.y+self.error, linestyle=':', color=line.get_color())
-            pylab.plot(self.x, self.y-self.error, linestyle=':', color=line.get_color())
+            pylab.plot(self.x, self.y+self.error, linestyle=':', color=self.color)
+            pylab.plot(self.x, self.y-self.error, linestyle=':', color=self.color)
 
 DataDescriptor.kinds["line"] = LineDescriptor
 
 
 class BarDescriptor(DataDescriptor):
-
     def plot(self):
-        fraction = 0.8
+        fraction = 1.0
         delta = self.x[1:] - self.x[:-1]
         left = numpy.zeros(len(self.x), float)
         left[1:] = self.x[1:] - 0.5*fraction*delta
@@ -224,19 +223,30 @@ class BarDescriptor(DataDescriptor):
         right[:-1] = self.x[:-1] + 0.5*fraction*delta
         right[-1] = self.x[-1] + 0.5*fraction*delta[-1]
         width = right-left
-        self.patch = pylab.bar(left, self.y, width, color=self.color, ecolor="k")[0]
+
+        points_x = []
+        points_y = []
+        for index in xrange(len(self.y)):
+            points_x.append(left[index])
+            points_y.append(self.y[index])
+            points_x.append(right[index])
+            points_y.append(self.y[index])
+        kwargs = {}
+        if self.color is not None: kwargs["color"] = self.color
+        self.patch = pylab.plot(points_x, points_y, linewidth=1, **kwargs)[0]
+        self.color = self.patch.get_color()
         if self.error is not None:
+            from matplotlib.patches import Polygon
             fraction = 0.5
             left[1:] = self.x[1:] - 0.5*fraction*delta
             left[0] = self.x[0] - 0.5*fraction*delta[0]
             right[:-1] = self.x[:-1] + 0.5*fraction*delta
             right[-1] = self.x[-1] + 0.5*fraction*delta[-1]
-            from matplotlib.patches import Polygon
             for l, r, x, y, e in zip(left, right, self.x, self.y, self.error):
-                pylab.gca().add_patch(Polygon([(l, y+e),(r,y+e)], ec='k', linewidth=1, fill=False))
-                pylab.gca().add_patch(Polygon([(l, y-e),(r,y-e)], ec='k', linewidth=1, fill=False))
-                pylab.gca().add_patch(Polygon([(x, y-e),(x,y+e)], ec='k', linewidth=1, fill=False))
-
+                pylab.gca().add_patch(Polygon([(l, y+e),(r,y+e)], ec=self.color, alpha=0.5, linewidth=1, fill=False))
+                pylab.gca().add_patch(Polygon([(l, y-e),(r,y-e)], ec=self.color, alpha=0.5, linewidth=1, fill=False))
+                pylab.gca().add_patch(Polygon([(x, y-e),(x,y+e)], ec=self.color, alpha=0.5, linewidth=1, fill=False))
+        pylab.gca().autoscale_view()
 
 DataDescriptor.kinds["bar"] = BarDescriptor
 
@@ -252,6 +262,8 @@ for word in sys.argv[1:]:
 (global_options, global_args) = global_parser.parse_args(blocks[0])
 if global_options.line_help:
     line_parser.print_help()
+if len(global_args) > 0:
+    parser.error("Expecting no global arguments. Got %s" % global_args)
 
 image = blocks[-1][-1]
 del blocks[-1][-1]
