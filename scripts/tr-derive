@@ -1,0 +1,72 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import load_track, dump_track
+from tracks.parse import parse_slice, parse_x_step
+from tracks.log import log
+from molmod.units import parse_unit
+
+import numpy, os
+from optparse import OptionParser
+
+
+usage = """%prog [options] input {x_axis|x_step} [input.error]
+
+%prog computes the derivative of the function in ${input}. If ${input.error}
+is given or ${input}.error exists, %prog will also compute the error on the
+derivative. The second argument is a track with the x-axis, or the distance
+between two subsequent data points. The output is written to ${input}.deriv and
+${input}.derive.error.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+(options, args) = parser.parse_args()
+
+
+if len(args) == 2 or len(args) == 3:
+    path_in = args[0]
+    x_step = parse_x_step(args[1], "x")
+    if len(args) == 3:
+        path_error = args[2]
+    else:
+        path_error = "%s.error" % path_in
+        if not os.path.isfile(path_error):
+            path_error = None
+else:
+    parser.error("Expecting two or three arguments.")
+
+f = load_track(path_in)
+fderiv = (f[1:]-f[:-1])/x_step
+name = "%s.deriv" % path_in
+dump_track(name, fderiv)
+log("WRITTEN %s" % name)
+
+if path_error is not None:
+    e = load_track(path_error)
+    var = e**2
+    varderiv = (var[1:]+var[:-1])/x_step
+    ederiv = numpy.sqrt(varderiv)
+    name = "%s.deriv.error" % path_in
+    dump_track(name, ederiv)
+    log("WRITTEN %s" % name)
+

@@ -393,6 +393,15 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(output_dir, "integrate_vac.normalized.int.png")
         ])
 
+    def test_derive(self):
+        self.from_cp2k_ener("thf01")
+        self.execute("tr-integrate", ["tracks/temperature", "tracks/time"])
+        self.execute("tr-derive", ["tracks/temperature.int", "tracks/time"])
+        tmp1 = load_track("tracks/temperature")
+        tmp2 = load_track("tracks/temperature.int.deriv")
+        self.assertArraysAlmostEqual(tmp1[1:], tmp2, 1e-5)
+
+
     def test_rfft_irfft(self):
         self.from_xyz("thf01", "vel", ["-s:1000:", "-u1"]) # irrft always results in an even number of datapoints
         self.from_cp2k_ener("thf01")
