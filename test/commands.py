@@ -236,14 +236,14 @@ class CommandsTestCase(BaseTestCase):
         xyz_reader_copy = XYZReader("test.pos.xyz")
         self.assertEqual(xyz_reader_orig.symbols,xyz_reader_copy.symbols)
         for (title_orig, coordinates_orig), (tile_copy, coordinates_copy) in zip(xyz_reader_orig, xyz_reader_copy):
-            self.assert_(abs(coordinates_orig - coordinates_copy).max() < 1e-7)
+            self.assertArraysAlmostEqual(coordinates_orig, coordinates_copy, 1e-7)
         # atom-filter version
         self.execute("tr-to-xyz", [os.path.join(input_dir, "thf01/init.xyz"), "tracks/atom.pos", "test.pos.xyz", "-a2,5"])
         xyz_reader_orig = XYZReader(os.path.join(input_dir, "thf01/md-pos-1.xyz"))
         xyz_reader_copy = XYZReader("test.pos.xyz")
         self.assertEqual(xyz_reader_copy.symbols,['C','H'])
         for (title_orig, coordinates_orig), (tile_copy, coordinates_copy) in zip(xyz_reader_orig, xyz_reader_copy):
-            self.assert_(abs(coordinates_orig[[2,5]] - coordinates_copy).max() < 1e-7)
+            self.assertArraysAlmostEqual(coordinates_orig[[2,5]], coordinates_copy, 1e-7)
 
     def test_read_write_slice_length(self):
         self.from_cp2k_ener("water32")
@@ -251,7 +251,7 @@ class CommandsTestCase(BaseTestCase):
         lines = self.execute("tr-read", ["tracks/temperature"])
         tmp1 = numpy.array([float(line) for line in lines], float)
         tmp2 = load_track("tracks/temperature")
-        self.assert_((tmp1==tmp2).all())
+        self.assertArraysEqual(tmp1, tmp2)
         self.assertEqual(len(lines), 201)
         # tr-length
         length = int("".join(self.execute("tr-length", ["tracks/temperature"])))
@@ -262,13 +262,13 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(length, 12)
         t = load_track("tracks/temperature")
         ts = load_track("tracks/temperature_sliced")
-        self.assert_((t[20:80:5] == ts).all())
+        self.assertArraysEqual(t[20:80:5], ts)
         # tr-write
         tmp1 = numpy.arange(101, dtype=float)
         lines = [str(val) for val in tmp1]
         self.execute("tr-write", ["tracks/tmp"], stdin=lines)
         tmp2 = load_track("tracks/tmp")
-        self.assert_((tmp1==tmp2).all())
+        self.assertArraysEqual(tmp1, tmp2)
 
     def test_read_write_multiple(self):
         def check(subs):
@@ -281,8 +281,8 @@ class CommandsTestCase(BaseTestCase):
             self.execute("tr-write", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
             t2 = load_track("tracks/time")
             k2 = load_track("tracks/kinetic_energy")
-            self.assert_(abs(t1-t2).max()/abs(t1).max() < 1e-5)
-            self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
+            self.assertArraysAlmostEqual(t1, t2, 1e-5)
+            self.assertArraysAlmostEqual(k1, k2, 1e-5)
             # slice in write
             self.from_cp2k_ener("thf01")
             t1 = load_track("tracks/time")[sub]
@@ -291,15 +291,15 @@ class CommandsTestCase(BaseTestCase):
             self.execute("tr-write", ["-s%s" % subs, "ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
             t2 = load_track("tracks/time")
             k2 = load_track("tracks/kinetic_energy")
-            self.assert_(abs(t1-t2).max()/abs(t1).max() < 1e-5)
-            self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
+            self.assertArraysAlmostEqual(t1, t2, 1e-5)
+            self.assertArraysAlmostEqual(k1, k2, 1e-5)
             # - in write, no slice
             self.from_cp2k_ener("thf01")
             k1 = load_track("tracks/kinetic_energy")
             lines = self.execute("tr-read", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
             self.execute("tr-write", ["ps", "-", "kjmol", "tracks/test"], stdin=lines)
             k2 = load_track("tracks/test")
-            self.assert_(abs(k1-k2).max()/abs(k1).max() < 1e-5)
+            self.assertArraysAlmostEqual(k1, k2, 1e-5)
         check("::")
         check("20:601:5")
 
@@ -323,19 +323,19 @@ class CommandsTestCase(BaseTestCase):
         ])
         tmp1 = load_track("tracks/vac_a1")
         tmp2 = load_track("tracks/vac_a2")
-        self.assert_((tmp1==tmp2).all())
+        self.assertArraysEqual(tmp1, tmp2)
         tmp1 = load_track("tracks/vac_a1.normalized")
         tmp2 = load_track("tracks/vac_a2.normalized")
-        self.assert_((tmp1==tmp2).all())
+        self.assertArraysEqual(tmp1, tmp2)
         self.assertEqual(tmp1[0], 1.0)
         tmp1 = load_track("tracks/vac_a1.error")
         tmp2 = load_track("tracks/vac_a2.error")
-        self.assert_((tmp1==tmp2).all())
-        self.assert_((tmp1/tmp1[0] == 1.0).all())
+        self.assertArraysEqual(tmp1, tmp2)
+        self.assertArrayConstant(tmp1, tmp1[0])
         tmp1 = load_track("tracks/vac_a1.normalized.error")
         tmp2 = load_track("tracks/vac_a2.normalized.error")
-        self.assert_((tmp1==tmp2).all())
-        self.assert_((tmp1/tmp1[0] == 1.0).all())
+        self.assertArraysEqual(tmp1, tmp2)
+        self.assertArrayConstant(tmp1, tmp1[0])
 
         self.execute("tr-ac", glob.glob("tracks/atom.vel.*") + ["--tau=200*fs", "-m 4000*fs", "5.0*fs", "tracks/vac_b1"])
         self.execute("tr-ac", glob.glob("tracks/atom.vel.*") + ["--tau=200*fs", "-m 4000*fs", "tracks/time", "tracks/vac_b2"])
@@ -354,19 +354,19 @@ class CommandsTestCase(BaseTestCase):
         ])
         tmp1 = load_track("tracks/vac_b1")
         tmp2 = load_track("tracks/vac_b2")
-        self.assert_((tmp1==tmp2).all())
+        self.assertArraysEqual(tmp1, tmp2)
         tmp1 = load_track("tracks/vac_b1.normalized")
         tmp2 = load_track("tracks/vac_b2.normalized")
-        self.assert_((tmp1==tmp2).all())
+        self.assertArraysEqual(tmp1, tmp2)
         self.assertEqual(tmp1[0], 1.0)
         tmp1 = load_track("tracks/vac_b1.error")
         tmp2 = load_track("tracks/vac_b2.error")
-        self.assert_((tmp1==tmp2).all())
-        self.assert_((tmp1/tmp1[0] == 1.0).all())
+        self.assertArraysEqual(tmp1, tmp2)
+        self.assertArrayConstant(tmp1, tmp1[0])
         tmp1 = load_track("tracks/vac_b1.normalized.error")
         tmp2 = load_track("tracks/vac_b2.normalized.error")
-        self.assert_((tmp1==tmp2).all())
-        self.assert_((tmp1/tmp1[0] == 1.0).all())
+        self.assertArraysEqual(tmp1, tmp2)
+        self.assertArrayConstant(tmp1, tmp1[0])
 
     def test_integrate(self):
         self.from_xyz("thf01", "vel", ["-u1"])
@@ -405,7 +405,7 @@ class CommandsTestCase(BaseTestCase):
             tmp1 = load_track(filename)
             tmp2 = load_track(other_filename)
             self.assertEqual(tmp1.shape, tmp2.shape)
-            self.assert_(abs(tmp1-tmp2).max() < 1e-7)
+            self.assertArraysAlmostEqual(tmp1, tmp2, 1e-7)
 
     def test_make_spectrum(self):
         self.from_xyz("thf01", "vel", ["-u1"])
@@ -419,7 +419,7 @@ class CommandsTestCase(BaseTestCase):
         freqs = load_track("tracks/freqs")
         self.assertEqual(wavenumbers[0], 0.0)
         self.assertEqual(freqs[0], 0.0)
-        self.assert_((abs(freqs[1:]/wavenumbers[1:]-lightspeed)/lightspeed).max() < 1e-7)
+        self.assertArrayAlmostConstant(freqs[1:]/wavenumbers[1:], lightspeed, 1e-7)
         self.execute("tr-plot", [
             "--xlabel=Wavenumber", "--ylabel=Amplitude", "--xunit=1/cm",
             ":line", "-s1::", "tracks/wavenumbers", "tracks/spectrum",
@@ -470,13 +470,13 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(freqs[-1], 1/(2*(time[1]-time[0])))
         self.execute("tr-freq-axis", ["tracks/spectrum", "5000*fs", "tracks/freqs"])
         freqs_check = load_track("tracks/freqs")
-        self.assert_((freqs==freqs_check).all())
+        self.assertArraysEqual(freqs, freqs_check)
         self.execute("tr-freq-axis", ["501", "tracks/time", "tracks/freqs"])
         freqs_check = load_track("tracks/freqs")
-        self.assert_((freqs==freqs_check).all())
+        self.assertArraysEqual(freqs, freqs_check)
         self.execute("tr-freq-axis", ["501", "5000*fs", "tracks/freqs"])
         freqs_check = load_track("tracks/freqs")
-        self.assert_((freqs==freqs_check).all())
+        self.assertArraysEqual(freqs, freqs_check)
 
     def test_wavenumber_axis(self):
         self.from_cp2k_ener("thf01")
@@ -492,13 +492,13 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(wavenumbers[-1], 1/(2*(time[1]-time[0]))/lightspeed)
         self.execute("tr-wavenumber-axis", ["tracks/spectrum", "5000*fs", "tracks/wavenumbers"])
         wavenumbers_check = load_track("tracks/wavenumbers")
-        self.assert_((wavenumbers==wavenumbers_check).all())
+        self.assertArraysEqual(wavenumbers, wavenumbers_check)
         self.execute("tr-wavenumber-axis", ["501", "tracks/time", "tracks/wavenumbers"])
         wavenumbers_check = load_track("tracks/wavenumbers")
-        self.assert_((wavenumbers==wavenumbers_check).all())
+        self.assertArraysEqual(wavenumbers, wavenumbers_check)
         self.execute("tr-wavenumber-axis", ["501", "5000*fs", "tracks/wavenumbers"])
         wavenumbers_check = load_track("tracks/wavenumbers")
-        self.assert_((wavenumbers==wavenumbers_check).all())
+        self.assertArraysEqual(wavenumbers, wavenumbers_check)
 
     def test_ic_dist(self):
         self.from_xyz("thf01", "pos")
@@ -548,7 +548,7 @@ class CommandsTestCase(BaseTestCase):
                 bond = load_track(bond_filename)
                 index1, index2 = [int(word) for word in bond_filename.split(".")[-2:]]
                 bond_check = dist_track("tracks/atom.pos.%07i" % index1, "tracks/atom.pos.%07i" % index2, slice(None))
-                self.assert_((bond==bond_check).all())
+                self.assertArraysEqual(bond, bond_check)
             # bend
             bend_filenames = glob.glob("tracks/atom.pos.bend*")
             self.assertEqual(len(bend_filenames), nbends)
@@ -556,7 +556,7 @@ class CommandsTestCase(BaseTestCase):
                 bend = load_track(bend_filename)
                 index1, index2, index3 = [int(word) for word in bend_filename.split(".")[-3:]]
                 bend_check = bend_track("tracks/atom.pos.%07i" % index1, "tracks/atom.pos.%07i" % index2, "tracks/atom.pos.%07i" % index3, slice(None))
-                self.assert_((bend==bend_check).all())
+                self.assertArraysEqual(bend, bend_check)
             # dihed
             dihed_filenames = glob.glob("tracks/atom.pos.dihed*")
             self.assertEqual(len(dihed_filenames), ndiheds)
@@ -564,7 +564,7 @@ class CommandsTestCase(BaseTestCase):
                 dihed = load_track(dihed_filename)
                 index1, index2, index3, index4 = [int(word) for word in dihed_filename.split(".")[-4:]]
                 dihed_check = dihed_track("tracks/atom.pos.%07i" % index1, "tracks/atom.pos.%07i" % index2, "tracks/atom.pos.%07i" % index3, "tracks/atom.pos.%07i" % index4, slice(None))
-                self.assert_((dihed==dihed_check).all())
+                self.assertArraysEqual(dihed, dihed_check)
         self.from_xyz("thf01", "pos")
         self.execute("tr-ic-psf", ["tracks/atom.pos", "bond", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["tracks/atom.pos", "bend", os.path.join(input_dir, "thf01/init.psf")])
@@ -593,12 +593,12 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-mean-std", glob.glob("tracks/atom.ekin.*") + ["tracks/atom.ekin"])
         ekin_mean = load_track("tracks/atom.ekin.mean")
         ekin = load_track("tracks/kinetic_energy")
-        self.assert_(abs(ekin/13-ekin_mean).max()/ekin_mean.max() < 1e-6)
+        self.assertArraysAlmostEqual(ekin/13, ekin_mean, 1e-6)
         # B) Verify the relation between std and error
         self.execute("tr-mean-std", glob.glob("tracks/atom.vel.*") + ["tracks/atom.vel"])
         vel_error = load_track("tracks/atom.vel.error")
         vel_std = load_track("tracks/atom.vel.std")
-        self.assert_(abs(vel_std-vel_error*numpy.sqrt(3*13)).max()/abs(vel_std).max() < 1e-5)
+        self.assertArraysAlmostEqual(vel_std, vel_error*numpy.sqrt(3*13), 1e-5)
 
     def test_blav(self):
         self.from_cp2k_ener("thf01")
@@ -626,7 +626,7 @@ class CommandsTestCase(BaseTestCase):
         for c in 'xyz':
             self.execute("tr-mean-std", glob.glob("tracks/com.vel.*.%s" % c) + ["tracks/com.vel.%s" % c])
             vmean = load_track("tracks/com.vel.%s.mean" % c)
-            self.assert_(abs(vmean).max() < 1e-10)
+            self.assertArrayAlmostZero(vmean, 1e-10)
         # check that the weighted sum of the relative velocities is always zero, per molecule
         for m_index in xrange(32):
             for c in 'xyz':
@@ -634,7 +634,7 @@ class CommandsTestCase(BaseTestCase):
                 for a_index in (psf.molecules==m_index).nonzero()[0]:
                     mass = periodic[psf.numbers[a_index]].mass
                     tmp += mass*load_track("tracks/rel.vel.%07i.%s" % (a_index, c))
-                self.assert_(abs(tmp).max() < 1e-14)
+                self.assertArrayAlmostZero(tmp, 1e-14)
         # compute the total kinetic energy from the com and the rel contributions
         # and compare it to tracks/kinetic_energy
         ekin = 0
@@ -648,7 +648,7 @@ class CommandsTestCase(BaseTestCase):
                     v = load_track("tracks/rel.vel.%07i.%s" % (a_index, c))
                     ekin += 0.5*mass*v*v
         ekin_check = load_track("tracks/kinetic_energy")
-        self.assert_(abs(ekin/ekin_check - 1).max() < 1e-6)
+        self.assertArraysAlmostEqual(ekin, ekin_check, 1e-6)
 
     def test_filter(self):
         verbose = False
@@ -729,7 +729,7 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-write", ["tracks/atom.pos.bond.df.hist", "tracks/atom.pos.bond.df.hist.error"], stdin=lines)
         df_hist_bis = load_track("tracks/atom.pos.bond.df.hist")
         self.assertAlmostEqual(df_hist_bis.sum(), 1.0, 2)
-        self.assert_(abs(df_hist-df_hist_bis).max()/abs(df_hist).max() < 1e-5)
+        self.assertArraysAlmostEqual(df_hist, df_hist_bis, 1e-5)
         self.execute("tr-plot", [
             "--title='C-H bond length distribution'", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
             ":bar", "tracks/atom.pos.bond.df.bins", "tracks/atom.pos.bond.df.hist", "tracks/atom.pos.bond.df.hist.error",
@@ -744,7 +744,7 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-write", ["tracks/atom.pos.bond.cdf.hist", "tracks/atom.pos.bond.cdf.hist.error"], stdin=lines)
         cdf_hist_bis = load_track("tracks/atom.pos.bond.cdf.hist")
         self.assertAlmostEqual(cdf_hist_bis[-1], 1.0, 2)
-        self.assert_(abs(cdf_hist-cdf_hist_bis).max()/abs(cdf_hist).max() < 1e-5)
+        self.assertArraysAlmostEqual(cdf_hist, cdf_hist_bis, 1e-5)
         self.execute("tr-plot", [
             "--title='C-H bond length distribution'", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
             ":bar", "tracks/atom.pos.bond.cdf.bins", "tracks/atom.pos.bond.cdf.hist", "tracks/atom.pos.bond.cdf.hist.error",
@@ -757,7 +757,7 @@ class CommandsTestCase(BaseTestCase):
         k = load_track("tracks/kinetic_energy")
         t = k/(3*13)*2/boltzman
         tcheck = load_track("tracks/tcheck")
-        self.assert_((t==tcheck).all())
+        self.assertArraysEqual(t, tcheck)
 
     def test_closest_distance(self):
         self.from_xyz("thf01", "pos")

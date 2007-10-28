@@ -67,8 +67,8 @@ class TrackTestCase(BaseTestCase):
         for rnd1 in self.get_arrays():
             dump_track("test", rnd1)
             rnd2 = load_track("test")
-            self.assert_((rnd1==rnd2).all())
-            self.assert_(rnd1.dtype==rnd2.dtype)
+            self.assertArraysEqual(rnd1, rnd2)
+            self.assertEqual(rnd1.dtype, rnd2.dtype)
 
     def test_append(self):
         for rnd1 in self.get_arrays():
@@ -76,8 +76,8 @@ class TrackTestCase(BaseTestCase):
             for index in xrange(10):
                 track.append(rnd1[index*5:(index+1)*5])
             rnd2 = track.read()
-            self.assert_((rnd1==rnd2).all())
-            self.assert_(rnd1.dtype==rnd2.dtype)
+            self.assertArraysEqual(rnd1, rnd2)
+            self.assertEqual(rnd1.dtype, rnd2.dtype)
 
     def test_read_parts(self):
         for rnd1 in self.get_arrays():
@@ -87,16 +87,16 @@ class TrackTestCase(BaseTestCase):
             for index in xrange(10):
                 rnd2.append(track.read(start=index*5, length=5))
             rnd2 = numpy.concatenate(rnd2)
-            self.assert_((rnd1==rnd2).all())
-            self.assert_(rnd1.dtype==rnd2.dtype)
+            self.assertArraysEqual(rnd1, rnd2)
+            self.assertEqual(rnd1.dtype, rnd2.dtype)
 
     def test_read_behind(self):
         for rnd1 in self.get_arrays():
             track = Track("test", clear=True)
             track.append(rnd1)
             rnd2 = track.read(50,10)
-            self.assert_(len(rnd2)==0)
-            self.assert_(rnd1.dtype==rnd2.dtype)
+            self.assertEqual(len(rnd2), 0)
+            self.assertEqual(rnd1.dtype, rnd2.dtype)
 
 
 class MultiTrackTestCase(BaseTestCase):
@@ -117,8 +117,8 @@ class MultiTrackTestCase(BaseTestCase):
         buffers_check = [load_track(name) for name in names]
 
         for b, b_check in zip(buffers, buffers_check):
-            self.assert_((b==b_check).all())
-            self.assert_((b.dtype==b_check.dtype))
+            self.assertArraysEqual(b, b_check)
+            self.assertEqual(b.dtype, b_check.dtype)
 
     def test_append(self):
         buffers, names = self.get_buffers()
@@ -136,8 +136,8 @@ class MultiTrackTestCase(BaseTestCase):
 
         for b, b_check in zip(buffers, buffers_check):
             b = numpy.concatenate([b,b])
-            self.assert_((b==b_check).all())
-            self.assert_((b.dtype==b_check.dtype))
+            self.assertArraysEqual(b, b_check)
+            self.assertEqual(b.dtype, b_check.dtype)
 
     def test_read(self):
         buffers, names = self.get_buffers()
@@ -152,5 +152,6 @@ class MultiTrackTestCase(BaseTestCase):
         buffers_check = [numpy.array(b, dtype) for b, dtype in zip(buffers_check, mtr.dtypes)]
 
         for b, b_check in zip(buffers, buffers_check):
-            self.assert_((b==b_check).all())
-            self.assert_((b.dtype==b_check.dtype))
+            self.assertArraysEqual(b, b_check)
+            self.assertEqual(b.dtype, b_check.dtype)
+
