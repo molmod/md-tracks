@@ -737,7 +737,7 @@ class CommandsTestCase(BaseTestCase):
         df_hist = load_track("tracks/atom.pos.bond.df.hist")
         self.assertAlmostEqual(df_hist.sum(), 1.0, 2)
         self.execute("tr-plot", [
-            "--title='C-H bond length distribution'", "--xlabel='C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
+            "--title=C-H bond length distribution", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
             ":bar", "tracks/atom.pos.bond.df.bins", "tracks/atom.pos.bond.df.hist",
             os.path.join(output_dir, "df_noerror.png"),
         ])
@@ -746,7 +746,7 @@ class CommandsTestCase(BaseTestCase):
         cdf_hist = load_track("tracks/atom.pos.bond.cdf.hist")
         self.assertAlmostEqual(cdf_hist[-1], 1.0, 2)
         self.execute("tr-plot", [
-            "--title='Cumulative C-H bond length distribution'", "--xlabel='C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
+            "--title=Cumulative C-H bond length distribution", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
             ":bar", "tracks/atom.pos.bond.cdf.bins", "tracks/atom.pos.bond.cdf.hist",
             os.path.join(output_dir, "df_cumul_noerror.png"),
         ])
@@ -761,7 +761,7 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(df_hist_bis.sum(), 1.0, 2)
         self.assertArraysAlmostEqual(df_hist, df_hist_bis, 1e-5)
         self.execute("tr-plot", [
-            "--title='C-H bond length distribution'", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
+            "--title=C-H bond length distribution", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
             ":bar", "tracks/atom.pos.bond.df.bins", "tracks/atom.pos.bond.df.hist", "tracks/atom.pos.bond.df.hist.error",
             os.path.join(output_dir, "df_error.png"),
         ])
@@ -776,7 +776,7 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(cdf_hist_bis[-1], 1.0, 2)
         self.assertArraysAlmostEqual(cdf_hist, cdf_hist_bis, 1e-5)
         self.execute("tr-plot", [
-            "--title='C-H bond length distribution'", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
+            "--title=C-H bond length distribution", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
             ":bar", "tracks/atom.pos.bond.cdf.bins", "tracks/atom.pos.bond.cdf.hist", "tracks/atom.pos.bond.cdf.hist.error",
             os.path.join(output_dir, "df_cumul_error.png"),
         ])
@@ -809,7 +809,7 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-ic-psf", ["tracks/atom.pos", "bond", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-pca", glob.glob("tracks/atom.pos.bond.*") + ["-n", "-e", "tracks/pca.evals", "-m", "tracks/pca.mode"])
         self.execute("tr-plot", [
-            "--xunit=ps", "--yunit=A", "--xlabel=Time", "--ylabel=Amplitude", "--title='First principal bond stretch mode'",
+            "--xunit=ps", "--yunit=A", "--xlabel=Time", "--ylabel=Amplitude", "--title=First principal bond stretch mode",
             ":line", "tracks/time", "tracks/pca.mode.0000000",
             os.path.join(output_dir, "pca_first_time"),
         ])
