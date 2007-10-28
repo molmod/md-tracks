@@ -117,7 +117,8 @@ line_usage = """A line specification has the following structure:
 
 where ${kind} is 'line' or 'bar', x is the track with the x-data, y is the track
 with the y-data and e is the track with the error on the y-data. A line
-specification must start with a colon, i.e. ':'.
+specification must start with a colon, i.e. ':'. If the track x contains more
+data than y, only the x[:len(y)] will be used for plotting.
 """
 
 line_parser = OptionParser(line_usage)
@@ -186,7 +187,9 @@ class DataDescriptor(object):
         else:
             line_parser.error("A line description should at most contain three tracks. Got:\n%s" % " ".join(args))
         if self.x is None:
-            self.x = numpy.arange(len(y), dtype=float)[sub]
+            self.x = numpy.arange(len(self.y), dtype=float)[sub]
+        elif len(self.x) > len(self.y): # allow the x-axis to contain more data
+            self.x = self.x[:len(self.y)]
         self.x = self.x/xunit
         self.y = self.y/yunit
         if self.error is not None: self.error = self.error/yunit
