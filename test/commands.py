@@ -667,12 +667,6 @@ class CommandsTestCase(BaseTestCase):
             result = self.execute("tr-filter", arguments, verbose=verbose)[0].strip()
             self.assertEqual(result, expected)
             if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
-            arguments.append("--prefix=test")
-            result = self.execute("tr-filter", arguments, verbose=verbose)[0].strip()
-            if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
-            arguments.append("--xyz")
-            result = self.execute("tr-filter", arguments, verbose=verbose)[0].strip()
-            if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
 
         check_filter('thf01', 'at', 'a.label=="ca" or a.label=="CB"', '1,2,3,4')
         check_filter('thf01', 'at', 'a.symbol=="c"', '1,2,3,4')
@@ -702,6 +696,16 @@ class CommandsTestCase(BaseTestCase):
         check_filter('water32', 'mol', 'm.index==5', '5')
         check_filter('water32', 'mol', 'a.index==6', '2')
 
+    def test_format_indexes(self):
+        output = self.execute("tr-format-indexes", ["none", "0,1,2,3"])[0]
+        self.assertEqual(output, "0,1,2,3")
+        output = self.execute("tr-format-indexes", ["suffix", "0,1,2,3"])[0]
+        self.assertEqual(output, "0000000.0000001.0000002.0000003")
+        output = self.execute("tr-format-indexes", ["prefix=test", "0,1,2,3"])[0]
+        self.assertEqual(output, "test.0000000 test.0000001 test.0000002 test.0000003")
+        output = self.execute("tr-format-indexes", ["prefix_xyz=test", "0,1,2,3"])[0]
+        self.assertEqual(output, "test.0000000.x test.0000000.y test.0000000.z test.0000001.x test.0000001.y test.0000001.z test.0000002.x test.0000002.y test.0000002.z test.0000003.x test.0000003.y test.0000003.z")
+
     def test_fluct(self):
         self.from_cp2k_ener("thf01")
         self.execute("tr-fluct", ["tracks/temperature", "tracks/temperature", "tracks/test"])
@@ -709,7 +713,6 @@ class CommandsTestCase(BaseTestCase):
     def test_df(self):
         self.from_xyz("thf01", "pos")
         self.from_cp2k_ener("thf01")
-        atoms = self.execute("tr-filter", [os.path.join(input_dir, "thf01/init.psf"), "at", 'a.number==1'])[0]
         self.execute("tr-ic-psf", ['tracks/atom.pos', 'bond', '1,2,3,4', '5,6,7,8,9,10,11,12', os.path.join(input_dir, "thf01/init.psf")])
         # ordinary df, no error bars
         self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.df"])

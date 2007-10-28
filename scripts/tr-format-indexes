@@ -1,0 +1,68 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from optparse import OptionParser
+
+
+usage = """%prog [options] format indexes
+
+%prog formats the given index, where format can be one of:
+
+* none: keep the same format
+* suffix: %07i.%07i. ..., useful for file suffixes
+* prefix=PREFIX: a white-space separated list of filenames: PREFIX.%07i
+* prefix_xyz=PREFIX: a white space separated list of filenames: PREFIX.%07i.c
+  where c is x, y or z.
+
+This function is mainly meant to process the output of tr-filter.
+
+"""
+
+parser = OptionParser(usage)
+(options, args) = parser.parse_args()
+
+if len(args) == 2:
+    format, indexes_str = args
+    equal_count = format.count("=")
+    if equal_count == 1:
+        format, format_arg = format.split("=")
+    elif equal_count > 0:
+        parser.error("A format specifier can contain at most one '=' character.")
+    format = format.lower()
+else:
+    parser.error("Expecting two arguments.")
+
+if format == 'none':
+    print indexes_str
+elif format == 'suffix':
+    indexes = list(int(i) for i in indexes_str.split(","))
+    print ".".join("%07i" % i for i in indexes)
+elif format == 'prefix':
+    indexes = list(int(i) for i in indexes_str.split(","))
+    filenames = ["%s.%07i" % (format_arg, i) for i in indexes]
+    print " ".join(filenames)
+elif format == 'prefix_xyz':
+    indexes = list(int(i) for i in indexes_str.split(","))
+    filenames = ["%s.%07i" % (format_arg, i) for i in indexes]
+    filenames = sum([["%s.x" % filename, "%s.y" % filename, "%s.z" % filename] for filename in filenames], [])
+    print " ".join(filenames)
+
