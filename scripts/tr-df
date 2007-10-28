@@ -91,12 +91,7 @@ log("WRITTEN %s" % filename)
 
 if options.bin_tracks:
     mtr = MultiTracksReader(paths_in)
-    # create empty bin_tracks:
     bin_filenames = ["%s.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
-    bin_ranges = numpy.array([numpy.arange(nbins), numpy.arange(nbins)+1]).transpose()
-    bin_ranges *= bin_width
-    bin_ranges += xmin
-
     mtw = MultiTracksWriter(bin_filenames)
     for row in itertools.islice(mtr, sub.start, sub.stop, sub.step):
         counts = numpy.histogram(row, nbins, (xmin,xmax), False)[0]/float(len(paths_in))
