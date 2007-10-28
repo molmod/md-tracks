@@ -224,7 +224,7 @@ class BarDescriptor(DataDescriptor):
         right[:-1] = self.x[:-1] + 0.5*fraction*delta
         right[-1] = self.x[-1] + 0.5*fraction*delta[-1]
         width = right-left
-        self.patch = pylab.bar(left, self.y, width, color=self.color, ecolor="k", linewidth=1)[0]
+        self.patch = pylab.bar(left, self.y, width, color=self.color, ecolor="k")[0]
         if self.error is not None:
             fraction = 0.5
             left[1:] = self.x[1:] - 0.5*fraction*delta
