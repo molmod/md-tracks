@@ -128,10 +128,13 @@ class MultiTracksReader(object):
             log(" %i " % start, False)
             buffers = [track.read(start, self.buffer_length) for track in self.tracks]
             shortest = min(len(b) for b in buffers)
+            longest = max(len(b) for b in buffers)
             if shortest == self.buffer_length:
                 yield buffers
             else:
                 buffers = [b[:shortest] for b in buffers]
+                if longest != shortest:
+                    log( " Not all tracks are of equal length! ", False)
                 yield buffers
                 break
             buffer_counter += 1
