@@ -253,8 +253,12 @@ class BarDescriptor(PlotDescriptor):
 PlotDescriptor.kinds["bar"] = BarDescriptor
 
 
+straigt_line_usage = """The data argument is a single value for the position of the line.
+
+The unit must be included, e.g. 3*A.
+"""
 class StraightHLineDescriptor(PlotDescriptor):
-    parser = OptionParser(line_usage)
+    parser = OptionParser(straigt_line_usage)
     parser.add_option(
         "-c", "--color", default='k',
         help="Specifiy the color for this line [default=%default]",
