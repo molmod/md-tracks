@@ -68,6 +68,21 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     mtw.finalize()
 
 
+def cpmd_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
+    """Convert a cp2k energy file into separate tracks."""
+    import itertools
+    names = ["step", "fict_kinectic_energy", "temperature", "potential_energy", "classical_energy", "hamiltonian_energy", "ms_displacement"]
+    filenames = list(os.path.join(destination, name) for name in names)
+    dtypes = [int, float, float, float, float, float, float]
+    dtypes = [numpy.dtype(d) for d in dtypes]
+    mtw = MultiTracksWriter(filenames, dtypes, clear=clear)
+    f = file(filename)
+    for line in itertools.islice(f, sub.start, sub.stop, sub.step):
+        row = [float(word) for word in line.split()[:7]]
+        mtw.dump_row(row)
+    f.close()
+    mtw.finalize()
+
 def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
     import itertools
     names = ["cell.a.x", "cell.a.y", "cell.a.z", "cell.b.x", "cell.b.y", "cell.b.z", "cell.c.x", "cell.c.y", "cell.c.z", "cell.a", "cell.b", "cell.c", "cell.alpha", "cell.beta", "cell.gamma"]
@@ -93,7 +108,7 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
     else:
         atom_indexes = list(atom_indexes)
     names = sum((
-        ["atom.pos.%07i.x", "atom.pos.%07i.y", "atom.pos.%07i.z", "atom.vel.%07i.x", "atom.vel.%07i.y", "atom.vel.%07i.z"]
+        ["atom.pos.%07i.x" % index, "atom.pos.%07i.y" % index, "atom.pos.%07i.z" % index, "atom.vel.%07i.x" % index, "atom.vel.%07i.y" % index, "atom.vel.%07i.z" % index]
         for index in atom_indexes
     ), [])
     filenames = list(os.path.join(destination, name) for name in names)
