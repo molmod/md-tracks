@@ -30,26 +30,26 @@ from optparse import OptionParser
 
 # A) Specify the parameters and the usage
 
-global_usage = """%prog [global_options] line0 [line1 ...] image
+global_usage = """%prog [global_options] plot0 [plot1 ...] image
 
 %prog is a generic plotting script that plots data from multiple tracks. The
-global options must precede the line specifications. The result is saved to the
-file ${image}, which must always be the last argument. A line specification has
+global options must precede the line specifications. The figure is saved to the
+file ${image}, which must always be the last argument. A plot specification has
 the following structure:
 
- :kind [options] {y|x y [e]}
+ :kind [options] data
 
-where ${kind} is 'line' or 'bar', x is the track with the x-data, y is the track
-with the y-data and e is the track with the error on the y-data. A line
-specification must start with a colon, i.e. ':'.
+where ${kind} is 'line' or 'bar'. A plot specification must start with a colon,
+i.e. ':'. The available options and the number of data arguments depend on the
+kind of plot.
 
 %prog -h prints the global options.
-%prog --line-help print the options for the line specifications."""
+%prog --plot-help print the options for the line specifications."""
 
 global_parser = OptionParser(global_usage)
 global_parser.add_option(
-    "--line-help",
-    help="Print the options for the line specification.",
+    "--plot-help",
+    help="Print more information on the plot specifications.",
     default=False, action="store_true",
 )
 global_parser.add_option(
@@ -111,45 +111,18 @@ global_parser.add_option(
 )
 
 
-line_usage = """A line specification has the following structure:
-
- :kind [options] {y|x y [e]}
-
-where ${kind} is 'line' or 'bar', x is the track with the x-data, y is the track
-with the y-data and e is the track with the error on the y-data. A line
-specification must start with a colon, i.e. ':'. If the track x contains more
-data than y, only the x[:len(y)] will be used for plotting.
-"""
-
-line_parser = OptionParser(line_usage)
-line_parser.add_option(
-    "-c", "--color",
-    help="Specifiy the color for this line",
-)
-line_parser.add_option(
-    "-l", "--label",
-    help="Specifiy a label for this line",
-)
-line_parser.add_option(
-    "-s", "--slice", default="::",
-    help="Subsample the input tracks with the given slice start:stop:step "
-         "where start, stop and step must be integers or can be omitted. "
-         "The slice interpretation is pythonic. [default=%default]",
-)
-
-# B) Define the Data descriptors
-
+# B) Define the plot descriptors
 
 class Error(Exception):
     pass
 
 
-class DataDescriptor(object):
+class PlotDescriptor(object):
     kinds = {}
 
     def __new__(type, args):
         result = object.__new__(type, args)
-        cls = DataDescriptor.kinds.get(args[0].lower()[1:])
+        cls = PlotDescriptor.kinds.get(args[0].lower()[1:])
         if cls is None:
             raise Error("line type '%s' not recognized." % args[0])
         else:
@@ -157,35 +130,36 @@ class DataDescriptor(object):
         return result
 
     def __init__(self, args):
-        (options, args) = line_parser.parse_args(args)
-        sub = parse_slice(options.slice)
-        del args[0]
-        if len(args) == 1:
-            self.y = load_track(args[0])[sub]
+        self.options, self.args = self.parser.parse_args(args[1:])
+
+    def init_line_data(self):
+        sub = parse_slice(self.options.slice)
+        if len(self.args) == 1:
+            self.y = load_track(self.args[0])[sub]
             self.x = None
             self.error = None
-            self.label = args[0]
-        elif len(args) == 2:
-            if len(args[0]) == 0:
+            label = self.args[0]
+        elif len(self.args) == 2:
+            if len(self.args[0]) == 0:
                 self.x = None
             else:
-                self.x = load_track(args[0])[sub]
-            self.y = load_track(args[1])[sub]
+                self.x = load_track(self.args[0])[sub]
+            self.y = load_track(self.args[1])[sub]
             self.error = None
-            self.label = args[1]
-        elif len(args) == 3:
-            if len(args[0]) == 0:
+            label = self.args[1]
+        elif len(self.args) == 3:
+            if len(self.args[0]) == 0:
                 self.x = None
             else:
-                self.x = load_track(args[0])[sub]
-            self.y = load_track(args[1])[sub]
-            if len(args[2]) == 0:
+                self.x = load_track(self.args[0])[sub]
+            self.y = load_track(self.args[1])[sub]
+            if len(self.args[2]) == 0:
                 self.error = None
             else:
-                self.error = load_track(args[2])[sub]
-            self.label = args[1]
+                self.error = load_track(self.args[2])[sub]
+            label = self.args[1]
         else:
-            line_parser.error("A line description should at most contain three tracks. Got:\n%s" % " ".join(args))
+            line_parser.error("A line description should at most contain three tracks. Got:\n%s" % " ".join(self.args))
         if self.x is None:
             self.x = numpy.arange(len(self.y), dtype=float)[sub]
         elif len(self.x) > len(self.y): # allow the x-axis to contain more data
@@ -193,26 +167,56 @@ class DataDescriptor(object):
         self.x = self.x/xunit
         self.y = self.y/yunit
         if self.error is not None: self.error = self.error/yunit
-        self.color = options.color
-        if options.label is not None:
-            self.label = options.label
+        if self.options.label is None:
+            self.options.label = label
 
+line_usage = """Data arguments: {y|x y [e]}
+- x is the track with the x-data
+- y is the track with the y-data
+- e is the track with the error on the y-data.
+If the track x contains more data than y, only the x[:len(y)] will be used for
+plotting.
+"""
+class LineDescriptor(PlotDescriptor):
+    parser = OptionParser(line_usage)
+    parser.add_option(
+        "-c", "--color",
+        help="Specifiy the color for this line",
+    )
+    parser.add_option(
+        "-l", "--label",
+        help="Specifiy a label for this line",
+    )
+    parser.add_option(
+        "-s", "--slice", default="::",
+        help="Subsample the input tracks with the given slice start:stop:step "
+             "where start, stop and step must be integers or can be omitted. "
+             "The slice interpretation is pythonic. [default=%default]",
+    )
 
-class LineDescriptor(DataDescriptor):
+    def __init__(self, args):
+        PlotDescriptor.__init__(self, args)
+        self.init_line_data()
 
     def plot(self):
         kwargs = {}
-        if self.color is not None: kwargs["color"] = self.color
+        if self.options.color is not None: kwargs["color"] = self.options.color
         self.patch = pylab.plot(self.x, self.y, linewidth=1, **kwargs)[0]
-        self.color = self.patch.get_color()
+        self.options.color = self.patch.get_color()
         if self.error is not None:
-            pylab.plot(self.x, self.y+self.error, linestyle=':', color=self.color)
-            pylab.plot(self.x, self.y-self.error, linestyle=':', color=self.color)
+            pylab.plot(self.x, self.y+self.error, linestyle='-', alpha=0.5, color=self.options.color)
+            pylab.plot(self.x, self.y-self.error, linestyle='-', alpha=0.5, color=self.options.color)
 
-DataDescriptor.kinds["line"] = LineDescriptor
+PlotDescriptor.kinds["line"] = LineDescriptor
 
 
-class BarDescriptor(DataDescriptor):
+class BarDescriptor(PlotDescriptor):
+    parser = LineDescriptor.parser
+
+    def __init__(self, args):
+        PlotDescriptor.__init__(self, args)
+        self.init_line_data()
+
     def plot(self):
         fraction = 1.0
         delta = self.x[1:] - self.x[:-1]
@@ -232,9 +236,9 @@ class BarDescriptor(DataDescriptor):
             points_x.append(right[index])
             points_y.append(self.y[index])
         kwargs = {}
-        if self.color is not None: kwargs["color"] = self.color
+        if self.options.color is not None: kwargs["color"] = self.options.color
         self.patch = pylab.plot(points_x, points_y, linewidth=1, **kwargs)[0]
-        self.color = self.patch.get_color()
+        self.options.color = self.patch.get_color()
         if self.error is not None:
             from matplotlib.patches import Polygon
             fraction = 0.5
@@ -243,25 +247,34 @@ class BarDescriptor(DataDescriptor):
             right[:-1] = self.x[:-1] + 0.5*fraction*delta
             right[-1] = self.x[-1] + 0.5*fraction*delta[-1]
             for l, r, x, y, e in zip(left, right, self.x, self.y, self.error):
-                pylab.gca().add_patch(Polygon([(l, y+e),(r,y+e)], ec=self.color, alpha=0.5, linewidth=1, fill=False))
-                pylab.gca().add_patch(Polygon([(l, y-e),(r,y-e)], ec=self.color, alpha=0.5, linewidth=1, fill=False))
-                pylab.gca().add_patch(Polygon([(x, y-e),(x,y+e)], ec=self.color, alpha=0.5, linewidth=1, fill=False))
+                pylab.gca().add_patch(Polygon([(l, y+e),(r,y+e)], ec=self.options.color, alpha=0.5, linewidth=1, fill=False))
+                pylab.gca().add_patch(Polygon([(l, y-e),(r,y-e)], ec=self.options.color, alpha=0.5, linewidth=1, fill=False))
+                pylab.gca().add_patch(Polygon([(x, y-e),(x,y+e)], ec=self.options.color, alpha=0.5, linewidth=1, fill=False))
         pylab.gca().autoscale_view()
 
-DataDescriptor.kinds["bar"] = BarDescriptor
+PlotDescriptor.kinds["bar"] = BarDescriptor
 
 
 # C) parse the arguments
 blocks = [[]]
 for word in sys.argv[1:]:
-    if word[0] == ":" and word[1:] in DataDescriptor.kinds:
+    if word[0] == ":" and word[1:] in PlotDescriptor.kinds:
         blocks.append([word])
     else:
         blocks[-1].append(word)
 
 (global_options, global_args) = global_parser.parse_args(blocks[0])
-if global_options.line_help:
-    line_parser.print_help()
+if global_options.plot_help:
+    global_parser.print_usage()
+    print
+    print "Plot specifications"
+    print "==================="
+    print
+    for name, cls in sorted(PlotDescriptor.kinds.iteritems()):
+        print name
+        print "-"*len(name)
+        cls.parser.print_help()
+    sys.exit(0)
 if len(global_args) > 0:
     parser.error("Expecting no global arguments. Got %s" % global_args)
 
@@ -306,10 +319,11 @@ if global_options.grid:
     pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
     pylab.gca().set_axisbelow(True)
 for line_block in blocks[1:]:
-    dd = DataDescriptor(line_block)
+    dd = PlotDescriptor(line_block)
     dd.plot()
-    patches.append(dd.patch)
-    labels.append(dd.label)
+    if dd.options.label is not None:
+        patches.append(dd.patch)
+        labels.append(dd.options.label)
     del dd
 if global_options.xlog:
     pylab.gca().set_xscale("log")
