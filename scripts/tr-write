@@ -79,9 +79,7 @@ else:
     parser.error("Expecting at least one argument.")
 
 columns = [index for index, path_out in enumerate(paths_out) if path_out != '-']
-print columns
 paths_out = [path_out for path_out in paths_out if path_out != '-']
-print paths_out
 
 sub = parse_slice(options.slice)
 units = numpy.array(units)[columns]
@@ -89,6 +87,5 @@ mtw = MultiTracksWriter(paths_out)
 for line in itertools.islice(sys.stdin, sub.start, sub.stop, sub.step):
     words = line.split()
     row = numpy.array(list(float(words[index]) for index in columns))
-    print row
     mtw.dump_row(row*units)
 mtw.finalize()
