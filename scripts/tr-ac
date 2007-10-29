@@ -80,7 +80,7 @@ else:
     if max_delta_steps <= 0:
         parser.error("The option --max-delta-t must be strictly positive.")
 average_steps = length - max_delta_steps
-agerage_time = average_steps*time_step
+average_time = average_steps*time_step
 
 result = 0
 for path_in in paths_in:
@@ -89,7 +89,7 @@ for path_in in paths_in:
         raise Error("All input tracks must have the same length.")
     if options.non_zero_average:
         f -= f.mean()
-    tmp = numpy.correlate(f, f[:average_steps], 'valid')/agerage_time
+    tmp = numpy.correlate(f, f[:average_steps], 'valid')/average_steps
     result += tmp
     log("PROCESSED %s" % path_in)
 
@@ -101,7 +101,7 @@ log("WRITTEN %s.normalized" % path_out)
 if options.tau is not None:
     correlation_time = parse_unit(options.tau)
     ones = numpy.ones(len(result), float)
-    normalized_error = 2*numpy.sqrt(correlation_time/agerage_time/len(paths_in))
+    normalized_error = 2*numpy.sqrt(correlation_time/average_time/len(paths_in))
     error = normalized_error*result[0]
     dump_track("%s.error" % path_out, ones*error)
     dump_track("%s.normalized.error" % path_out, ones*normalized_error)
