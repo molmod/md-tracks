@@ -465,7 +465,7 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-make-spectrum", glob.glob("tracks/atom.vel.*.rfft") + ["tracks/spectrum"])
         self.execute("tr-wavenumber-axis", ["tracks/spectrum", "1000*fs", "tracks/wavenumbers"])
         output = self.execute("tr-fit-peaks", [
-            "tracks/wavenumbers", "tracks/spectrum", "1750", "2250",
+            "tracks/wavenumbers", "tracks/spectrum", "1900", "2200",
             "0.0001:2050.0:50.0:0.01", "--dump-model=tracks/model", #"--no-fit",
         ])
         f = file(os.path.join(output_dir, "fit_peaks.out"), "w")
@@ -475,6 +475,8 @@ class CommandsTestCase(BaseTestCase):
             "--xlabel=Wavenumber", "--ylabel=Amplitude", "--xunit=1/cm",
             ":line", "-s3::", "tracks/wavenumbers", "tracks/spectrum",
             ":line", "-s3::", "tracks/wavenumbers", "tracks/model",
+            ":vline", "1900/cm",
+            ":vline", "2200/cm",
             os.path.join(output_dir, "fit_peaks_spectrum.png"),
         ])
 
@@ -830,6 +832,7 @@ class CommandsTestCase(BaseTestCase):
 
         self.execute("tr-plot", [
             "--xunit=A", "--yunit=1", "--xlabel=Iteratomic distance", "--ylabel=g(r)", "--title=Radial distribution functions",
+            ":hline", "1",
             ":bar", "tracks/rdf_O_O.bins", "tracks/rdf_O_O.hist",
             ":bar", "tracks/rdf_H_H.bins", "tracks/rdf_H_H.hist",
             ":bar", "tracks/rdf_O_H.bins", "tracks/rdf_O_H.hist",

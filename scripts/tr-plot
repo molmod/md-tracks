@@ -24,7 +24,7 @@ from tracks.core import load_track
 from tracks.parse import parse_slice
 from molmod.units import parse_unit
 
-import numpy, sys
+import numpy, sys, pylab
 from optparse import OptionParser
 
 
@@ -132,7 +132,7 @@ class PlotDescriptor(object):
     def __init__(self, args):
         self.options, self.args = self.parser.parse_args(args[1:])
 
-    def init_line_data(self):
+    def init_line_data(self, xunit, yunit):
         sub = parse_slice(self.options.slice)
         if len(self.args) == 1:
             self.y = load_track(self.args[0])[sub]
@@ -159,7 +159,7 @@ class PlotDescriptor(object):
                 self.error = load_track(self.args[2])[sub]
             label = self.args[1]
         else:
-            line_parser.error("A line description should at most contain three tracks. Got:\n%s" % " ".join(self.args))
+            self.parser.error("A line description should at most contain three tracks. Got:\n%s" % " ".join(self.args))
         if self.x is None:
             self.x = numpy.arange(len(self.y), dtype=float)[sub]
         elif len(self.x) > len(self.y): # allow the x-axis to contain more data
@@ -169,6 +169,7 @@ class PlotDescriptor(object):
         if self.error is not None: self.error = self.error/yunit
         if self.options.label is None:
             self.options.label = label
+
 
 line_usage = """Data arguments: {y|x y [e]}
 - x is the track with the x-data
@@ -196,9 +197,9 @@ class LineDescriptor(PlotDescriptor):
 
     def __init__(self, args):
         PlotDescriptor.__init__(self, args)
-        self.init_line_data()
 
-    def plot(self):
+    def plot(self, xunit, yunit):
+        self.init_line_data(xunit, yunit)
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
         self.patch = pylab.plot(self.x, self.y, linewidth=1, **kwargs)[0]
@@ -213,11 +214,8 @@ PlotDescriptor.kinds["line"] = LineDescriptor
 class BarDescriptor(PlotDescriptor):
     parser = LineDescriptor.parser
 
-    def __init__(self, args):
-        PlotDescriptor.__init__(self, args)
-        self.init_line_data()
-
-    def plot(self):
+    def plot(self, xunit, yunit):
+        self.init_line_data(xunit, yunit)
         fraction = 1.0
         delta = self.x[1:] - self.x[:-1]
         left = numpy.zeros(len(self.x), float)
@@ -253,6 +251,49 @@ class BarDescriptor(PlotDescriptor):
         pylab.gca().autoscale_view()
 
 PlotDescriptor.kinds["bar"] = BarDescriptor
+
+
+class StraightHLineDescriptor(PlotDescriptor):
+    parser = OptionParser(line_usage)
+    parser.add_option(
+        "-c", "--color", default='k',
+        help="Specifiy the color for this line [default=%default]",
+    )
+    parser.add_option(
+        "-l", "--label",
+        help="Specifiy a label for this line",
+    )
+    kind = None
+
+    def __init__(self, args):
+        PlotDescriptor.__init__(self, args)
+        if len(self.args) != 1:
+            self.parser.error("Expecting one argument in %s specification" % self.kind)
+        else:
+            self.value = parse_unit(self.args[0])
+
+
+class HLineDescriptor(StraightHLineDescriptor):
+    kind = "hline"
+
+    def plot(self, xunit, yunit):
+        kwargs = {}
+        if self.options.color is not None: kwargs["color"] = self.options.color
+        self.patch = pylab.axhline(self.value/yunit, linewidth=1, **kwargs)
+
+PlotDescriptor.kinds["hline"] = HLineDescriptor
+
+
+class VLineDescriptor(StraightHLineDescriptor):
+    kind = "vline"
+
+    def plot(self, xunit, yunit):
+        kwargs = {}
+        if self.options.color is not None: kwargs["color"] = self.options.color
+        self.patch = pylab.axvline(self.value/xunit, linewidth=1, **kwargs)
+
+PlotDescriptor.kinds["vline"] = VLineDescriptor
+
 
 
 # C) parse the arguments
@@ -302,7 +343,7 @@ def parse_lim(s):
     return mi, ma
 
 
-import pylab, matplotlib
+# E) The actual plotting
 from matplotlib.ticker import ScalarFormatter
 class InvScalarFormatter(ScalarFormatter):
     def __call__(self, x, pos):
@@ -320,7 +361,7 @@ if global_options.grid:
     pylab.gca().set_axisbelow(True)
 for line_block in blocks[1:]:
     dd = PlotDescriptor(line_block)
-    dd.plot()
+    dd.plot(xunit, yunit)
     if dd.options.label is not None:
         patches.append(dd.patch)
         labels.append(dd.options.label)
