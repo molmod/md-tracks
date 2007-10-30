@@ -49,7 +49,7 @@ class BaseTestCase(unittest.TestCase):
 
     def tearDown(self):
         os.chdir(orig_dir)
-        #shutil.rmtree(tmp_dir)
+        shutil.rmtree(tmp_dir)
 
     def assertArraysEqual(self, a, b):
         self.assertEqual(a.shape, b.shape, "The array shapes do not match.")
