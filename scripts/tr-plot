@@ -194,6 +194,10 @@ class LineDescriptor(PlotDescriptor):
              "where start, stop and step must be integers or can be omitted. "
              "The slice interpretation is pythonic. [default=%default]",
     )
+    parser.add_option(
+        "-d", dest="linestyle",
+        help="Specify the line style: '-', '--', ':', ... (see matplotlib.sf.net)",
+    )
 
     def __init__(self, args):
         PlotDescriptor.__init__(self, args)
@@ -202,17 +206,32 @@ class LineDescriptor(PlotDescriptor):
         self.init_line_data(xunit, yunit)
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
+        if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
         self.patch = pylab.plot(self.x, self.y, linewidth=1, **kwargs)[0]
-        self.options.color = self.patch.get_color()
+        kwargs["color"] = self.patch.get_color()
         if self.error is not None:
-            pylab.plot(self.x, self.y+self.error, linestyle='-', alpha=0.5, color=self.options.color)
-            pylab.plot(self.x, self.y-self.error, linestyle='-', alpha=0.5, color=self.options.color)
+            pylab.plot(self.x, self.y+self.error, linestyle='-', alpha=0.5, **kwargs)
+            pylab.plot(self.x, self.y-self.error, linestyle='-', alpha=0.5, **kwargs)
 
 PlotDescriptor.kinds["line"] = LineDescriptor
 
 
 class BarDescriptor(PlotDescriptor):
-    parser = LineDescriptor.parser
+    parser = OptionParser(line_usage)
+    parser.add_option(
+        "-c", "--color",
+        help="Specifiy the color for this line",
+    )
+    parser.add_option(
+        "-l", "--label",
+        help="Specifiy a label for this line",
+    )
+    parser.add_option(
+        "-s", "--slice", default="::",
+        help="Subsample the input tracks with the given slice start:stop:step "
+             "where start, stop and step must be integers or can be omitted. "
+             "The slice interpretation is pythonic. [default=%default]",
+    )
 
     def plot(self, xunit, yunit):
         self.init_line_data(xunit, yunit)
@@ -267,6 +286,10 @@ class StraightHLineDescriptor(PlotDescriptor):
         "-l", "--label",
         help="Specifiy a label for this line",
     )
+    parser.add_option(
+        "-d", dest="linestyle",
+        help="Specify the line style: '-', '--', ':', ... (see matplotlib.sf.net)",
+    )
     kind = None
 
     def __init__(self, args):
@@ -283,6 +306,7 @@ class HLineDescriptor(StraightHLineDescriptor):
     def plot(self, xunit, yunit):
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
+        if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
         self.patch = pylab.axhline(self.value/yunit, linewidth=1, **kwargs)
 
 PlotDescriptor.kinds["hline"] = HLineDescriptor
@@ -294,6 +318,7 @@ class VLineDescriptor(StraightHLineDescriptor):
     def plot(self, xunit, yunit):
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
+        if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
         self.patch = pylab.axvline(self.value/xunit, linewidth=1, **kwargs)
 
 PlotDescriptor.kinds["vline"] = VLineDescriptor
@@ -332,18 +357,18 @@ if global_options.xinv: xunit = 1/xunit
 yunit = parse_unit(global_options.yunit)
 if global_options.yinv: yunit = 1/yunit
 
-def parse_lim(s):
+def parse_lim(s, unit):
     if s.count(",") != 1:
         raise ValueError("The value of the option xlim and ylim must contain exactly one ','.")
     mi,ma = s.split(',')
     if len(mi) == 0:
         mi = None
     else:
-        mi = float(mi)
+        mi = parse_unit(mi)/unit
     if len(ma) == 0:
         ma = None
     else:
-        ma = float(ma)
+        ma = parse_unit(ma)/unit
     return mi, ma
 
 
@@ -378,8 +403,8 @@ if global_options.xinv:
     pylab.gca().get_xaxis().set_major_formatter(InvScalarFormatter())
 if global_options.yinv:
     pylab.gca().get_yaxis().set_major_formatter(InvScalarFormatter())
-pylab.xlim(parse_lim(global_options.xlim))
-pylab.ylim(parse_lim(global_options.ylim))
+pylab.xlim(parse_lim(global_options.xlim, xunit))
+pylab.ylim(parse_lim(global_options.ylim, yunit))
 if global_options.legend:
     pylab.legend(patches, labels, loc=0)
 pylab.savefig(image)

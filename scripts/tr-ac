@@ -104,4 +104,6 @@ if options.tau is not None:
     normalized_error = 2*numpy.sqrt(correlation_time/average_time/len(paths_in))
     error = normalized_error*result[0]
     dump_track("%s.error" % path_out, ones*error)
+    log("WRITTEN %s.error" % path_out)
     dump_track("%s.normalized.error" % path_out, ones*normalized_error)
+    log("WRITTEN %s.normalized.error" % path_out)

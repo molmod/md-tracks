@@ -54,14 +54,14 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
 def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     """Convert a cp2k energy file into separate tracks."""
     import itertools
-    names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy", "conserved_quantity"]
+    names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy"]
     filenames = list(os.path.join(destination, name) for name in names)
-    dtypes = [int, float, float, float, float, float, float]
+    dtypes = [int, float, float, float, float, float]
     dtypes = [numpy.dtype(d) for d in dtypes]
     mtw = MultiTracksWriter(filenames, dtypes, clear=clear)
     f = file(filename)
     for line in itertools.islice(f, sub.start, sub.stop, sub.step):
-        row = [float(word) for word in line.split()]
+        row = [float(word) for word in line.split()[:6]]
         row[1] = row[1]*fs
         mtw.dump_row(row)
     f.close()
