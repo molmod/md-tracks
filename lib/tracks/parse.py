@@ -26,9 +26,13 @@ import sys
 
 
 __all__ = [
-    "parse_slice", "get_delta", "parse_x_step", "parse_x_last",
+    "Error", "parse_slice", "get_delta", "parse_x_step", "parse_x_last",
     "parse_x_length",
 ]
+
+
+class Error(Exception):
+    pass
 
 
 def parse_slice(s):
