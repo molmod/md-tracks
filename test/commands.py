@@ -724,7 +724,7 @@ class CommandsTestCase(BaseTestCase):
         if verbose: print
         def check_filter(case, kind, expression, expected):
             arguments = [os.path.join(input_dir, "%s/init.psf" % case), kind, expression]
-            result = self.execute("tr-filter", arguments, verbose=verbose)[0].strip()
+            result = self.execute("tr-select", arguments, verbose=verbose)[0].strip()
             self.assertEqual(result, expected)
             if verbose: print "%s  |  %s  |  %s   =>   %s" % (case, kind, expression, result)
 
@@ -757,7 +757,7 @@ class CommandsTestCase(BaseTestCase):
         check_filter('water32', 'mol', 'a.index==6', '2')
 
     def test_filter_rings(self):
-        output = self.execute("tr-filter-rings", [os.path.join(input_dir, "thf01/init.psf"), "5"])
+        output = self.execute("tr-select-rings", [os.path.join(input_dir, "thf01/init.psf"), "5"])
         self.assert_(len(output)==1)
         self.assertEqual(set([0,1,2,3,4]), set(int(word) for word in output[0].split(",")))
 
@@ -867,11 +867,11 @@ class CommandsTestCase(BaseTestCase):
         self.from_xyz("water32", "pos")
         self.from_cp2k_ener("water32")
 
-        atoms_O = self.execute("tr-filter", [os.path.join(input_dir, "water32/init.psf"), "at", "a.number==8"])[0]
+        atoms_O = self.execute("tr-select", [os.path.join(input_dir, "water32/init.psf"), "at", "a.number==8"])[0]
         prefixes_O = self.execute("tr-format-indexes", ["prefix=tracks/atom.pos", atoms_O])[0].split()
         self.execute("tr-rdf", prefixes_O + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_O_O"])
 
-        atoms_H = self.execute("tr-filter", [os.path.join(input_dir, "water32/init.psf"), "at", "a.number==1"])[0]
+        atoms_H = self.execute("tr-select", [os.path.join(input_dir, "water32/init.psf"), "at", "a.number==1"])[0]
         prefixes_H = self.execute("tr-format-indexes", ["prefix=tracks/atom.pos", atoms_H])[0].split()
         self.execute("tr-rdf", prefixes_H + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_H_H"])
 
@@ -891,7 +891,7 @@ class CommandsTestCase(BaseTestCase):
         self.from_cp2k_ener("ar108")
         self.from_cp2k_cell("ar108")
 
-        atoms_Ar = self.execute("tr-filter", [os.path.join(input_dir, "ar108/init.psf"), "at", "a.number==18"])[0]
+        atoms_Ar = self.execute("tr-select", [os.path.join(input_dir, "ar108/init.psf"), "at", "a.number==18"])[0]
         prefixes_Ar = self.execute("tr-format-indexes", ["prefix=tracks/atom.pos", atoms_Ar])[0].split()
         # without error bars
         self.execute("tr-rdf", prefixes_Ar + ["-s::10", "tracks/cell", "20*A", "80", "tracks/rdf"])
