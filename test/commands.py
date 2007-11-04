@@ -23,7 +23,7 @@ from common import *
 
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_slice
-from tracks.util import dist_track, bend_track, dihed_track
+import tracks.vector as vector
 from ccio.psf import PSFFile
 from ccio.xyz import XYZReader, XYZFile
 from molmod.units import angstrom, fs
@@ -616,7 +616,10 @@ class CommandsTestCase(BaseTestCase):
             for bond_filename in bond_filenames:
                 bond = load_track(bond_filename)
                 index1, index2 = [int(word) for word in bond_filename.split(".")[-2:]]
-                bond_check = dist_track("tracks/atom.pos.%07i" % index1, "tracks/atom.pos.%07i" % index2, slice(None))
+                bond_check = vector.dist(
+                    vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                )
                 self.assertArraysEqual(bond, bond_check)
             # bend
             bend_filenames = glob.glob("tracks/atom.pos.bend*")
@@ -624,7 +627,11 @@ class CommandsTestCase(BaseTestCase):
             for bend_filename in bend_filenames:
                 bend = load_track(bend_filename)
                 index1, index2, index3 = [int(word) for word in bend_filename.split(".")[-3:]]
-                bend_check = bend_track("tracks/atom.pos.%07i" % index1, "tracks/atom.pos.%07i" % index2, "tracks/atom.pos.%07i" % index3, slice(None))
+                bend_check = vector.bend(
+                    vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                )
                 self.assertArraysEqual(bend, bend_check)
             # dihed
             dihed_filenames = glob.glob("tracks/atom.pos.dihed*")
@@ -632,7 +639,12 @@ class CommandsTestCase(BaseTestCase):
             for dihed_filename in dihed_filenames:
                 dihed = load_track(dihed_filename)
                 index1, index2, index3, index4 = [int(word) for word in dihed_filename.split(".")[-4:]]
-                dihed_check = dihed_track("tracks/atom.pos.%07i" % index1, "tracks/atom.pos.%07i" % index2, "tracks/atom.pos.%07i" % index3, "tracks/atom.pos.%07i" % index4, slice(None))
+                dihed_check = vector.dihed(
+                    vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index4),
+                )
                 self.assertArraysEqual(dihed, dihed_check)
         self.from_xyz("thf01", "pos")
         self.execute("tr-ic-psf", ["tracks/atom.pos", "bond", os.path.join(input_dir, "thf01/init.psf")])
@@ -847,7 +859,10 @@ class CommandsTestCase(BaseTestCase):
         equal = numpy.zeros(len(closest_distances), int)
         for atom_a in group_a:
             for atom_b in group_b:
-                distances = dist_track(atom_a, atom_b)
+                distances = vector.dist(
+                    vector.from_prefix(atom_a),
+                    vector.from_prefix(atom_b),
+                )
                 self.assert_((distances >= closest_distances).all())
                 equal += (closest_distances == distances)
         self.assert_((equal > 0).all())

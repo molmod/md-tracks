@@ -20,11 +20,11 @@
 # --
 
 
-from tracks.util import dist_track, bend_track, dihed_track
 from tracks.core import dump_track, TrackNotFoundError
 from tracks.parse import parse_slice
 from tracks.util import AtomFilter
 from tracks.log import log
+import tracks.vector as vector
 from ccio.psf import PSFFile
 
 import numpy
@@ -114,7 +114,10 @@ if kind == 'bond':
             (atom_filter1(index2) and atom_filter2(index1))):
             try:
                 name = '%s.bond.%07i.%07i' % (output_prefix, index1, index2)
-                dump_track(name, dist_track("%s.%07i" % (prefix, index1), "%s.%07i" % (prefix, index2), sub))
+                dump_track(name, vector.dist(
+                    vector.from_prefix("%s.%07i" % (prefix, index1), sub),
+                    vector.from_prefix("%s.%07i" % (prefix, index2), sub),
+                ))
                 log("DONE %s" % name)
             except TrackNotFoundError, e:
                 log("WARNING %s" % str(e))
@@ -136,7 +139,11 @@ elif kind == 'bend':
             (atom_filter1(index3) and atom_filter2(index2) and atom_filter3(index1))):
             try:
                 name = '%s.bend.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
-                dump_track(name, bend_track("%s.%07i" % (prefix, index1), "%s.%07i" % (prefix, index2), "%s.%07i" % (prefix, index3), sub))
+                dump_track(name, vector.bend(
+                    vector.from_prefix("%s.%07i" % (prefix, index1), sub),
+                    vector.from_prefix("%s.%07i" % (prefix, index2), sub),
+                    vector.from_prefix("%s.%07i" % (prefix, index3), sub),
+                ))
                 log("DONE %s" % name)
             except TrackNotFoundError, e:
                 log("WARNING %s" % str(e))
@@ -160,7 +167,12 @@ elif kind == 'dihed':
             (atom_filter1(index4) and atom_filter2(index3) and atom_filter3(index2) and atom_filter4(index1))):
             try:
                 name = '%s.dihed.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
-                dump_track(name, dihed_track("%s.%07i" % (prefix, index1), "%s.%07i" % (prefix, index2), "%s.%07i" % (prefix, index3), "%s.%07i" % (prefix, index4), sub))
+                dump_track(name, vector.dihed(
+                    vector.from_prefix("%s.%07i" % (prefix, index1), sub),
+                    vector.from_prefix("%s.%07i" % (prefix, index2), sub),
+                    vector.from_prefix("%s.%07i" % (prefix, index3), sub),
+                    vector.from_prefix("%s.%07i" % (prefix, index4), sub),
+                ))
                 log("DONE %s" % name)
             except TrackNotFoundError, e:
                 log("WARNING %s" % str(e))

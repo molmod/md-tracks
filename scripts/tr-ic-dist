@@ -21,8 +21,8 @@
 
 
 from tracks.core import dump_track
-from tracks.util import dist_track
 from tracks.parse import parse_slice
+import tracks.vector as vector
 
 import numpy
 from optparse import OptionParser
@@ -52,4 +52,7 @@ else:
     parser.error("Expecting three arguments.")
 
 sub = parse_slice(options.slice)
-dump_track(output_path, dist_track(prefix1, prefix2, sub))
+dump_track(output_path, vector.dist(
+    vector.from_prefix(prefix1, sub),
+    vector.from_prefix(prefix2, sub),
+))

@@ -21,8 +21,8 @@
 
 
 from tracks.core import dump_track
-from tracks.util import bend_track
 from tracks.parse import parse_slice
+import tracks.vector as vector
 
 import numpy
 from optparse import OptionParser
@@ -53,4 +53,8 @@ else:
     parser.error("Expecting four arguments.")
 
 sub = parse_slice(options.slice)
-dump_track(output_path, bend_track(prefix1, prefix2, prefix3, sub))
+dump_track(output_path, vector.bend(
+    vector.from_prefix(prefix1, sub),
+    vector.from_prefix(prefix2, sub),
+    vector.from_prefix(prefix3, sub),
+))
