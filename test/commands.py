@@ -925,3 +925,11 @@ class CommandsTestCase(BaseTestCase):
         # check the number of generated files:
         self.assertEqual(len(glob.glob("tracks/ang.mom*")), 32*3)
 
+    def test_norm(self):
+        v1 = numpy.random.normal(0, 1, 100)
+        v2 = numpy.random.normal(0, 1, 100)
+        dump_track("v1", v1)
+        dump_track("v2", v2)
+        result = numpy.sqrt(v1*v1+v2*v2)
+        self.execute("tr-norm", ["v1", "v2", "result"])
+        self.assertArraysEqual(load_track("result"), result)
