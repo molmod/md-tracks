@@ -63,6 +63,18 @@ The output is written to ${prefix}.dihed.${index1}.${index2}.${index3}.${index4}
 Only four or none ${atoms*} arguments are allowed. Their interpretation is
 similar to the bond case.
 
+Case ${kind}=dtl (Distance to line, (1,2)-3)
+
+The output is written to ${prefix}.dtl.${index1}.${index2}.${index3}
+Only three or none ${atoms*} arguments are allowed. Their interpretation is
+similar to the bond case.
+
+Case ${kind}=oop (Out of plane distance, (1,2,3)-4)
+
+The output is written to ${prefix}.oop.${index1}.${index2}.${index3}.${index4}
+Only four or none ${atoms*} arguments are allowed. Their interpretation is
+similar to the bond case.
+
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
@@ -136,7 +148,7 @@ elif kind == 'bend':
         atom_filter2 = AtomFilter(args[-3])
         atom_filter3 = AtomFilter(args[-2])
     else:
-        parser.error("When kind is bond, three or six arguments are expected, got %i." % len(args))
+        parser.error("When kind is bend, three or six arguments are expected, got %i." % len(args))
 
     for index1, index2, index3 in psf.bends:
         if ((atom_filter1(index1) and atom_filter2(index2) and atom_filter3(index3)) or
@@ -165,7 +177,7 @@ elif kind == 'dihed':
         atom_filter3 = AtomFilter(args[-3])
         atom_filter4 = AtomFilter(args[-2])
     else:
-        parser.error("When kind is bond, three or seven arguments are expected, got %i." % len(args))
+        parser.error("When kind is dihed, three or seven arguments are expected, got %i." % len(args))
 
     for index1, index2, index3, index4 in psf.dihedrals:
         if ((atom_filter1(index1) and atom_filter2(index2) and atom_filter3(index3) and atom_filter4(index4)) or
@@ -182,6 +194,82 @@ elif kind == 'dihed':
                 log("DONE %s" % name)
             except TrackNotFoundError, e:
                 log("WARNING %s" % str(e))
+
+elif kind == 'dtl':
+    from molmod.graphs import MatchGenerator, SubgraphMatchDefinition, Graph
+
+    if len(args) == 3:
+        atom_filter1 = AtomFilter()
+        atom_filter2 = AtomFilter()
+        atom_filter3 = AtomFilter()
+    elif len(args) == 6:
+        atom_filter1 = AtomFilter(args[-4])
+        atom_filter2 = AtomFilter(args[-3])
+        atom_filter3 = AtomFilter(args[-2])
+    else:
+        parser.error("When kind is dtl, three or six arguments are expected, got %i." % len(args))
+
+    graph = psf.get_graph()
+    match_generator = MatchGenerator(SubgraphMatchDefinition(
+        Graph([(1,2),(1,3)]),
+        node_tags = {1: 1, 2: 2, 3: 3}
+    ))
+
+    for match in match_generator(graph):
+        index1 = match.forward[1]
+        index2 = match.forward[2]
+        index3 = match.forward[3]
+        if atom_filter1(index1) and atom_filter2(index2) and atom_filter3(index3):
+            try:
+                name = '%s.dtl.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
+                dump_track(name, vector.dtl(
+                    vector.from_prefix("%s.%07i" % (prefix, index1), sub),
+                    vector.from_prefix("%s.%07i" % (prefix, index2), sub),
+                    vector.from_prefix("%s.%07i" % (prefix, index3), sub),
+                ))
+                log("DONE %s" % name)
+            except TrackNotFoundError, e:
+                log("WARNING %s" % str(e))
+
+elif kind == 'oop':
+    from molmod.graphs import MatchGenerator, SubgraphMatchDefinition, CriteriaSet, Graph
+
+    if len(args) == 3:
+        atom_filter1 = AtomFilter()
+        atom_filter2 = AtomFilter()
+        atom_filter3 = AtomFilter()
+        atom_filter4 = AtomFilter()
+    elif len(args) == 7:
+        atom_filter1 = AtomFilter(args[-5])
+        atom_filter2 = AtomFilter(args[-4])
+        atom_filter3 = AtomFilter(args[-3])
+        atom_filter4 = AtomFilter(args[-2])
+    else:
+        parser.error("When kind is oop, three or seven arguments are expected, got %i." % len(args))
+
+    graph = psf.get_graph()
+    match_generator = MatchGenerator(SubgraphMatchDefinition(
+        Graph([(4,1), (4,2), (4,3)]),
+        #[CriteriaSet("foo", {1: atom_filter1, 2: atom_filter2, 3: atom_filter3, 4: atom_filter4})],
+        [CriteriaSet("foo", {1: atom_filter1, 2: atom_filter2, 3: atom_filter3, 4: atom_filter4})],
+    ))
+
+    for match in match_generator(graph):
+        index1 = match.forward[1]
+        index2 = match.forward[2]
+        index3 = match.forward[3]
+        index4 = match.forward[4]
+        try:
+            name = '%s.oop.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
+            dump_track(name, vector.oop(
+                vector.from_prefix("%s.%07i" % (prefix, index1), sub),
+                vector.from_prefix("%s.%07i" % (prefix, index2), sub),
+                vector.from_prefix("%s.%07i" % (prefix, index3), sub),
+                vector.from_prefix("%s.%07i" % (prefix, index4), sub),
+            ))
+            log("DONE %s" % name)
+        except TrackNotFoundError, e:
+            log("WARNING %s" % str(e))
 
 else:
     parser.error("Unknown kind: %s" % kind)

@@ -635,7 +635,7 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(bends[-1]/angstrom, 0.755, 2)
 
     def test_ic_psf(self):
-        def check_ic_psf(nbonds, nbends, ndiheds):
+        def check_ic_psf(nbonds, nbends, ndiheds, ndtls, noops):
             # bond
             bond_filenames = glob.glob("tracks/atom.pos.bond*")
             self.assertEqual(len(bond_filenames), nbonds)
@@ -672,18 +672,47 @@ class CommandsTestCase(BaseTestCase):
                     vector.from_prefix("tracks/atom.pos.%07i" % index4),
                 )
                 self.assertArraysEqual(dihed, dihed_check)
+            # dtl
+            dtl_filenames = glob.glob("tracks/atom.pos.dtl*")
+            self.assertEqual(len(dtl_filenames), ndtls)
+            for dtl_filename in dtl_filenames:
+                dtl = load_track(dtl_filename)
+                index1, index2, index3 = [int(word) for word in dtl_filename.split(".")[-3:]]
+                dtl_check = vector.dtl(
+                    vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                )
+                self.assertArraysEqual(dtl, dtl_check)
+            # oop
+            oop_filenames = glob.glob("tracks/atom.pos.oop*")
+            self.assertEqual(len(oop_filenames), noops)
+            for oop_filename in oop_filenames:
+                oop = load_track(oop_filename)
+                index1, index2, index3, index4 = [int(word) for word in oop_filename.split(".")[-4:]]
+                oop_check = vector.oop(
+                    vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                    vector.from_prefix("tracks/atom.pos.%07i" % index4),
+                )
+                self.assertArraysEqual(oop, oop_check)
         self.from_xyz("thf01", "pos")
         self.execute("tr-ic-psf", ["tracks/atom.pos", "bond", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["tracks/atom.pos", "bend", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["tracks/atom.pos", "dihed", os.path.join(input_dir, "thf01/init.psf")])
-        check_ic_psf(13,25,33)
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "dtl", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "oop", os.path.join(input_dir, "thf01/init.psf")])
+        check_ic_psf(13,25,33,50,16)
         # clean up and start again with --filter-atoms
         shutil.rmtree("tracks")
         self.from_xyz("thf01", "pos")
         self.execute("tr-ic-psf", ["tracks/atom.pos", "bond", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["tracks/atom.pos", "bend", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["tracks/atom.pos", "dihed", "5,6,7,8,9,10,11,12", "1,2,3,4", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
-        check_ic_psf(8,5,12)
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "dtl", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["tracks/atom.pos", "oop", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "3,4", os.path.join(input_dir, "thf01/init.psf")])
+        check_ic_psf(8,5,12,10,8)
 
     def test_mean_std(self):
         self.from_xyz("thf01", "vel", ["-u1"])
