@@ -60,10 +60,6 @@ parser.add_option(
     help="Don't print any output."
 )
 parser.add_option(
-    "-c", "--cumulative", action="store_true", default=False,
-    help="Compute a histogram of the cumulative distribution function."
-)
-parser.add_option(
     "--bin-tracks", action="store_true", default=False,
     help="Create a separate track for each bin, to be processed with tr-blav."
 )
@@ -93,12 +89,14 @@ if options.bin_tracks:
     mtr = MultiTracksReader(paths_in)
     bin_filenames = ["%s.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
     mtw = MultiTracksWriter(bin_filenames)
+    cumul_bin_filenames = ["%s.cumul.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
+    cumul_mtw = MultiTracksWriter(cumul_bin_filenames)
     for row in itertools.islice(mtr, sub.start, sub.stop, sub.step):
         counts = numpy.histogram(row, nbins, (xmin,xmax), False)[0]/float(len(paths_in))
-        if options.cumulative:
-            counts = counts.cumsum()
         mtw.dump_row(counts)
+        cumul_mtw.dump_row(counts.cumsum())
     mtw.finalize()
+    cumul_mtw.finalize()
 else:
     counts = 0.0
     total_count = 0
@@ -107,9 +105,12 @@ else:
         counts += numpy.histogram(track_in, nbins, (xmin,xmax), False)[0]
         total_count += len(track_in)
 
-    if options.cumulative: counts = counts.cumsum()
     counts /= float(total_count)
+
     filename = "%s.hist" % output_prefix
     dump_track(filename, counts)
+    log("WRITTEN %s" % filename)
+    filename = "%s.cumul.hist" % output_prefix
+    dump_track(filename, counts.cumsum())
     log("WRITTEN %s" % filename)
 

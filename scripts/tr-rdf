@@ -77,10 +77,6 @@ parser.add_option(
     help="Don't print any output."
 )
 parser.add_option(
-    "-c", "--cumulative", action="store_true", default=False,
-    help="Compute a histogram of the cumulative distribution function."
-)
-parser.add_option(
     "--bin-tracks", action="store_true", default=False,
     help="Create a separate track for each bin, to be processed with tr-blav."
 )
@@ -205,14 +201,14 @@ def yield_distances():
 if options.bin_tracks:
     bin_filenames = ["%s.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
     mtw = MultiTracksWriter(bin_filenames)
+    cumul_bin_filenames = ["%s.cumul.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
+    cumul_mtw = MultiTracksWriter(cumul_bin_filenames)
     for distances, reference_counts in yield_distances():
         counts = correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
-        if options.cumulative:
-            counts = counts.cumsum()
-            mtw.dump_row(counts)
-        else:
-            mtw.dump_row(counts/reference_counts)
+        mtw.dump_row(counts/reference_counts)
+        cumul_mtw.dump_row(counts.cumsum())
     mtw.finalize()
+    cumul_mtw.finalize()
 else:
     counts = 0.0
     row_count = 0
@@ -221,10 +217,10 @@ else:
         row_count += 1
 
     filename = "%s.hist" % output_prefix
-    if options.cumulative:
-        counts = counts.cumsum()
-        dump_track(filename, counts/row_count)
-    else:
-        dump_track(filename, counts/row_count/reference_counts)
+    dump_track(filename, counts/row_count/reference_counts)
+    log("WRITTEN %s" % filename)
+
+    filename = "%s.cumul.hist" % output_prefix
+    dump_track(filename, counts.cumsum()/row_count)
     log("WRITTEN %s" % filename)
 

@@ -856,12 +856,11 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(output_dir, "df_noerror.png"),
         ])
         # cumulative df, no error bars
-        self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["-c", "1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.cdf"])
-        cdf_hist = load_track("tracks/atom.pos.bond.cdf.hist")
+        cdf_hist = load_track("tracks/atom.pos.bond.df.cumul.hist")
         self.assertAlmostEqual(cdf_hist[-1], 1.0, 2)
         self.execute("tr-plot", [
             "--title=Cumulative C-H bond length distribution", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
-            ":bar", "tracks/atom.pos.bond.cdf.bins", "tracks/atom.pos.bond.cdf.hist",
+            ":bar", "tracks/atom.pos.bond.df.bins", "tracks/atom.pos.bond.df.cumul.hist",
             os.path.join(output_dir, "df_cumul_noerror.png"),
         ])
         # ordinary df, with error bars
@@ -880,18 +879,17 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(output_dir, "df_error.png"),
         ])
         # cumulative df, with error bars
-        self.execute("tr-df", glob.glob("tracks/atom.pos.bond.???????.???????") + ["-c", "--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.pos.bond.cdf"])
         lines = []
-        for bin_filename in sorted(glob.glob("tracks/atom.pos.bond.cdf.bin.???????")):
+        for bin_filename in sorted(glob.glob("tracks/atom.pos.bond.df.cumul.bin.???????")):
             output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
             lines.append(output[0])
-        self.execute("tr-write", ["tracks/atom.pos.bond.cdf.hist", "tracks/atom.pos.bond.cdf.hist.error"], stdin=lines)
-        cdf_hist_bis = load_track("tracks/atom.pos.bond.cdf.hist")
+        self.execute("tr-write", ["tracks/atom.pos.bond.df.cumul.hist", "tracks/atom.pos.bond.df.cumul.hist.error"], stdin=lines)
+        cdf_hist_bis = load_track("tracks/atom.pos.bond.df.cumul.hist")
         self.assertAlmostEqual(cdf_hist_bis[-1], 1.0, 2)
         self.assertArraysAlmostEqual(cdf_hist, cdf_hist_bis, 1e-5)
         self.execute("tr-plot", [
             "--title=C-H bond length distribution", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
-            ":bar", "tracks/atom.pos.bond.cdf.bins", "tracks/atom.pos.bond.cdf.hist", "tracks/atom.pos.bond.cdf.hist.error",
+            ":bar", "tracks/atom.pos.bond.df.bins", "tracks/atom.pos.bond.df.cumul.hist", "tracks/atom.pos.bond.df.cumul.hist.error",
             os.path.join(output_dir, "df_cumul_error.png"),
         ])
 
@@ -955,6 +953,14 @@ class CommandsTestCase(BaseTestCase):
             ":bar", "tracks/rdf_O_H.bins", "tracks/rdf_O_H.hist",
             os.path.join(output_dir, "rdf_water32_noerror")
         ])
+        self.execute("tr-plot", [
+            "--ylim=0,10", "--xunit=A", "--yunit=1", "--xlabel=Iteratomic distance", "--ylabel=f(r)", "--title=Cumulative radial distribution functions",
+            ":hline", "1",
+            ":bar", "tracks/rdf_O_O.bins", "tracks/rdf_O_O.cumul.hist",
+            ":bar", "tracks/rdf_H_H.bins", "tracks/rdf_H_H.cumul.hist",
+            ":bar", "tracks/rdf_O_H.bins", "tracks/rdf_O_H.cumul.hist",
+            os.path.join(output_dir, "rdf_cumul_water32_noerror")
+        ])
 
     def test_rdf_ar108(self):
         self.from_xyz("ar108", "pos")
@@ -970,6 +976,11 @@ class CommandsTestCase(BaseTestCase):
             ":bar", "tracks/rdf.bins", "tracks/rdf.hist",
             os.path.join(output_dir, "rdf_ar108_noerror")
         ])
+        self.execute("tr-plot", [
+            "--ylim=0,20", "--xunit=A", "--yunit=1", "--xlabel=Iteratomic distance", "--ylabel=f(r)", "--title=Cumulative radial distribution functions",
+            ":bar", "tracks/rdf.bins", "tracks/rdf.cumul.hist",
+            os.path.join(output_dir, "rdf_cumul_ar108_noerror")
+        ])
         # with error bars
         self.execute("tr-rdf", prefixes_Ar + ["-s::2", "--bin-tracks", "tracks/cell", "20*A", "80", "tracks/rdf"])
         lines = []
@@ -981,6 +992,16 @@ class CommandsTestCase(BaseTestCase):
             "--xunit=A", "--yunit=1", "--ylim=0,", "--xlabel=Iteratomic distance", "--ylabel=g(r)", "--title=Radial distribution functions",
             ":bar", "tracks/rdf.bins", "tracks/rdf.hist", "tracks/rdf.hist.error",
             os.path.join(output_dir, "rdf_ar108_error")
+        ])
+        lines = []
+        for bin_filename in sorted(glob.glob("tracks/rdf.cumul.bin.???????")):
+            output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
+            lines.append(output[0])
+        self.execute("tr-write", ["tracks/rdf.cumul.hist", "tracks/rdf.cumul.hist.error"], stdin=lines)
+        self.execute("tr-plot", [
+            "--ylim=0,20", "--xunit=A", "--yunit=1", "--xlabel=Iteratomic distance", "--ylabel=f(r)", "--title=Cumulative radial distribution functions",
+            ":bar", "tracks/rdf.bins", "tracks/rdf.cumul.hist", "tracks/rdf.cumul.hist.error",
+            os.path.join(output_dir, "rdf_cumul_ar108_error")
         ])
 
     def test_angular_momentum(self):
