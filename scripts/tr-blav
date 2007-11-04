@@ -32,11 +32,11 @@ from optparse import OptionParser
 usage = """%prog [options] input {time|timestep}
 
 %prog applies the block average method track ${input}. It prints out a line with
-four values:
- * an estimate of the mean
- * (an under limit for) the error on the mean
- * (an under limit for) the correlation time
- * (an under limit for) the statistical inefficiency
+estimates of the following values:
+ * the mean
+ * the error on the mean
+ * the correlation time
+ * the statistical inefficiency
 
 %prog -h prints out all available options."""
 
@@ -53,7 +53,7 @@ parser.add_option(
 )
 parser.add_option(
     "-u", "--unit", default='au',
-    help="The output values are printed in the given UNIT. [default=%default]",
+    help="The mean and error are printed in the given UNIT. [default=%default]",
 )
 parser.add_option(
     "-t", "--time-unit", default='au',
