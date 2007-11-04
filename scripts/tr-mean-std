@@ -65,7 +65,7 @@ sub = parse_slice(options.slice)
 mean = 0
 mean_squared = 0
 for path_in in paths_in:
-    f = load_track(path_in)
+    f = load_track(path_in)[sub]
     mean += f
     mean_squared += f*f
     log("PROCESSED %s" % path_in)
