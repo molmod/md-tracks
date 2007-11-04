@@ -23,33 +23,22 @@
 from tracks.core import load_track, dump_track
 import molmod.units
 import molmod.constants
-from molmod.data import periodic, bonds
+from molmod.data import periodic
 
 from optparse import OptionParser
+import numpy
 
 
-usage = """%prog [options] [var1=input1 [var2=input2 ...]] expression [output]
+usage = """%%prog [options] [var1=input1 [var2=input2 ...]] expression [output]
 
-%prog evaluates ${expression} on the data in the tracks ${input*} and writes
-the result to ${output}. The ${expression} can be any valid python epxression
-that uses ${val*}, the constants defined in molmod.units and molmod.constants,
-and periodic and bonds from molmod.data. If not input or output tracks are
-given, the outcome of the expression is printed on screen.
+%%prog evaluates ${expression} on the data in the tracks ${input*} and writes
+the result to ${output}. The ${expression} can be any valid python expression
+that uses ${var*}, If not input or output tracks are given, the outcome of the
+expression is printed on screen. Th following constants and functions are defined
 
-%prog -h prints out all available options."""
+%(details)s
 
-parser = OptionParser(usage)
-parser.add_option(
-    "-s", "--slice", default="::",
-    help="Subsample the input track with the given slice start:stop:step "
-         "where start, stop and step must be integers or can be omitted. "
-         "The slice interpretation is pythonic. [default=%default]",
-)
-parser.add_option(
-    "-p", "--print-globals", action="store_true", default=False,
-    help="Print all the constants that can be used in the expression and exit."
-)
-(options, args) = parser.parse_args()
+%%prog -h prints out all available options."""
 
 
 def load_constants(m):
@@ -61,39 +50,87 @@ def load_constants(m):
 g = {}
 g.update(load_constants(molmod.units))
 g.update(load_constants(molmod.constants))
-g["periodic"] = periodic
-g["bonds"] = bonds
+for name in dir(numpy):
+    value = eval("numpy.%s" % name)
+    if isinstance(value, numpy.ufunc):
+        g[name] = value
+for symbol, atom in periodic.atoms_by_symbol.iteritems():
+    g["at%s" % symbol.capitalize()] = atom
 
-message = """All values are in atomic units. These constants can be used to
-convert from and to atomic units. For example:
+
+details = """
+Constants
+---------
+
+All values are in atomic units. These constants can be used to convert from and
+to atomic units. For example:
 
   3*A = a distance of three angstroms in atomic units.
   3/A = a distance of three atomic units in angstroms.
 
-Conventionally, all tracks are contain data in atomic units.
+P.S. Conventionally, all tracks contain data in atomic units.
+
+%(constants)s
+
+
+Mathematical functions
+----------------------
+
+The following functions are defined:
+
+%(functions)s
+
+
+Atoms
+-----
+
+Atoms variables can be used to compute elementary molecular properties. e.g.
+atH.mass*2+atO.mass is the mass of water (in atomic units). An atom object has
+the following attributes:
+
+%(atom_attributes)s
+
+An atom variable is always prepended with 'at'. e.g. atC is the carbon atom.
 """
 
-if options.print_globals:
-    print message
-    for name, value in sorted(g.iteritems()):
-        if isinstance(value, float):
-            print "%15s=%10.7e" % (name, value)
-        else:
-            print "%15s=%s" % (name, value)
-else:
-    if len(args) == 2:
-        parser.error("Expecting One, three or more arguments, not two.")
-    elif len(args) == 1:
-        expression = args[0]
-        print eval(expression, g)
-    elif len(args) >= 3:
-        expression = args[-2]
-        path_out = args[-1]
-        for word in args[:-2]:
-            if word.count("=") != 1:
-                parser.error("Each input stanza must contain exactly one '=' character.")
-        inputs = [word.split("=") for word in args[:-2]]
-        for name, path_in in inputs:
-            g[name] = load_track(path_in)
-        dump_track(path_out, eval(expression, g))
+constants = []
+functions = []
+for name, value in sorted(g.iteritems()):
+    if isinstance(value, float):
+        constants.append("%15s=%10.7e" % (name, value))
+    elif callable(value):
+        functions.append("%s  --  %s" % (name.ljust(15), value.__doc__))
+atom_attributes = list(sorted(periodic[1].__dict__.iterkeys()))
+details = details % {
+    "constants": "\n".join(constants),
+    "functions": "\n".join(functions),
+    "atom_attributes": ", ".join(atom_attributes),
+}
+
+
+parser = OptionParser(usage % {"details": details})
+parser.add_option(
+    "-s", "--slice", default="::",
+    help="Subsample the input tracks with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+)
+(options, args) = parser.parse_args()
+
+
+if len(args) == 2:
+    parser.error("Expecting One, three or more arguments, not two.")
+elif len(args) == 1:
+    expression = args[0]
+    print eval(expression, g)
+elif len(args) >= 3:
+    expression = args[-2]
+    path_out = args[-1]
+    for word in args[:-2]:
+        if word.count("=") != 1:
+            parser.error("Each input stanza must contain exactly one '=' character.")
+    inputs = [word.split("=") for word in args[:-2]]
+    for name, path_in in inputs:
+        g[name] = load_track(path_in)
+    dump_track(path_out, eval(expression, g))
 

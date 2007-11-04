@@ -835,6 +835,8 @@ class CommandsTestCase(BaseTestCase):
         t = k/(3*13)*2/boltzman
         tcheck = load_track("tracks/tcheck")
         self.assertArraysEqual(t, tcheck)
+        result = float(self.execute("tr-calc", ["cos(atAr.mass)"])[0])
+        self.assertAlmostEqual(result, numpy.cos(periodic["Ar"].mass), 5)
 
     def test_closest_distance(self):
         self.from_xyz("thf01", "pos")
