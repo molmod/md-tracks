@@ -1,0 +1,111 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import load_track, dump_track
+from tracks.log import log
+from molmod.data import periodic
+from ccio.psf import PSFFile
+
+import numpy, os
+from optparse import OptionParser
+
+
+usage = """%prog [options] input_prefix connectivity.psf [output_prefix]
+
+%prog computes the time-dependent angular momentum of the molecules defined in
+${connectivity.psf}. The prefix is used to read the relative atom positions and
+the relative atom velocities. The following contain this data:
+${input_prefix}.pos.${atom_index}.${c}
+${input_prefix}.vel.${atom_index}.${c}
+where ${c} is x, y, or z. The masses are also taken from the psf file. The
+output is written to ${output_prefix}.ang.mom.${molecule_index}.${c}
+where ${c} is x, y or z. If the last argument is omitted,
+${output_prefix}=${inpuy_prefix_directory}/ang.mom
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
+)
+parser.add_option(
+    "-m", "--filter-molecules",
+    help="Only consider the molecules listed in FILTER_MOLECULES. This is a "
+         "comma-separated list of molecule indexes. Counting starts at zero.",
+)
+(options, args) = parser.parse_args()
+
+
+log.verbose = options.verbose
+if len(args) == 2:
+    input_prefix, path_psf = args
+    directory = os.path.dirname(input_prefix)
+    output_prefix = os.path.join(directory, "ang.mom")
+elif len(args) == 3:
+    input_prefix, path_psf, output_prefix = args
+else:
+    parser.error("Expecting three arguments.")
+
+
+psf = PSFFile(path_psf)
+
+if options.filter_molecules is None:
+    m_indexes = frozenset(numpy.unique(psf.molecules))
+else:
+    m_indexes = frozenset(int(word) for word in options.filter_molecules.split(","))
+
+molecules = dict(
+    (m_index, (psf.molecules==m_index).nonzero()[0])
+    for m_index in m_indexes
+)
+
+def calc_mom(a_indexes, c1, c2):
+    mom = 0.0
+    for a_index in a_indexes:
+        m = periodic[psf.numbers[a_index]].mass
+        name_p = "%s.pos.%07i.%s" % (input_prefix, a_index, c1)
+        name_v = "%s.vel.%07i.%s" % (input_prefix, a_index, c2)
+        mom += m*load_track(name_p)*load_track(name_v)
+        log("PROCESSED %s" % name_p)
+        log("PROCESSED %s" % name_v)
+        name_p = "%s.pos.%07i.%s" % (input_prefix, a_index, c2)
+        name_v = "%s.vel.%07i.%s" % (input_prefix, a_index, c1)
+        mom -= m*load_track(name_p)*load_track(name_v)
+        log("PROCESSED %s" % name_p)
+        log("PROCESSED %s" % name_v)
+    return mom
+
+for m_index, a_indexes in molecules.iteritems():
+    name_x = "%s.%07i.x" % (output_prefix, m_index)
+    dump_track(name_x, calc_mom(a_indexes, "y", "z"))
+    log("WRITTEN %s" % name_x)
+
+    name_y = "%s.%07i.y" % (output_prefix, m_index)
+    dump_track(name_y, calc_mom(a_indexes, "z", "x"))
+    log("WRITTEN %s" % name_y)
+
+    name_z = "%s.%07i.z" % (output_prefix, m_index)
+    dump_track(name_z, calc_mom(a_indexes, "x", "y"))
+    log("WRITTEN %s" % name_z)
+
+

@@ -913,3 +913,15 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(output_dir, "rdf_ar108_error")
         ])
 
+    def test_angular_momentum(self):
+        self.from_xyz("water32", "pos")
+        self.from_xyz("water32", "vel", ["-u1"])
+        self.from_cp2k_ener("water32")
+        # split positions and velocities in com and rel
+        self.execute("tr-split-com", ["tracks/atom.pos", "pos", os.path.join(input_dir, "water32/init.psf")])
+        self.execute("tr-split-com", ["tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])
+        # compute the angular momenta
+        self.execute("tr-angular-momentum", ["tracks/rel", os.path.join(input_dir, "water32/init.psf")])
+        # check the number of generated files:
+        self.assertEqual(len(glob.glob("tracks/ang.mom*")), 32*3)
+
