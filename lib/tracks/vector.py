@@ -114,9 +114,9 @@ def bend(v1, v2, v3, return_cos=False):
 
 def dihed(v1, v2, v3, v4, return_cos=False):
     """Compute the dihedral angle of four atoms at each time step."""
-    delta_a = v1-v2
-    delta_b = v3-v2
-    delta_c = v4-v3
+    delta_a = v1 - v2
+    delta_b = v3 - v2
+    delta_c = v4 - v3
     # compute the norm of b
     norm_b = delta_b.norm()
     # normalize the vector b
@@ -141,3 +141,20 @@ def dihed(v1, v2, v3, v4, return_cos=False):
     swap = (triple(delta_b, delta_a, delta_c) > 0)*2-1
     angle *= swap
     return angle
+
+
+def oop(v1, v2, v3, v4):
+    """Compute the distance from v4 to the plane defined by v1, v2 and v3 at each time step."""
+    delta_a = v1 - v2
+    delta_b = v3 - v2
+    normal = cross(delta_a, delta_b)
+    normal /= normal.norm()
+    return dot(v4 - v2, normal)
+
+
+def dtl(v1, v2, v3):
+    """Compute the distance from v3 to the line defined by v1 and v2 at each time step."""
+    delta_line = v1 - v2
+    delta_line /= delta_line.norm()
+    delta = v1 - v3
+    return (delta - delta_line*dot(delta_line, delta)).norm()

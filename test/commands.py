@@ -608,6 +608,32 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(bends[1]*180/numpy.pi, -16.602, 3)
         self.assertAlmostEqual(bends[-1]*180/numpy.pi, -31.306, 3)
 
+    def test_ic_dtl(self):
+        self.from_xyz("thf01", "pos")
+        self.execute("tr-ic-dtl", ["tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002", "tracks/test"])
+        bends = load_track("tracks/test")
+        self.assertAlmostEqual(bends[0]/angstrom, 1.364, 3)
+        self.assertAlmostEqual(bends[1]/angstrom, 1.422, 3)
+        self.assertAlmostEqual(bends[-1]/angstrom, 1.337, 3)
+        self.execute("tr-ic-dtl", ["-s20:601:5", "tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002", "tracks/test"])
+        bends = load_track("tracks/test")
+        self.assertAlmostEqual(bends[0]/angstrom, 1.394, 3)
+        self.assertAlmostEqual(bends[1]/angstrom, 1.358, 3)
+        self.assertAlmostEqual(bends[-1]/angstrom, 1.367, 3)
+
+    def test_ic_oop(self):
+        self.from_xyz("thf01", "pos")
+        self.execute("tr-ic-oop", ["tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"])
+        bends = load_track("tracks/test")
+        self.assertAlmostEqual(bends[0]/angstrom, 0.000, 3)
+        self.assertAlmostEqual(bends[1]/angstrom, 0.049, 3)
+        self.assertAlmostEqual(bends[-1]/angstrom, -0.552, 3)
+        self.execute("tr-ic-oop", ["-s20:601:5", "tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"])
+        bends = load_track("tracks/test")
+        self.assertAlmostEqual(bends[0]/angstrom, 0.380, 2)
+        self.assertAlmostEqual(bends[1]/angstrom, 0.419, 2)
+        self.assertAlmostEqual(bends[-1]/angstrom, 0.755, 2)
+
     def test_ic_psf(self):
         def check_ic_psf(nbonds, nbends, ndiheds):
             # bond
