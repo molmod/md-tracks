@@ -55,12 +55,6 @@ parser.add_option(
     "-q", "--quiet", action="store_false", dest="verbose", default=True,
     help="Don't print any output."
 )
-parser.add_option(
-    "-t", "--tau",
-    help="Give an estimate of the correlation time. If given, an error estimate "
-         "of the time correlation function will be computed and stored in "
-         "${output}.error and ${output}.normalized.error."
-)
 (options, args) = parser.parse_args()
 
 
@@ -97,13 +91,3 @@ dump_track(path_out, result)
 log("WRITTEN %s" % path_out)
 dump_track("%s.normalized" % path_out, result/result[0])
 log("WRITTEN %s.normalized" % path_out)
-
-if options.tau is not None:
-    correlation_time = parse_unit(options.tau)
-    ones = numpy.ones(len(result), float)
-    normalized_error = 2*numpy.sqrt(correlation_time/average_time/len(paths_in))
-    error = normalized_error*result[0]
-    dump_track("%s.error" % path_out, ones*error)
-    log("WRITTEN %s.error" % path_out)
-    dump_track("%s.normalized.error" % path_out, ones*normalized_error)
-    log("WRITTEN %s.normalized.error" % path_out)

@@ -26,7 +26,8 @@ import sys
 
 
 __all__ = [
-    "parse_slice", "parse_x_step", "parse_x_last", "parse_x_length",
+    "parse_slice", "get_delta", "parse_x_step", "parse_x_last",
+    "parse_x_length",
 ]
 
 
@@ -54,6 +55,13 @@ def _parse_x_track(s, fn, convert=parse_unit):
             raise Error("Can not open file %s and can not interpret %s." % (s, s))
 
 
+def get_delta(x_axis):
+    delta = x_axis[1:] - x_axis[:-1]
+    if (delta[0] != delta).all():
+        raise Error("The %s-axis is not equidistant. Is %s truly a %s-axis?" % (measure, s, measure))
+    return delta[0]
+
+
 def parse_x_step(s, measure="time"):
     """Convert s into a discretization step.
 
@@ -62,12 +70,7 @@ def parse_x_step(s, measure="time"):
 
     The return value is the discretization step in a.u.
     """
-    def fn(x_axis):
-        delta = x_axis[1:]-x_axis[:-1]
-        if (delta[0] != delta).all():
-            raise Error("The %s-axis is not equidistant. Is %s truly a %s-axis?" % (measure, s, measure))
-        return delta[0]
-    return _parse_x_track(s, fn)
+    return _parse_x_track(s, get_delta)
 
 
 def parse_x_last(s):

@@ -1,0 +1,79 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import load_track, dump_track
+from tracks.parse import get_delta
+from tracks.log import log
+from molmod.units import parse_unit
+
+import numpy
+from optparse import OptionParser
+
+
+usage = """%prog [options] ac_prefix ndim {time_axis|time_step duration} tau
+
+%prog computes the error on an auto-correlation function. (See A. Rev. Phys.
+Chem. (1980) vol. 31, p. 491-521). The output is written to ${ac_prefix}.error
+and ${ac_prefix}.normalized.error. The arguments are:
+
+  ac_prefix  --  The prefix used as output prefix in tr-ac.
+  ndim  --  The number of inputs used in tr-ac.
+  time_axis  --  A track that contains the time axis of the simulation. The time
+                 step and the duration of the simulation will be read from this.
+                 file.
+  time_step  --  The discretization step of the input tracks of tr-ac.
+  duration -- The total simulation time.
+  tau  --  An estimate of the correlation time.
+"""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
+)
+(options, args) = parser.parse_args()
+
+
+log.verbose = options.verbose
+if len(args) == 4 or len(args) == 5:
+    path_ac = args[0]
+    num_inputs = int(args[1])
+    if len(args) == 5:
+        time_step = parse_unit(args[2])
+        duration = parse_unit(args[3])
+    else:
+        time_axis = load_track(args[2])
+        time_step = get_delta(time_axis)
+        duration = time_axis[-1] - time_axis[0]
+    tau = parse_unit(args[-1])
+else:
+    parser.error("Expecting four or five arguments.")
+
+ac = load_track(path_ac)
+ones = numpy.ones(len(ac), float)
+average_time = duration - len(ac)*time_step
+normalized_error = 2*numpy.sqrt(tau/average_time/num_inputs)
+error = normalized_error*ac[0]
+dump_track("%s.error" % path_ac, ones*error)
+log("WRITTEN %s.error" % path_ac)
+dump_track("%s.normalized.error" % path_ac, ones*normalized_error)
+log("WRITTEN %s.normalized.error" % path_ac)
