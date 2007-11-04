@@ -209,8 +209,9 @@ if options.bin_tracks:
         counts = correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
         if options.cumulative:
             counts = counts.cumsum()
-            reference_counts = reference_counts.cumsum()
-        mtw.dump_row(counts/reference_counts)
+            mtw.dump_row(counts)
+        else:
+            mtw.dump_row(counts/reference_counts)
     mtw.finalize()
 else:
     counts = 0.0
@@ -219,10 +220,11 @@ else:
         counts += correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
         row_count += 1
 
+    filename = "%s.hist" % output_prefix
     if options.cumulative:
         counts = counts.cumsum()
-        reference_counts = reference_counts.cumsum()
-    filename = "%s.hist" % output_prefix
-    dump_track(filename, counts/row_count/reference_counts)
+        dump_track(filename, counts/row_count)
+    else:
+        dump_track(filename, counts/row_count/reference_counts)
     log("WRITTEN %s" % filename)
 
