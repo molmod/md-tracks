@@ -94,7 +94,7 @@ def dist(v1, v2):
     return (v1 - v2).norm()
 
 
-def bend(v1, v2, v3):
+def bend(v1, v2, v3, return_cos=False):
     """Compute the bending angle of three atoms at each time step."""
     delta_a = v1 - v2
     delta_b = v3 - v2
@@ -107,11 +107,12 @@ def bend(v1, v2, v3):
     # calculate the dot product
     cos = dot(delta_a, delta_b)
     cos = numpy.clip(cos, -1, 1)
+    if return_cos: return cos
     angle = numpy.arccos(cos)
     return angle
 
 
-def dihed(v1, v2, v3, v4):
+def dihed(v1, v2, v3, v4, return_cos=False):
     """Compute the dihedral angle of four atoms at each time step."""
     delta_a = v1-v2
     delta_b = v3-v2
@@ -135,6 +136,7 @@ def dihed(v1, v2, v3, v4):
     # calculate the dot product and the angle
     cos = dot(delta_a, delta_c)
     cos = numpy.clip(cos, -1, 1)
+    if return_cos: return cos
     angle = numpy.arccos(cos)
     swap = (triple(delta_b, delta_a, delta_c) > 0)*2-1
     angle *= swap

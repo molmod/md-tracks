@@ -44,6 +44,10 @@ parser.add_option(
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
 )
+parser.add_option(
+    "-c", "--cos", action="store_true", default=False,
+    help="Compute the cosine instead of the angle."
+)
 (options, args) = parser.parse_args()
 
 
@@ -57,4 +61,5 @@ dump_track(output_path, vector.bend(
     vector.from_prefix(prefix1, sub),
     vector.from_prefix(prefix2, sub),
     vector.from_prefix(prefix3, sub),
+    options.cos,
 ))
