@@ -54,7 +54,7 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
 def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     """Convert a cp2k energy file into separate tracks."""
     import itertools
-    names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "total_energy"]
+    names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "conserved_quantity"]
     filenames = list(os.path.join(destination, name) for name in names)
     dtypes = [int, float, float, float, float, float]
     dtypes = [numpy.dtype(d) for d in dtypes]
