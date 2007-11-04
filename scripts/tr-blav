@@ -29,7 +29,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] input {time|timestep}
+usage = """%prog [options] input {time_axis|timestep}
 
 %prog applies the block average method track ${input}. It prints out a line with
 estimates of the following values:

@@ -29,7 +29,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] {spectrum|nwavenumber} {time|duration} output
+usage = """%prog [options] {spectrum|nwavenumber} {time_axis|duration} output
 
 %prog creates a track that contains equidistant wavenumber values that are
 suitable for creating spectrum plots of dynamics simulations. The output is
@@ -38,7 +38,7 @@ written to the file ${output}.
 arguments:
   spectrum -- The spectrum track (the number of data points are read from this file.)
   nwavenumber -- the number of wavenumber data points in the spectrum
-  time -- the time track (the last value will be taken to read the duration of the simulation.)
+  time_axis -- the time track (the last value will be taken to read the duration of the simulation.)
   duration -- The total duration of the dynamics simulation in fs
   output -- The name of the track where the wavenumber axis is written to.
 
