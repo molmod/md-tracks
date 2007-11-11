@@ -47,6 +47,12 @@ class TrackVector(object):
         else:
             return TrackVector([c1*other for c1 in self.data])
 
+    def __div__(self, other):
+        if isinstance(other, TrackVector):
+            return TrackVector([c1/c2 for c1, c2 in zip(self.data, other.data)])
+        else:
+            return TrackVector([c1/other for c1 in self.data])
+
     def __isub__(self, other):
         for c1, c2 in zip(self.data, other.data):
             c1 -= c2
@@ -130,35 +136,59 @@ def bend(p1, p2, p3, v1=None, v2=None, v3=None, return_cos=False):
 
 
 
-def dihed(v1, v2, v3, v4, return_cos=False):
+def dihed(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None, return_cos=False):
     """Compute the dihedral angle of four atoms at each time step."""
-    delta_a = v1 - v2
-    delta_b = v3 - v2
-    delta_c = v4 - v3
+    p_delta_a = p1 - p2
+    p_delta_b = p3 - p2
+    p_delta_c = p4 - p3
     # compute the norm of b
-    norm_b = delta_b.norm()
+    p_norm_b = p_delta_b.norm()
     # normalize the vector b
-    delta_b /= norm_b
+    p_normed_b = p_delta_b/p_norm_b
     # project a and c on the plane orthogonal to b
-    dot_ab = dot(delta_a, delta_b)
-    dot_cb = dot(delta_c, delta_b)
-    tmp = delta_b*dot_ab
-    delta_a -= delta_b*dot_ab
-    delta_c -= delta_b*dot_cb
+    p_dot_ab = dot(p_delta_a, p_normed_b)
+    p_dot_cb = dot(p_delta_c, p_normed_b)
+    p_proj_a = p_delta_a - p_normed_b*p_dot_ab
+    p_proj_c = p_delta_c - p_normed_b*p_dot_cb
     # compute the norms of a' and c'
-    norm_a = delta_a.norm()
-    norm_c = delta_c.norm()
-    # normalize the vectors a' and c'
-    delta_a /= norm_a
-    delta_c /= norm_c
-    # calculate the dot product and the angle
-    cos = dot(delta_a, delta_c)
-    cos = numpy.clip(cos, -1, 1)
-    if return_cos: return cos
-    angle = numpy.arccos(cos)
-    swap = (triple(delta_b, delta_a, delta_c) > 0)*2-1
-    angle *= swap
-    return angle
+    p_proj_norm_a = p_proj_a.norm()
+    p_proj_norm_c = p_proj_c.norm()
+    # calculate the cosine and/or the angle
+    p_t = dot(p_proj_a, p_proj_c)
+    p_n = p_proj_norm_a*p_proj_norm_c
+    p_cos = p_t/p_n
+    p_cos = numpy.clip(p_cos, -1, 1)
+    if not return_cos:
+        p_angle = numpy.arccos(p_cos)
+        swap = (triple(p_delta_b, p_delta_a, p_delta_c) > 0)*2-1
+        p_angle *= swap
+    if v1 is None:
+        if return_cos:
+            return p_cos
+        else:
+            return p_angle
+    else:
+        v_delta_a = v1 - v2
+        v_delta_b = v3 - v2
+        v_delta_c = v4 - v3
+        v_norm_b = dot(p3-p2,v3-v2)/p_norm_b
+        v_normed_b = (v_delta_b - p_normed_b*v_norm_b)/p_norm_b
+        v_proj_a = v_delta_a - v_normed_b*dot(p_normed_b,p_delta_a) \
+                             - p_normed_b*dot(v_normed_b,p_delta_a) \
+                             - p_normed_b*dot(p_normed_b,v_delta_a)
+        v_proj_c = v_delta_c - v_normed_b*dot(p_normed_b,p_delta_c) \
+                             - p_normed_b*dot(v_normed_b,p_delta_c) \
+                             - p_normed_b*dot(p_normed_b,v_delta_c)
+        v_proj_norm_a = dot(p_proj_a,v_proj_a)/p_proj_norm_a
+        v_proj_norm_c = dot(p_proj_c,v_proj_c)/p_proj_norm_c
+        v_t = dot(v_proj_a, p_proj_c) + dot(p_proj_a, v_proj_c)
+        v_n = p_proj_norm_a*v_proj_norm_c + v_proj_norm_a*p_proj_norm_c
+        v_cos = (p_n*v_t - v_n*p_t)/p_n**2
+        if return_cos:
+            return p_cos, v_cos
+        else:
+            v_angle = -1/numpy.sqrt(1 - p_cos**2)*v_cos*swap
+            return p_angle, v_angle
 
 
 def oop(v1, v2, v3, v4):

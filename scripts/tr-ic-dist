@@ -35,7 +35,7 @@ for all time steps. Tracks with the given prefixes must exist, and their
 filenames must look like: ${pos_prefix1}.c and ${pos_prefix2}.c where c is x, y
 or z. The output is stored in ${pos_output}.
 
-if ${vel_prefix1} and ${vel_prefix2} are given, also the dime derivative of the
+if ${vel_prefix1} and ${vel_prefix2} are given, also the time derivative of the
 distance is computed.  Tracks with the given prefixes must exist, and their
 filenames must look like: ${vel_prefix1}.c and ${vel_prefix2}.c where c is x, y
 or z. The output is stored in ${vel_output}.

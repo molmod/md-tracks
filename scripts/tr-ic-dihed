@@ -28,12 +28,18 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] prefix1 prefix2 prefix3 prefix4 output
+usage = """%prog [options] pos_prefix1 pos_prefix2 pos_prefix3 pos_prefix4 [vel_prefix1 vel_prefix2 vel_prefix3 vel_prefix4] pos_output [vel_output]
 
-%prog computes the dihedral angled prefix1-prefix2-prefix3-prefix4 for all time
-steps. Tracks with the given prefixes must exist, and their filenames must look
-like: ${prefix1}.c, ${prefix2}.c, ${prefix3}.c and ${prefix4}.c where c is x, y
-or z. The output is stored in ${output}.
+%prog computes the dihedral angle pos_prefix1-pos_prefix2-pos_prefix3-pos_prefix4
+for all time steps. Tracks with the given prefixes must exist, and their
+filenames must look like: ${pos_prefix1}.c, ${pos_prefix2}.c, ${pos_prefix3}.c
+and ${pos_prefix4}.c where c is x, y or z. The output is stored in ${pos_output}.
+
+if ${vel_prefix*} are given, also the time derivative of the dihedral angle is
+computed. Tracks with the given prefixes must exist, and their filenames must
+look like: ${vel_prefix*}.c where c is x, y or z. The output is stored in
+${vel_output}.
+
 
 %prog -h prints out all available options."""
 
@@ -52,15 +58,39 @@ parser.add_option(
 
 
 if len(args) == 5:
-    prefix1, prefix2, prefix3, prefix4, output_path = args
+    pos_prefix1, pos_prefix2, pos_prefix3, pos_prefix4, pos_output_path = args
+    vel_prefix1 = None
+    vel_prefix2 = None
+    vel_prefix3 = None
+    vel_prefix4 = None
+    vel_output_path = None
+elif len(args) == 10:
+    pos_prefix1, pos_prefix2, pos_prefix3, pos_prefix4, vel_prefix1, vel_prefix2, vel_prefix3, vel_prefix4, pos_output_path, vel_output_path = args
 else:
-    parser.error("Expecting five arguments.")
+    parser.error("Expecting five or ten arguments.")
 
 sub = parse_slice(options.slice)
-dump_track(output_path, vector.dihed(
-    vector.from_prefix(prefix1, sub),
-    vector.from_prefix(prefix2, sub),
-    vector.from_prefix(prefix3, sub),
-    vector.from_prefix(prefix4, sub),
-    options.cos,
-))
+if vel_prefix1 is None:
+    dump_track(pos_output_path, vector.dihed(
+        vector.from_prefix(pos_prefix1, sub),
+        vector.from_prefix(pos_prefix2, sub),
+        vector.from_prefix(pos_prefix3, sub),
+        vector.from_prefix(pos_prefix4, sub),
+        return_cos=options.cos,
+    ))
+else:
+    pos_dihed, vel_dihed = vector.dihed(
+        vector.from_prefix(pos_prefix1, sub),
+        vector.from_prefix(pos_prefix2, sub),
+        vector.from_prefix(pos_prefix3, sub),
+        vector.from_prefix(pos_prefix4, sub),
+        vector.from_prefix(vel_prefix1, sub),
+        vector.from_prefix(vel_prefix2, sub),
+        vector.from_prefix(vel_prefix3, sub),
+        vector.from_prefix(vel_prefix4, sub),
+        return_cos=options.cos,
+    )
+    dump_track(pos_output_path, pos_dihed)
+    dump_track(vel_output_path, vel_dihed)
+
+
