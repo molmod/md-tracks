@@ -569,18 +569,40 @@ class CommandsTestCase(BaseTestCase):
         wavenumbers_check = load_track("tracks/wavenumbers")
         self.assertArraysEqual(wavenumbers, wavenumbers_check)
 
+    def check_deriv(self, pos, vel, time, relerr):
+        self.execute("tr-derive", [pos, time])
+        v = load_track(vel)
+        v_check = load_track("%s.deriv" % pos)
+        v_half = 0.5*(v[1:]+v[:-1])
+        self.assertArraysAlmostEqual(v_check, v_half, relerr, mean=True)
+
     def test_ic_dist(self):
         self.from_xyz("thf01", "pos")
+        self.from_xyz("thf01", "vel", ["-u1"])
+        self.from_cp2k_ener("thf01")
+        # just pos
         self.execute("tr-ic-dist", ["tracks/atom.pos.0000001", "tracks/atom.pos.0000002", "tracks/test"])
         dists = load_track("tracks/test")
         self.assertAlmostEqual(dists[0], 4.25631, 4)
         self.assertAlmostEqual(dists[1], 4.28458, 4)
         self.assertAlmostEqual(dists[-1], 4.26709, 4)
+        # slice
         self.execute("tr-ic-dist", ["-s20:601:5", "tracks/atom.pos.0000001", "tracks/atom.pos.0000002", "tracks/test"])
         dists = load_track("tracks/test")
         self.assertAlmostEqual(dists[0], 4.32567, 4)
         self.assertAlmostEqual(dists[1], 4.41805, 4)
         self.assertAlmostEqual(dists[-1], 4.35014, 4)
+        # pos and vel
+        self.execute("tr-ic-dist", [
+            "tracks/atom.pos.0000001", "tracks/atom.pos.0000002",
+            "tracks/atom.vel.0000001", "tracks/atom.vel.0000002",
+            "tracks/test_pos", "tracks/test_vel",
+        ])
+        dists = load_track("tracks/test_pos")
+        self.assertAlmostEqual(dists[0], 4.25631, 4)
+        self.assertAlmostEqual(dists[1], 4.28458, 4)
+        self.assertAlmostEqual(dists[-1], 4.26709, 4)
+        self.check_deriv("tracks/test_pos", "tracks/test_vel", "tracks/time", 1e-1)
 
     def test_ic_bend(self):
         self.from_xyz("thf01", "pos")

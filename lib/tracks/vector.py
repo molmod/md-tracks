@@ -89,9 +89,14 @@ def triple(tv1, tv2, tv3):
     )
 
 
-def dist(v1, v2):
+def dist(p1, p2, v1=None, v2=None):
     """Compute the distance between two atoms at each time step."""
-    return (v1 - v2).norm()
+    pd = (p1 - p2).norm()
+    if v1 is None:
+        return pd
+    else:
+        vd = dot(v1-v2, p1-p2)/pd
+        return pd, vd
 
 
 def bend(v1, v2, v3, return_cos=False):

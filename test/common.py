@@ -58,10 +58,14 @@ class BaseTestCase(unittest.TestCase):
     def assertArrayConstant(self, arr, const):
         self.assert_((arr==const).all(), "Some/All array values do not match the constant.")
 
-    def assertArraysAlmostEqual(self, a, b, relerr_threshold):
+    def assertArraysAlmostEqual(self, a, b, relerr_threshold, mean=False):
         self.assertEqual(a.shape, b.shape, "The array shapes do not match.")
-        error = abs(a-b).max()
-        oom = 0.5*(abs(a).max()+abs(b).max())
+        if mean:
+            error = abs(a-b).mean()
+            oom = 0.5*(abs(a).mean()+abs(b).mean())
+        else:
+            error = abs(a-b).max()
+            oom = 0.5*(abs(a).max()+abs(b).max())
         relerr = error/oom
         self.assert_(relerr <= relerr_threshold, "The relative error is larger than given threshold: %5.3e > %5.3e" % (relerr, relerr_threshold))
 

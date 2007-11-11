@@ -35,7 +35,7 @@ usage = """%prog [options] input {x_axis|x_step} [input.error]
 is given or ${input}.error exists, %prog will also compute the error on the
 derivative. The second argument is a track with the x-axis, or the distance
 between two subsequent data points. The output is written to ${input}.deriv and
-${input}.derive.error.
+${input}.deriv.error.
 
 %prog -h prints out all available options."""
 

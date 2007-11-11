@@ -28,12 +28,17 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] prefix1 prefix2 output
+usage = """%prog [options] pos_prefix1 pos_prefix2 [vel_prefix1 vel_prefix2] pos_output ${vel_output}
 
-%prog computes the distance between the atom prefix1 and prefix2 for all time
-steps. Tracks with the given prefixes must exist, and their filenames must look
-like: ${prefix1}.c and ${prefix2}.c where c is x,y or z. The output is stored in
-${output}.
+%prog computes the distance between the atom ${pos_prefix1} and ${pos_prefix2}
+for all time steps. Tracks with the given prefixes must exist, and their
+filenames must look like: ${pos_prefix1}.c and ${pos_prefix2}.c where c is x, y
+or z. The output is stored in ${pos_output}.
+
+if ${vel_prefix1} and ${vel_prefix2} are given, also the dime derivative of the
+distance is computed.  Tracks with the given prefixes must exist, and their
+filenames must look like: ${vel_prefix1}.c and ${vel_prefix2}.c where c is x, y
+or z. The output is stored in ${vel_output}.
 
 %prog -h prints out all available options."""
 
@@ -47,12 +52,28 @@ parser.add_option(
 (options, args) = parser.parse_args()
 
 if len(args) == 3:
-    prefix1, prefix2, output_path = args
+    pos_prefix1, pos_prefix2, pos_output_path = args
+    vel_prefix1 = None
+    vel_prefix2 = None
+    vel_output_path = None
+elif len(args) == 6:
+    pos_prefix1, pos_prefix2, vel_prefix1, vel_prefix2, pos_output_path, vel_output_path = args
 else:
-    parser.error("Expecting three arguments.")
+    parser.error("Expecting three or six arguments.")
 
 sub = parse_slice(options.slice)
-dump_track(output_path, vector.dist(
-    vector.from_prefix(prefix1, sub),
-    vector.from_prefix(prefix2, sub),
-))
+if vel_output_path is None:
+    dump_track(pos_output_path, vector.dist(
+        vector.from_prefix(pos_prefix1, sub),
+        vector.from_prefix(pos_prefix2, sub),
+    ))
+else:
+    dist_pos, dist_vel = vector.dist(
+        vector.from_prefix(pos_prefix1, sub),
+        vector.from_prefix(pos_prefix2, sub),
+        vector.from_prefix(vel_prefix1, sub),
+        vector.from_prefix(vel_prefix2, sub),
+    )
+    dump_track(pos_output_path, dist_pos)
+    dump_track(vel_output_path, dist_vel)
+
