@@ -1046,3 +1046,14 @@ class CommandsTestCase(BaseTestCase):
         result = numpy.sqrt(v1*v1+v2*v2)
         self.execute("tr-norm", ["v1", "v2", "result"])
         self.assertArraysEqual(load_track("result"), result)
+
+    def test_cc(self):
+        t = numpy.arange(0,1001,dtype=float)/1000*numpy.pi*2
+        dump_track("test0", numpy.sin(t))
+        dump_track("test1", numpy.cos(t))
+        dump_track("test2", -numpy.sin(t))
+        dump_track("test3", numpy.sin(t)+1)
+        lines = self.execute("tr-cc", ["test0", "test0", "test1", "test2", "test3"])
+        values = [int(line.split()[-2]) for line in lines]
+        self.assertEqual(values, [100, 0, -100, 100])
+

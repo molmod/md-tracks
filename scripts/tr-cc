@@ -1,0 +1,56 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import load_track
+
+import numpy
+from optparse import OptionParser
+
+
+usage = """%prog [options] input1 input2 [input3 ...]
+
+%prog computes the correlation coefficient between ${input1} and all the
+subsequent inputs. The results are printed on screen.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+(options, args) = parser.parse_args()
+
+
+if len(args) >= 2:
+    path_one = args[0]
+    paths_other = args[1:]
+else:
+    parser.error("Expecting at least two argument.")
+
+one = load_track(path_one)
+one = one - one.mean()
+one /= one.std()
+for path_other in paths_other:
+    other = load_track(path_other)
+    other = other - other.mean()
+    other /= other.std()
+    cc = (one*other).mean()
+    cc = numpy.clip(cc, -1, 1)
+    print "cc('%s','%s') = % 4.0f %%" % (path_one, path_other, cc*100)
+
