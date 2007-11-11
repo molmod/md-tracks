@@ -606,16 +606,31 @@ class CommandsTestCase(BaseTestCase):
 
     def test_ic_bend(self):
         self.from_xyz("thf01", "pos")
+        self.from_xyz("thf01", "vel", ["-u1"])
+        self.from_cp2k_ener("thf01")
+        # just pos
         self.execute("tr-ic-bend", ["tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002", "tracks/test"])
         bends = load_track("tracks/test")
         self.assertAlmostEqual(bends[0]*180/numpy.pi, 105.426, 3)
         self.assertAlmostEqual(bends[1]*180/numpy.pi, 102.286, 3)
         self.assertAlmostEqual(bends[-1]*180/numpy.pi, 107.284, 3)
+        # slice
         self.execute("tr-ic-bend", ["-s20:601:5", "tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002", "tracks/test"])
         bends = load_track("tracks/test")
         self.assertAlmostEqual(bends[0]*180/numpy.pi, 104.739, 3)
         self.assertAlmostEqual(bends[1]*180/numpy.pi, 108.972, 3)
         self.assertAlmostEqual(bends[-1]*180/numpy.pi, 107.277, 3)
+        # pos and vel
+        self.execute("tr-ic-bend", [
+            "tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002",
+            "tracks/atom.vel.0000001", "tracks/atom.vel.0000000", "tracks/atom.vel.0000002",
+            "tracks/test_pos", "tracks/test_vel",
+        ])
+        bends = load_track("tracks/test_pos")
+        self.assertAlmostEqual(bends[0]*180/numpy.pi, 105.426, 3)
+        self.assertAlmostEqual(bends[1]*180/numpy.pi, 102.286, 3)
+        self.assertAlmostEqual(bends[-1]*180/numpy.pi, 107.284, 3)
+        self.check_deriv("tracks/test_pos", "tracks/test_vel", "tracks/time", 1e-1)
 
     def test_ic_dihed(self):
         self.from_xyz("thf01", "pos")

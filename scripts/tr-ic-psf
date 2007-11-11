@@ -159,7 +159,7 @@ elif kind == 'bend':
                     vector.from_prefix("%s.%07i" % (prefix, index1), sub),
                     vector.from_prefix("%s.%07i" % (prefix, index2), sub),
                     vector.from_prefix("%s.%07i" % (prefix, index3), sub),
-                    options.cos,
+                    return_cos=options.cos,
                 ))
                 log("DONE %s" % name)
             except TrackNotFoundError, e:
@@ -189,7 +189,7 @@ elif kind == 'dihed':
                     vector.from_prefix("%s.%07i" % (prefix, index2), sub),
                     vector.from_prefix("%s.%07i" % (prefix, index3), sub),
                     vector.from_prefix("%s.%07i" % (prefix, index4), sub),
-                    options.cos,
+                    return_cos=options.cos,
                 ))
                 log("DONE %s" % name)
             except TrackNotFoundError, e:

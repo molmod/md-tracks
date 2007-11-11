@@ -99,22 +99,35 @@ def dist(p1, p2, v1=None, v2=None):
         return pd, vd
 
 
-def bend(v1, v2, v3, return_cos=False):
+def bend(p1, p2, p3, v1=None, v2=None, v3=None, return_cos=False):
     """Compute the bending angle of three atoms at each time step."""
-    delta_a = v1 - v2
-    delta_b = v3 - v2
+    p_delta_a = p1 - p2
+    p_delta_b = p3 - p2
     # compute the norms
-    norm_a = delta_a.norm()
-    norm_b = delta_b.norm()
-    # normalize the vectors
-    delta_a /= norm_a
-    delta_b /= norm_b
-    # calculate the dot product
-    cos = dot(delta_a, delta_b)
-    cos = numpy.clip(cos, -1, 1)
-    if return_cos: return cos
-    angle = numpy.arccos(cos)
-    return angle
+    p_norm_a = p_delta_a.norm()
+    p_norm_b = p_delta_b.norm()
+    # calculate the cosine
+    p_cos = dot(p_delta_a, p_delta_b)/p_norm_a/p_norm_b
+    p_cos = numpy.clip(p_cos, -1, 1)
+    if v1 is None:
+        if return_cos: return p_cos
+        p_angle = numpy.arccos(p_cos)
+        return p_angle
+    else:
+        v_norm_a = dot(v1-v2, p_delta_a)/p_norm_a
+        v_norm_b = dot(v3-v2, p_delta_b)/p_norm_b
+
+        t = dot(p_delta_a, p_delta_b)
+        n = p_norm_a*p_norm_b
+        dt = dot(v1, p_delta_b) + dot(v3, p_delta_a) - dot(v2, p_delta_a) - dot(v2, p_delta_b)
+        dn = v_norm_a*p_norm_b + v_norm_b*p_norm_a
+
+        v_cos = (n*dt-t*dn)/n**2
+        if return_cos: return p_cos, v_cos
+        p_angle = numpy.arccos(p_cos)
+        v_angle = -1/numpy.sqrt(1 - p_cos**2)*v_cos
+        return p_angle, v_angle
+
 
 
 def dihed(v1, v2, v3, v4, return_cos=False):

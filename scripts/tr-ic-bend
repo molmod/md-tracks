@@ -28,12 +28,17 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] prefix1 prefix2 prefix3 output
+usage = """%prog [options] pos_prefix1 pos_prefix2 pos_prefix3 [vel_prefix1 vel_prefix2 vel_prefix3] pos_output [vel_output]
 
-%prog computes the bending angle, defined by prefix1-prefix2-prefix3, for all
-time steps. Tracks with the given prefixes must exist, and their filenames must
-look like: ${prefix1}.c, ${prefix2}.c and ${prefix3}.c, where c is x, y or z.
-The output is stored in ${output}.
+%prog computes the bending angle, defined by pos_prefix1-pos_prefix2-pos_prefix3,
+for all time steps. Tracks with the given prefixes must exist, and their
+filenames must look like: ${pos_prefix1}.c, ${pos_prefix2}.c and
+${pos_prefix3}.c, where c is x, y or z. The output is stored in ${pos_output}.
+
+if ${vel_prefix1}, ${vel_prefix2} and ${vel_prefix3} are given, also the dime
+derivative of the bending angle is computed. Tracks with the given prefixes must
+exist, and their filenames must look like: ${vel_prefix1}.c, ${vel_prefix2}.c
+and ${vel_prefix3}.c where c is x, y or z. The output is stored in ${vel_output}.
 
 %prog -h prints out all available options."""
 
@@ -52,14 +57,34 @@ parser.add_option(
 
 
 if len(args) == 4:
-    prefix1, prefix2, prefix3, output_path = args
+    pos_prefix1, pos_prefix2, pos_prefix3, pos_output_path = args
+    vel_prefix1 = None
+    vel_prefix2 = None
+    vel_prefix3 = None
+    vel_output_path = None
+elif len(args) == 8:
+    pos_prefix1, pos_prefix2, pos_prefix3, vel_prefix1, vel_prefix2, vel_prefix3, pos_output_path, vel_output_path = args
 else:
     parser.error("Expecting four arguments.")
 
 sub = parse_slice(options.slice)
-dump_track(output_path, vector.bend(
-    vector.from_prefix(prefix1, sub),
-    vector.from_prefix(prefix2, sub),
-    vector.from_prefix(prefix3, sub),
-    options.cos,
-))
+if vel_prefix1 is None:
+    dump_track(pos_output_path, vector.bend(
+        vector.from_prefix(pos_prefix1, sub),
+        vector.from_prefix(pos_prefix2, sub),
+        vector.from_prefix(pos_prefix3, sub),
+        return_cos=options.cos,
+    ))
+else:
+    pos_bend, vel_bend = vector.bend(
+        vector.from_prefix(pos_prefix1, sub),
+        vector.from_prefix(pos_prefix2, sub),
+        vector.from_prefix(pos_prefix3, sub),
+        vector.from_prefix(vel_prefix1, sub),
+        vector.from_prefix(vel_prefix2, sub),
+        vector.from_prefix(vel_prefix3, sub),
+        return_cos=options.cos,
+    )
+    dump_track(pos_output_path, pos_bend)
+    dump_track(vel_output_path, vel_bend)
+
