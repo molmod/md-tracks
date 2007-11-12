@@ -999,18 +999,18 @@ class CommandsTestCase(BaseTestCase):
 
         self.execute("tr-plot", [
             "--xunit=A", "--yunit=1", "--xlabel=Iteratomic distance", "--ylabel=g(r)", "--title=Radial distribution functions",
-            ":hline", "1",
             ":bar", "tracks/rdf_O_O.bins", "tracks/rdf_O_O.hist",
             ":bar", "tracks/rdf_H_H.bins", "tracks/rdf_H_H.hist",
             ":bar", "tracks/rdf_O_H.bins", "tracks/rdf_O_H.hist",
+            ":hline", "1",
             os.path.join(output_dir, "rdf_water32_noerror")
         ])
         self.execute("tr-plot", [
             "--ylim=0,10", "--xunit=A", "--yunit=1", "--xlabel=Iteratomic distance", "--ylabel=f(r)", "--title=Cumulative radial distribution functions",
-            ":hline", "1",
             ":bar", "tracks/rdf_O_O.bins", "tracks/rdf_O_O.cumul.hist",
             ":bar", "tracks/rdf_H_H.bins", "tracks/rdf_H_H.cumul.hist",
             ":bar", "tracks/rdf_O_H.bins", "tracks/rdf_O_H.cumul.hist",
+            ":hline", "1",
             os.path.join(output_dir, "rdf_cumul_water32_noerror")
         ])
 
