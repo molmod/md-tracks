@@ -22,6 +22,7 @@
 
 from tracks.core import dump_track
 from tracks.parse import parse_slice
+from tracks.log import log
 import tracks.vector as vector
 
 import numpy
@@ -53,9 +54,14 @@ parser.add_option(
     "-c", "--cos", action="store_true", default=False,
     help="Compute the cosine instead of the angle."
 )
+parser.add_option(
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
+)
 (options, args) = parser.parse_args()
 
 
+log.verbose = options.verbose
 if len(args) == 4:
     pos_prefix1, pos_prefix2, pos_prefix3, pos_output_path = args
     vel_prefix1 = None
@@ -75,6 +81,7 @@ if vel_prefix1 is None:
         vector.from_prefix(pos_prefix3, sub),
         return_cos=options.cos,
     ))
+    log("WRITTEN: %s" % pos_output_path)
 else:
     pos_bend, vel_bend = vector.bend(
         vector.from_prefix(pos_prefix1, sub),
@@ -86,5 +93,7 @@ else:
         return_cos=options.cos,
     )
     dump_track(pos_output_path, pos_bend)
+    log("WRITTEN: %s" % pos_output_path)
     dump_track(vel_output_path, vel_bend)
+    log("WRITTEN: %s" % vel_output_path)
 

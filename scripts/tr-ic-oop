@@ -22,6 +22,7 @@
 
 from tracks.core import dump_track
 from tracks.parse import parse_slice
+from tracks.log import log
 import tracks.vector as vector
 
 import numpy
@@ -49,9 +50,14 @@ parser.add_option(
          "where start, stop and step must be integers or can be omitted. "
          "The slice interpretation is pythonic. [default=%default]",
 )
+parser.add_option(
+    "-q", "--quiet", action="store_false", dest="verbose", default=True,
+    help="Don't print any output."
+)
 (options, args) = parser.parse_args()
 
 
+log.verbose = options.verbose
 if len(args) == 5:
     pos_prefix1, pos_prefix2, pos_prefix3, pos_prefix4, pos_output_path = args
     vel_prefix1 = None
@@ -66,12 +72,13 @@ else:
 
 sub = parse_slice(options.slice)
 if vel_prefix1 is None:
-  dump_track(pos_output_path, vector.oop(
-      vector.from_prefix(pos_prefix1, sub),
-      vector.from_prefix(pos_prefix2, sub),
-      vector.from_prefix(pos_prefix3, sub),
-      vector.from_prefix(pos_prefix4, sub),
-  ))
+    dump_track(pos_output_path, vector.oop(
+        vector.from_prefix(pos_prefix1, sub),
+        vector.from_prefix(pos_prefix2, sub),
+        vector.from_prefix(pos_prefix3, sub),
+        vector.from_prefix(pos_prefix4, sub),
+    ))
+    log("WRITTEN: %s" % pos_output_path)
 else:
     pos_oop, vel_oop = vector.oop(
         vector.from_prefix(pos_prefix1, sub),
@@ -84,4 +91,6 @@ else:
         vector.from_prefix(vel_prefix4, sub),
     )
     dump_track(pos_output_path, pos_oop)
+    log("WRITTEN: %s" % pos_output_path)
     dump_track(vel_output_path, vel_oop)
+    log("WRITTEN: %s" % vel_output_path)
