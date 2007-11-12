@@ -32,13 +32,13 @@ usage = """%prog [options] pos_prefix1 pos_prefix2 pos_prefix3 [vel_prefix1 vel_
 
 %prog computes the bending angle, defined by pos_prefix1-pos_prefix2-pos_prefix3,
 for all time steps. Tracks with the given prefixes must exist, and their
-filenames must look like: ${pos_prefix1}.c, ${pos_prefix2}.c and
-${pos_prefix3}.c, where c is x, y or z. The output is stored in ${pos_output}.
+filenames must look like: ${pos_prefix*}.c, where c is x, y or z. The output is
+stored in ${pos_output}.
 
-if ${vel_prefix1}, ${vel_prefix2} and ${vel_prefix3} are given, also the time
-derivative of the bending angle is computed. Tracks with the given prefixes must
-exist, and their filenames must look like: ${vel_prefix1}.c, ${vel_prefix2}.c
-and ${vel_prefix3}.c where c is x, y or z. The output is stored in ${vel_output}.
+if the arguments ${vel_prefix*} are given, also the time derivative of the
+bending angle is computed. Tracks with the given prefixes must exist, and their
+filenames must look like: ${vel_prefix*}.c, where c is x, y or z. The output is
+stored in ${vel_output}.
 
 %prog -h prints out all available options."""
 

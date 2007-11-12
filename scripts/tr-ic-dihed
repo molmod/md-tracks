@@ -32,13 +32,13 @@ usage = """%prog [options] pos_prefix1 pos_prefix2 pos_prefix3 pos_prefix4 [vel_
 
 %prog computes the dihedral angle pos_prefix1-pos_prefix2-pos_prefix3-pos_prefix4
 for all time steps. Tracks with the given prefixes must exist, and their
-filenames must look like: ${pos_prefix1}.c, ${pos_prefix2}.c, ${pos_prefix3}.c
-and ${pos_prefix4}.c where c is x, y or z. The output is stored in ${pos_output}.
+filenames must look like: ${pos_prefix*}.c, where c is x, y or z. The output is
+stored in ${pos_output}.
 
-if ${vel_prefix*} are given, also the time derivative of the dihedral angle is
-computed. Tracks with the given prefixes must exist, and their filenames must
-look like: ${vel_prefix*}.c where c is x, y or z. The output is stored in
-${vel_output}.
+if the arguments ${vel_prefix*} are given, also the time derivative of the
+dihedral angle is computed. Tracks with the given prefixes must exist, and their
+filenames must look like: ${vel_prefix*}.c where c is x, y or z. The output is
+stored in ${vel_output}.
 
 
 %prog -h prints out all available options."""

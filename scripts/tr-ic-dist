@@ -28,17 +28,17 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] pos_prefix1 pos_prefix2 [vel_prefix1 vel_prefix2] pos_output ${vel_output}
+usage = """%prog [options] pos_prefix1 pos_prefix2 [vel_prefix1 vel_prefix2] pos_output [vel_output]
 
 %prog computes the distance between the atom ${pos_prefix1} and ${pos_prefix2}
 for all time steps. Tracks with the given prefixes must exist, and their
-filenames must look like: ${pos_prefix1}.c and ${pos_prefix2}.c where c is x, y
-or z. The output is stored in ${pos_output}.
+filenames must look like: ${pos_prefix*}.c where c is x, y or z. The output is
+stored in ${pos_output}.
 
-if ${vel_prefix1} and ${vel_prefix2} are given, also the time derivative of the
+if the arguments ${vel_prefix*} are given, also the time derivative of the
 distance is computed.  Tracks with the given prefixes must exist, and their
-filenames must look like: ${vel_prefix1}.c and ${vel_prefix2}.c where c is x, y
-or z. The output is stored in ${vel_output}.
+filenames must look like: ${vel_prefix*}.c where c is x, y or z. The output is
+stored in ${vel_output}.
 
 %prog -h prints out all available options."""
 
@@ -76,4 +76,5 @@ else:
     )
     dump_track(pos_output_path, dist_pos)
     dump_track(vel_output_path, dist_vel)
+
 

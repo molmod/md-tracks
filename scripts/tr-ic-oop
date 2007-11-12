@@ -32,9 +32,8 @@ usage = """%prog [options] prefix1 prefix2 prefix3 prefix4 output
 
 %prog computes the distance from prefix4 to the plane defined by prefix1,
 prefix2 and prefix3 for all time steps. Tracks with the given prefixes must
-exist, and their filenames must look like: ${prefix1}.c, ${prefix2}.c,
-${prefix3}.c and ${prefix4}.c where c is x, y or z. The output is stored in
-${output}.
+exist, and their filenames must look like: ${prefix*}.c where c is x, y or z.
+The output is stored in ${output}.
 
 %prog -h prints out all available options."""
 

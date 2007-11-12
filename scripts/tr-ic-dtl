@@ -32,8 +32,8 @@ usage = """%prog [options] prefix1 prefix2 prefix3 output
 
 %prog computes the distance of ${prefix3} to the line defined by ${prefix1} and
 ${prefix2} at each time step. Tracks with the given prefixes must exist, and
-their filenames must look like: ${prefix1}.c, ${prefix2}.c and ${prefix3}.c,
-where c is x, y or z. The output is stored in ${output}.
+their filenames must look like: ${prefix*}.c, where c is x, y or z. The output
+is stored in ${output}.
 
 %prog -h prints out all available options."""
 
