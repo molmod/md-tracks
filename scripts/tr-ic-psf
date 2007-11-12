@@ -35,56 +35,44 @@ usage = """%prog [options] kind pos_prefix [vel_prefix] [atoms1 atoms2 [atoms3 [
 
 %prog computes all the internal coordinates of the given ${kind} for the
 Cartesian tracks with the given ${pos_prefix}. ${kind} can be one of 'bond',
-'bend', 'dihed', 'oop' or 'dtl'. The cartesian tracks are supposed to have the
-following filenames: ${pos_prefix}.${index}.${c}, where ${index} is the atom
-index padded with zeros up to 7 characters and ${c} is x, y or z.
+'bend', 'span', 'dihed', 'dtl' or 'oop'. The cartesian tracks are supposed to
+have the following filenames: ${pos_prefix}.${index}.${c}, where ${index} is
+the atom index padded with zeros up to 7 characters and ${c} is x, y or z.
+
+The different kinds are interpreted as:
+bond:  Bond length atom1-atom2
+bend:  Bending angle atom1-atom2-atom3
+span:  Distance over a bending angle atom1(-atom2-)atom3
+dihed: Dihedral angle atom1-atom2-atom3-atom4
+dtl:   Distance to line (atom1-atom2)-atom3
+oop:   Out of plane distance (atom1-atom2-atom3)-atom4
 
 The list of internal coordinates is taken from the file ${connectivity.psf}.
-Optionally one can reduce the internal coordinates to those that belong to the
-given set of atoms. Each ${atoms*} argument is a comma-separated list of atom
-indexes.
+Optionally one can reduce the set of internal coordinates with the ${atoms*}
+arguments. Each ${atoms*} argument is a comma-separated list of atom
+indexes. For example, when '${atoms1}=0,5,3', only the internal coordinates
+are considered where atom1 from the previous section belongs to this list. All
+or none atom filters must be given. The empty filter argument, i.e. '', is
+equivalent to a list containing all atom indexes.
 
 If the argument ${vel_prefix} is given, also the time derivatives of the
-internal coordinates are computed. Tracks with the given prefixes must exist, and their
-filenames must look like: ${vel_prefix*}.${index}.${c}. The output is stored in
-${vel_output}.
+internal coordinates are computed. Tracks with the given prefix must exist, and
+their filenames must look like: ${vel_prefix*}.${index}.${c}.
 
-Case ${kind}=bond
+The output is written to files that all have the same ${prefix}. If only
+${pos_prefix} is given, ${prefix}=${pos_prefix}, but if present, the trailing
+'.pos' is removed. If both ${pos_prefix} and ${vel_prefix} are given, the common
+part of both is used as output ${prefix}. Trailing dots are always removed from
+the ${prefix}.
 
-The output is written to: ${prefix}.bond.${index1}.${index2}
-Only two or none ${atoms*} arguments are allowed. If the ${atoms1} and ${atoms2}
-arguments are given, only bond lengths between an atom from ${atoms1} and and
-atom from ${atoms2} are considered.
-
-Case ${kind}=bend
-
-The output is written to ${prefix}.bend.${index1}.${index2}.${index3}
-Only three or none ${atoms*} arguments are allowed. Their interpretation is
-similar to the bond case.
-
-Case ${kind}=span (Distance over a bending angle)
-
-The output is written to ${prefix}.span.${index1}.${index2}.${index3}
-Only three or none ${atoms*} arguments are allowed. Their interpretation is
-similar to the bond case.
-
-Case ${kind}=dihed
-
-The output is written to ${prefix}.dihed.${index1}.${index2}.${index3}.${index4}
-Only four or none ${atoms*} arguments are allowed. Their interpretation is
-similar to the bond case.
-
-Case ${kind}=dtl (Distance to line, (1,2)-3)
-
-The output is written to ${prefix}.dtl.${index1}.${index2}.${index3}
-Only three or none ${atoms*} arguments are allowed. Their interpretation is
-similar to the bond case.
-
-Case ${kind}=oop (Out of plane distance, (1,2,3)-4)
-
-The output is written to ${prefix}.oop.${index1}.${index2}.${index3}.${index4}
-Only four or none ${atoms*} arguments are allowed. Their interpretation is
-similar to the bond case.
+The output_files have the following structure:
+${prefix}.${kind}.pos.${index1}.${index2}
+${prefix}.${kind}.pos.${index1}.${index2}.${index3}
+${prefix}.${kind}.pos.${index1}.${index2}.${index3}.${index4}
+and optionally:
+${prefix}.${kind}.vel.${index1}.${index2}
+${prefix}.${kind}.vel.${index1}.${index2}.${index3}
+${prefix}.${kind}.vel.${index1}.${index2}.${index3}.${index4}
 
 %prog -h prints out all available options."""
 
@@ -147,10 +135,11 @@ if options.output_prefix is None:
             output_prefix = output_prefix[:-4]
     else:
         output_prefix = os.path.commonprefix([pos_prefix, vel_prefix])
-        while output_prefix[-1] == '.':
-            output_prefix = output_prefix[:-1]
+    while output_prefix[-1] == '.':
+        output_prefix = output_prefix[:-1]
 else:
     output_prefix = options.output_prefix
+
 
 if kind == 'bond':
     if len(filter_args) == 0:
