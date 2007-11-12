@@ -235,9 +235,24 @@ def oop(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None):
         return p_oop, v_oop
 
 
-def dtl(v1, v2, v3):
-    """Compute the distance from v3 to the line defined by v1 and v2 at each time step."""
-    delta_line = v1 - v2
-    delta_line /= delta_line.norm()
-    delta = v1 - v3
-    return (delta - delta_line*dot(delta_line, delta)).norm()
+def dtl(p1, p2, p3, v1=None, v2=None, v3=None):
+    """Compute the distance from p3 to the line defined by p1 and p2 at each time step."""
+    p_delta_line = p1 - p2
+    p_delta_line_norm = p_delta_line.norm()
+    p_delta_line_normed = p_delta_line/p_delta_line_norm
+    p_delta = p1 - p3
+    p_proj = p_delta - p_delta_line_normed*dot(p_delta_line_normed, p_delta)
+    p_dtl = p_proj.norm()
+    if v1 is None:
+        return p_dtl
+    else:
+        v_delta_line = v1 - v2
+        v_delta_line_norm = dot(p_delta_line, v_delta_line)/p_delta_line_norm
+        v_delta_line_normed = (v_delta_line - p_delta_line_normed*v_delta_line_norm)/p_delta_line_norm
+        v_delta = v1 - v3
+        v_proj = v_delta - v_delta_line_normed*dot(p_delta_line_normed, p_delta) \
+                         - p_delta_line_normed*dot(v_delta_line_normed, p_delta) \
+                         - p_delta_line_normed*dot(p_delta_line_normed, v_delta)
+        v_dtl = dot(p_proj, v_proj)/p_dtl
+        return p_dtl, v_dtl
+

@@ -28,12 +28,17 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] prefix1 prefix2 prefix3 output
+usage = """%prog [options] pos_prefix1 pos_prefix2 pos_prefix3 [vel_prefix1 vel_prefix2 vel_prefix3] pos_output [vel_output]
 
-%prog computes the distance of ${prefix3} to the line defined by ${prefix1} and
-${prefix2} at each time step. Tracks with the given prefixes must exist, and
-their filenames must look like: ${prefix*}.c, where c is x, y or z. The output
-is stored in ${output}.
+%prog computes the distance of ${pos_prefix3} to the line defined by
+${pos_prefix1} and ${pos_prefix2} at each time step. Tracks with the given
+prefixes must exist, and their filenames must look like: ${pos_prefix*}.c, where
+c is x, y or z. The output is stored in ${pos_output}.
+
+If the arguments ${vel_prefix*} are given, also the time derivative of the
+bending angle is computed. Tracks with the given prefixes must exist, and their
+filenames must look like: ${vel_prefix*}.c, where c is x, y or z. The output is
+stored in ${vel_output}.
 
 %prog -h prints out all available options."""
 
@@ -48,13 +53,31 @@ parser.add_option(
 
 
 if len(args) == 4:
-    prefix1, prefix2, prefix3, output_path = args
+    pos_prefix1, pos_prefix2, pos_prefix3, pos_output_path = args
+    vel_prefix1 = None
+    vel_prefix2 = None
+    vel_prefix3 = None
+    vel_output_path = None
+elif len(args) == 8:
+    pos_prefix1, pos_prefix2, pos_prefix3, vel_prefix1, vel_prefix2, vel_prefix3, pos_output_path, vel_output_path = args
 else:
-    parser.error("Expecting four arguments.")
+    parser.error("Expecting four or eight arguments.")
 
 sub = parse_slice(options.slice)
-dump_track(output_path, vector.dtl(
-    vector.from_prefix(prefix1, sub),
-    vector.from_prefix(prefix2, sub),
-    vector.from_prefix(prefix3, sub),
-))
+if vel_prefix1 is None:
+    dump_track(pos_output_path, vector.dtl(
+        vector.from_prefix(pos_prefix1, sub),
+        vector.from_prefix(pos_prefix2, sub),
+        vector.from_prefix(pos_prefix3, sub),
+    ))
+else:
+    pos_dtl, vel_dtl = vector.dtl(
+        vector.from_prefix(pos_prefix1, sub),
+        vector.from_prefix(pos_prefix2, sub),
+        vector.from_prefix(pos_prefix3, sub),
+        vector.from_prefix(vel_prefix1, sub),
+        vector.from_prefix(vel_prefix2, sub),
+        vector.from_prefix(vel_prefix3, sub),
+    )
+    dump_track(pos_output_path, pos_dtl)
+    dump_track(vel_output_path, vel_dtl)

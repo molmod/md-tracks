@@ -662,16 +662,31 @@ class CommandsTestCase(BaseTestCase):
 
     def test_ic_dtl(self):
         self.from_xyz("thf01", "pos")
+        self.from_xyz("thf01", "vel", ["-u1"])
+        self.from_cp2k_ener("thf01")
+        # pos
         self.execute("tr-ic-dtl", ["tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002", "tracks/test"])
         dtls = load_track("tracks/test")
         self.assertAlmostEqual(dtls[0]/angstrom, 1.364, 3)
         self.assertAlmostEqual(dtls[1]/angstrom, 1.422, 3)
         self.assertAlmostEqual(dtls[-1]/angstrom, 1.337, 3)
+        # slice
         self.execute("tr-ic-dtl", ["-s20:601:5", "tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002", "tracks/test"])
         dtls = load_track("tracks/test")
         self.assertAlmostEqual(dtls[0]/angstrom, 1.394, 3)
         self.assertAlmostEqual(dtls[1]/angstrom, 1.358, 3)
         self.assertAlmostEqual(dtls[-1]/angstrom, 1.367, 3)
+        # pos and vel
+        self.execute("tr-ic-dtl", [
+            "tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002",
+            "tracks/atom.vel.0000001", "tracks/atom.vel.0000000", "tracks/atom.vel.0000002",
+            "tracks/test_pos", "tracks/test_vel",
+        ])
+        dtls = load_track("tracks/test_pos")
+        self.assertAlmostEqual(dtls[0]/angstrom, 1.364, 3)
+        self.assertAlmostEqual(dtls[1]/angstrom, 1.422, 3)
+        self.assertAlmostEqual(dtls[-1]/angstrom, 1.337, 3)
+        self.check_deriv("tracks/test_pos", "tracks/test_vel", "tracks/time", 1e-1)
 
     def test_ic_oop(self):
         self.from_xyz("thf01", "pos")
