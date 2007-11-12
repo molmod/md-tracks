@@ -191,13 +191,48 @@ def dihed(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None, return_cos=False):
             return p_angle, v_angle
 
 
-def oop(v1, v2, v3, v4):
-    """Compute the distance from v4 to the plane defined by v1, v2 and v3 at each time step."""
-    delta_a = v1 - v2
-    delta_b = v3 - v2
-    normal = cross(delta_a, delta_b)
-    normal /= normal.norm()
-    return dot(v4 - v2, normal)
+def oop(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None):
+    """Compute the distance from p4 to the plane defined by p1, p2 and p3 at each time step."""
+    p_delta_a = p1 - p2
+    p_delta_b = p3 - p2
+    p_ortho_1 = p4 - p1
+
+    p_norm_a = p_delta_a.norm()
+    p_normed_a = p_delta_a/p_norm_a
+    p_ortho_2 = p_ortho_1 - p_normed_a*dot(p_normed_a,p_ortho_1)
+
+    p_proj_b = p_delta_b - p_normed_a*dot(p_normed_a,p_delta_b)
+    p_norm_proj_b = p_proj_b.norm()
+    p_normed_proj_b = p_proj_b/p_norm_proj_b
+    p_ortho_3 = p_ortho_2 - p_normed_proj_b*dot(p_normed_proj_b,p_ortho_2)
+    p_oop = p_ortho_3.norm()
+
+    swap = (triple(p_delta_a, p_delta_b, p_ortho_1) > 0)*2-1
+    p_oop *= swap
+    if v1 is None:
+        return p_oop
+    else:
+        v_delta_a = v1 - v2
+        v_delta_b = v3 - v2
+        v_ortho_1 = v4 - v1
+
+        v_norm_a = dot(p_delta_a, v_delta_a)/p_norm_a
+        v_normed_a = (v_delta_a - p_normed_a*v_norm_a)/p_norm_a
+        v_ortho_2 = v_ortho_1 - v_normed_a*dot(p_normed_a,p_ortho_1) \
+                              - p_normed_a*dot(v_normed_a,p_ortho_1) \
+                              - p_normed_a*dot(p_normed_a,v_ortho_1)
+
+        v_proj_b = v_delta_b - v_normed_a*dot(p_normed_a,p_delta_b) \
+                             - p_normed_a*dot(v_normed_a,p_delta_b) \
+                             - p_normed_a*dot(p_normed_a,v_delta_b)
+        v_norm_proj_b = dot(p_proj_b, v_proj_b)/p_norm_proj_b
+        v_normed_proj_b = (v_proj_b - p_normed_proj_b*v_norm_proj_b)/p_norm_proj_b
+        v_ortho_3 = v_ortho_2 - v_normed_proj_b*dot(p_normed_proj_b,p_ortho_2) \
+                              - p_normed_proj_b*dot(v_normed_proj_b,p_ortho_2) \
+                              - p_normed_proj_b*dot(p_normed_proj_b,v_ortho_2)
+        v_oop = dot(p_ortho_3, v_ortho_3)/p_oop
+
+        return p_oop, v_oop
 
 
 def dtl(v1, v2, v3):

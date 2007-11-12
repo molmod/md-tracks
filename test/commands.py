@@ -574,6 +574,7 @@ class CommandsTestCase(BaseTestCase):
         v = load_track(vel)
         v_check = load_track("%s.deriv" % pos)
         v_half = 0.5*(v[1:]+v[:-1])
+        print v_check/v_half
         self.assertArraysAlmostEqual(v_check, v_half, relerr, mean=True)
 
     def test_ic_dist(self):
@@ -675,16 +676,31 @@ class CommandsTestCase(BaseTestCase):
 
     def test_ic_oop(self):
         self.from_xyz("thf01", "pos")
-        self.execute("tr-ic-oop", ["tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"])
-        bends = load_track("tracks/test")
-        self.assertAlmostEqual(bends[0]/angstrom, 0.000, 3)
-        self.assertAlmostEqual(bends[1]/angstrom, 0.049, 3)
-        self.assertAlmostEqual(bends[-1]/angstrom, -0.552, 3)
+        self.from_xyz("thf01", "vel", ["-u1"])
+        self.from_cp2k_ener("thf01")
+        # pos
+        self.execute("tr-ic-oop", ["tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"], verbose=True)
+        oops = load_track("tracks/test")
+        self.assertAlmostEqual(oops[0]/angstrom, 0.000, 2)
+        self.assertAlmostEqual(oops[1]/angstrom, 0.049, 2)
+        self.assertAlmostEqual(oops[-1]/angstrom, -0.5515, 2)
+        # slice
         self.execute("tr-ic-oop", ["-s20:601:5", "tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"])
-        bends = load_track("tracks/test")
-        self.assertAlmostEqual(bends[0]/angstrom, 0.380, 2)
-        self.assertAlmostEqual(bends[1]/angstrom, 0.419, 2)
-        self.assertAlmostEqual(bends[-1]/angstrom, 0.755, 2)
+        oops = load_track("tracks/test")
+        self.assertAlmostEqual(oops[0]/angstrom, 0.380, 2)
+        self.assertAlmostEqual(oops[1]/angstrom, 0.419, 2)
+        self.assertAlmostEqual(oops[-1]/angstrom, 0.755, 2)
+        # pos and vel
+        self.execute("tr-ic-oop", [
+            "tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001",
+            "tracks/atom.vel.0000002", "tracks/atom.vel.0000003", "tracks/atom.vel.0000004", "tracks/atom.vel.0000001",
+            "tracks/test_pos", "tracks/test_vel"
+        ])
+        oops = load_track("tracks/test_pos")
+        self.assertAlmostEqual(oops[0]/angstrom, 0.000, 2)
+        self.assertAlmostEqual(oops[1]/angstrom, 0.049, 2)
+        self.assertAlmostEqual(oops[-1]/angstrom, -0.5515, 2)
+        self.check_deriv("tracks/test_pos", "tracks/test_vel", "tracks/time", 1e-1)
 
     def test_ic_psf(self):
         def check_ic_psf(nbonds, nbends, ndiheds, ndtls, noops):
@@ -1083,7 +1099,7 @@ class CommandsTestCase(BaseTestCase):
         dump_track("test1", numpy.cos(t))
         dump_track("test2", -numpy.sin(t))
         dump_track("test3", numpy.sin(t)+1)
-        lines = self.execute("tr-cc", ["test0", "test0", "test1", "test2", "test3"])
+        lines = self.execute("tr-corr", ["test0", "test0", "test1", "test2", "test3"])
         values = [int(line.split()[-2]) for line in lines]
         self.assertEqual(values, [100, 0, -100, 100])
 
