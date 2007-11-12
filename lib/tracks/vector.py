@@ -171,7 +171,7 @@ def dihed(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None, return_cos=False):
         v_delta_a = v1 - v2
         v_delta_b = v3 - v2
         v_delta_c = v4 - v3
-        v_norm_b = dot(p3-p2,v3-v2)/p_norm_b
+        v_norm_b = dot(p_delta_b,v_delta_b)/p_norm_b
         v_normed_b = (v_delta_b - p_normed_b*v_norm_b)/p_norm_b
         v_proj_a = v_delta_a - v_normed_b*dot(p_normed_b,p_delta_a) \
                              - p_normed_b*dot(v_normed_b,p_delta_a) \

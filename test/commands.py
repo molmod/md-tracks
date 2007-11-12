@@ -574,7 +574,6 @@ class CommandsTestCase(BaseTestCase):
         v = load_track(vel)
         v_check = load_track("%s.deriv" % pos)
         v_half = 0.5*(v[1:]+v[:-1])
-        print v_check/v_half
         self.assertArraysAlmostEqual(v_check, v_half, relerr, mean=True)
 
     def test_ic_dist(self):
@@ -639,47 +638,47 @@ class CommandsTestCase(BaseTestCase):
         self.from_cp2k_ener("thf01")
         # just pos
         self.execute("tr-ic-dihed", ["tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"])
-        bends = load_track("tracks/test")
-        self.assertAlmostEqual(bends[0]*180/numpy.pi, 0.000, 3)
-        self.assertAlmostEqual(bends[1]*180/numpy.pi, -1.919, 3)
-        self.assertAlmostEqual(bends[-1]*180/numpy.pi, 21.320, 3)
+        diheds = load_track("tracks/test")
+        self.assertAlmostEqual(diheds[0]*180/numpy.pi, 0.000, 3)
+        self.assertAlmostEqual(diheds[1]*180/numpy.pi, -1.919, 3)
+        self.assertAlmostEqual(diheds[-1]*180/numpy.pi, 21.320, 3)
         # slice
         self.execute("tr-ic-dihed", ["-s20:601:5", "tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"])
-        bends = load_track("tracks/test")
-        self.assertAlmostEqual(bends[0]*180/numpy.pi, -15.209, 3)
-        self.assertAlmostEqual(bends[1]*180/numpy.pi, -16.602, 3)
-        self.assertAlmostEqual(bends[-1]*180/numpy.pi, -31.306, 3)
+        diheds = load_track("tracks/test")
+        self.assertAlmostEqual(diheds[0]*180/numpy.pi, -15.209, 3)
+        self.assertAlmostEqual(diheds[1]*180/numpy.pi, -16.602, 3)
+        self.assertAlmostEqual(diheds[-1]*180/numpy.pi, -31.306, 3)
         # just pos and vel
         self.execute("tr-ic-dihed", [
             "tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001",
             "tracks/atom.vel.0000002", "tracks/atom.vel.0000003", "tracks/atom.vel.0000004", "tracks/atom.vel.0000001",
             "tracks/test_pos", "tracks/test_vel"
         ])
-        bends = load_track("tracks/test_pos")
-        self.assertAlmostEqual(bends[0]*180/numpy.pi, 0.000, 3)
-        self.assertAlmostEqual(bends[1]*180/numpy.pi, -1.919, 3)
-        self.assertAlmostEqual(bends[-1]*180/numpy.pi, 21.320, 3)
+        diheds = load_track("tracks/test_pos")
+        self.assertAlmostEqual(diheds[0]*180/numpy.pi, 0.000, 3)
+        self.assertAlmostEqual(diheds[1]*180/numpy.pi, -1.919, 3)
+        self.assertAlmostEqual(diheds[-1]*180/numpy.pi, 21.320, 3)
         self.check_deriv("tracks/test_pos", "tracks/test_vel", "tracks/time", 1e-1)
 
     def test_ic_dtl(self):
         self.from_xyz("thf01", "pos")
         self.execute("tr-ic-dtl", ["tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002", "tracks/test"])
-        bends = load_track("tracks/test")
-        self.assertAlmostEqual(bends[0]/angstrom, 1.364, 3)
-        self.assertAlmostEqual(bends[1]/angstrom, 1.422, 3)
-        self.assertAlmostEqual(bends[-1]/angstrom, 1.337, 3)
+        dtls = load_track("tracks/test")
+        self.assertAlmostEqual(dtls[0]/angstrom, 1.364, 3)
+        self.assertAlmostEqual(dtls[1]/angstrom, 1.422, 3)
+        self.assertAlmostEqual(dtls[-1]/angstrom, 1.337, 3)
         self.execute("tr-ic-dtl", ["-s20:601:5", "tracks/atom.pos.0000001", "tracks/atom.pos.0000000", "tracks/atom.pos.0000002", "tracks/test"])
-        bends = load_track("tracks/test")
-        self.assertAlmostEqual(bends[0]/angstrom, 1.394, 3)
-        self.assertAlmostEqual(bends[1]/angstrom, 1.358, 3)
-        self.assertAlmostEqual(bends[-1]/angstrom, 1.367, 3)
+        dtls = load_track("tracks/test")
+        self.assertAlmostEqual(dtls[0]/angstrom, 1.394, 3)
+        self.assertAlmostEqual(dtls[1]/angstrom, 1.358, 3)
+        self.assertAlmostEqual(dtls[-1]/angstrom, 1.367, 3)
 
     def test_ic_oop(self):
         self.from_xyz("thf01", "pos")
         self.from_xyz("thf01", "vel", ["-u1"])
         self.from_cp2k_ener("thf01")
         # pos
-        self.execute("tr-ic-oop", ["tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"], verbose=True)
+        self.execute("tr-ic-oop", ["tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"])
         oops = load_track("tracks/test")
         self.assertAlmostEqual(oops[0]/angstrom, 0.000, 2)
         self.assertAlmostEqual(oops[1]/angstrom, 0.049, 2)

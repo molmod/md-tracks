@@ -35,7 +35,7 @@ for all time steps. Tracks with the given prefixes must exist, and their
 filenames must look like: ${pos_prefix*}.c, where c is x, y or z. The output is
 stored in ${pos_output}.
 
-if the arguments ${vel_prefix*} are given, also the time derivative of the
+If the arguments ${vel_prefix*} are given, also the time derivative of the
 dihedral angle is computed. Tracks with the given prefixes must exist, and their
 filenames must look like: ${vel_prefix*}.c where c is x, y or z. The output is
 stored in ${vel_output}.
