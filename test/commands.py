@@ -719,81 +719,158 @@ class CommandsTestCase(BaseTestCase):
     def test_ic_psf(self):
         def check_ic_psf(nbonds, nbends, ndiheds, ndtls, noops):
             # bond
-            bond_filenames = glob.glob("tracks/atom.pos.bond*")
+            bond_filenames = glob.glob("tracks/atom.bond.pos*")
             self.assertEqual(len(bond_filenames), nbonds)
-            for bond_filename in bond_filenames:
-                bond = load_track(bond_filename)
-                index1, index2 = [int(word) for word in bond_filename.split(".")[-2:]]
-                bond_check = vector.dist(
-                    vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                )
-                self.assertArraysEqual(bond, bond_check)
+            for pos_filename in bond_filenames:
+                bond_pos = load_track(pos_filename)
+                index1, index2 = [int(word) for word in pos_filename.split(".")[-2:]]
+                vel_filename = pos_filename.replace('pos', 'vel')
+                if os.path.isfile(vel_filename):
+                    bond_pos_check, bond_vel_check = vector.dist(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index2),
+                    )
+                    bond_vel = load_track(vel_filename)
+                    self.assertArraysEqual(bond_vel, bond_vel_check)
+                else:
+                    bond_pos_check = vector.dist(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                    )
+                self.assertArraysEqual(bond_pos, bond_pos_check)
             # bend
-            bend_filenames = glob.glob("tracks/atom.pos.bend*")
+            bend_filenames = glob.glob("tracks/atom.bend.pos*")
             self.assertEqual(len(bend_filenames), nbends)
-            for bend_filename in bend_filenames:
-                bend = load_track(bend_filename)
-                index1, index2, index3 = [int(word) for word in bend_filename.split(".")[-3:]]
-                bend_check = vector.bend(
-                    vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                )
-                self.assertArraysEqual(bend, bend_check)
+            for pos_filename in bend_filenames:
+                bend_pos = load_track(pos_filename)
+                index1, index2, index3 = [int(word) for word in pos_filename.split(".")[-3:]]
+                vel_filename = pos_filename.replace('pos', 'vel')
+                if os.path.isfile(vel_filename):
+                    bend_pos_check, bend_vel_check = vector.bend(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index2),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index3),
+                    )
+                    bend_vel = load_track(vel_filename)
+                    self.assertArraysEqual(bend_vel, bend_vel_check)
+                else:
+                    bend_pos_check = vector.bend(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                    )
+                self.assertArraysEqual(bend_pos, bend_pos_check)
             # dihed
-            dihed_filenames = glob.glob("tracks/atom.pos.dihed*")
+            dihed_filenames = glob.glob("tracks/atom.dihed.pos*")
             self.assertEqual(len(dihed_filenames), ndiheds)
-            for dihed_filename in dihed_filenames:
-                dihed = load_track(dihed_filename)
-                index1, index2, index3, index4 = [int(word) for word in dihed_filename.split(".")[-4:]]
-                dihed_check = vector.dihed(
-                    vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index4),
-                )
-                self.assertArraysEqual(dihed, dihed_check)
+            for pos_filename in dihed_filenames:
+                dihed_pos = load_track(pos_filename)
+                index1, index2, index3, index4 = [int(word) for word in pos_filename.split(".")[-4:]]
+                vel_filename = pos_filename.replace('pos', 'vel')
+                if os.path.isfile(vel_filename):
+                    dihed_pos_check, dihed_vel_check = vector.dihed(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index4),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index2),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index3),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index4),
+                    )
+                    dihed_vel = load_track(vel_filename)
+                    self.assertArraysEqual(dihed_vel, dihed_vel_check)
+                else:
+                    dihed_pos_check = vector.dihed(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index4),
+                    )
+                self.assertArraysEqual(dihed_pos, dihed_pos_check)
             # dtl
-            dtl_filenames = glob.glob("tracks/atom.pos.dtl*")
+            dtl_filenames = glob.glob("tracks/atom.dtl.pos*")
             self.assertEqual(len(dtl_filenames), ndtls)
-            for dtl_filename in dtl_filenames:
-                dtl = load_track(dtl_filename)
-                index1, index2, index3 = [int(word) for word in dtl_filename.split(".")[-3:]]
-                dtl_check = vector.dtl(
-                    vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                )
-                self.assertArraysEqual(dtl, dtl_check)
+            for pos_filename in dtl_filenames:
+                dtl_pos = load_track(pos_filename)
+                index1, index2, index3 = [int(word) for word in pos_filename.split(".")[-3:]]
+                vel_filename = pos_filename.replace('pos', 'vel')
+                if os.path.isfile(vel_filename):
+                    dtl_pos_check, dtl_vel_check = vector.dtl(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index2),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index3),
+                    )
+                    dtl_vel = load_track(vel_filename)
+                    self.assertArraysEqual(dtl_vel, dtl_vel_check)
+                else:
+                    dtl_pos_check = vector.dtl(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                    )
+                self.assertArraysEqual(dtl_pos, dtl_pos_check)
             # oop
-            oop_filenames = glob.glob("tracks/atom.pos.oop*")
+            oop_filenames = glob.glob("tracks/atom.oop.pos*")
             self.assertEqual(len(oop_filenames), noops)
-            for oop_filename in oop_filenames:
-                oop = load_track(oop_filename)
-                index1, index2, index3, index4 = [int(word) for word in oop_filename.split(".")[-4:]]
-                oop_check = vector.oop(
-                    vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                    vector.from_prefix("tracks/atom.pos.%07i" % index4),
-                )
-                self.assertArraysEqual(oop, oop_check)
+            for pos_filename in oop_filenames:
+                oop_pos = load_track(pos_filename)
+                index1, index2, index3, index4 = [int(word) for word in pos_filename.split(".")[-4:]]
+                vel_filename = pos_filename.replace('pos', 'vel')
+                if os.path.isfile(vel_filename):
+                    oop_pos_check, oop_vel_check = vector.oop(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index4),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index2),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index3),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index4),
+                    )
+                    oop_vel = load_track(vel_filename)
+                    self.assertArraysEqual(oop_vel, oop_vel_check)
+                else:
+                    oop_pos_check = vector.oop(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index4),
+                    )
+                self.assertArraysEqual(oop_pos, oop_pos_check)
         self.from_xyz("thf01", "pos")
-        self.execute("tr-ic-psf", ["tracks/atom.pos", "bond", os.path.join(input_dir, "thf01/init.psf")])
-        self.execute("tr-ic-psf", ["tracks/atom.pos", "bend", os.path.join(input_dir, "thf01/init.psf")])
-        self.execute("tr-ic-psf", ["tracks/atom.pos", "dihed", os.path.join(input_dir, "thf01/init.psf")])
-        self.execute("tr-ic-psf", ["tracks/atom.pos", "dtl", os.path.join(input_dir, "thf01/init.psf")])
-        self.execute("tr-ic-psf", ["tracks/atom.pos", "oop", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["bond", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["bend", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["dihed", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["dtl", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["oop", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
         check_ic_psf(13,25,33,50,16)
         # clean up and start again with --filter-atoms
         shutil.rmtree("tracks")
         self.from_xyz("thf01", "pos")
-        self.execute("tr-ic-psf", ["tracks/atom.pos", "bond", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
-        self.execute("tr-ic-psf", ["tracks/atom.pos", "bend", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
-        self.execute("tr-ic-psf", ["tracks/atom.pos", "dihed", "5,6,7,8,9,10,11,12", "1,2,3,4", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
-        self.execute("tr-ic-psf", ["tracks/atom.pos", "dtl", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
-        self.execute("tr-ic-psf", ["tracks/atom.pos", "oop", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "3,4", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["bond", "tracks/atom.pos", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["bend", "tracks/atom.pos", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["dihed", "tracks/atom.pos", "5,6,7,8,9,10,11,12", "1,2,3,4", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["dtl", "tracks/atom.pos", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["oop", "tracks/atom.pos", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "3,4", os.path.join(input_dir, "thf01/init.psf")])
+        check_ic_psf(8,5,12,10,8)
+        # clean up and start again with velocites
+        shutil.rmtree("tracks")
+        self.from_xyz("thf01", "pos")
+        self.from_xyz("thf01", "vel", ["-u1"])
+        self.execute("tr-ic-psf", ["bond", "tracks/atom.pos", "tracks/atom.vel", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["bend", "tracks/atom.pos", "tracks/atom.vel", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["dihed", "tracks/atom.pos", "tracks/atom.vel", "5,6,7,8,9,10,11,12", "1,2,3,4", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["dtl", "tracks/atom.pos", "tracks/atom.vel", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["oop", "tracks/atom.pos", "tracks/atom.vel", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "3,4", os.path.join(input_dir, "thf01/init.psf")])
         check_ic_psf(8,5,12,10,8)
 
     def test_mean_std(self):

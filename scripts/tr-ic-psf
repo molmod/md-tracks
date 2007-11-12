@@ -27,22 +27,27 @@ from tracks.log import log
 import tracks.vector as vector
 from ccio.psf import PSFFile
 
-import numpy
+import numpy, os
 from optparse import OptionParser
 
 
-usage = """%prog [options] prefix kind [atoms1 atoms2 [atoms3 [atoms4]]] connectivity.psf
+usage = """%prog [options] kind pos_prefix [vel_prefix] [atoms1 atoms2 [atoms3 [atoms4]]] connectivity.psf
 
 %prog computes all the internal coordinates of the given ${kind} for the
-Cartesian tracks with the given ${prefix}. ${kind} can be one of 'bond', 'bend'
-or 'dihed'. The cartesian tracks are supposed to have the following filenames:
-${prefix}.${index}.${c}, where ${index} is the atom index padded with zeros up
-to 7 characters and ${x} is x, y or z.
+Cartesian tracks with the given ${pos_prefix}. ${kind} can be one of 'bond',
+'bend', 'dihed', 'oop' or 'dtl'. The cartesian tracks are supposed to have the
+following filenames: ${pos_prefix}.${index}.${c}, where ${index} is the atom
+index padded with zeros up to 7 characters and ${c} is x, y or z.
 
 The list of internal coordinates is taken from the file ${connectivity.psf}.
 Optionally one can reduce the internal coordinates to those that belong to the
 given set of atoms. Each ${atoms*} argument is a comma-separated list of atom
 indexes.
+
+If the argument ${vel_prefix} is given, also the time derivatives of the
+internal coordinates are computed. Tracks with the given prefixes must exist, and their
+filenames must look like: ${vel_prefix*}.${index}.${c}. The output is stored in
+${vel_output}.
 
 Case ${kind}=bond
 
@@ -100,10 +105,28 @@ parser.add_option(
 (options, args) = parser.parse_args()
 
 
+kind_num_filters = {
+    'bond': 2,
+    'bend': 3,
+    'dihed': 4,
+    'dtl': 3,
+    'oop': 4,
+}
+
+
 log.verbose = options.verbose
 if len(args) >= 3:
-    prefix = args[0]
-    kind = args[1].lower()
+    kind = args[0].lower()
+    num_filters = kind_num_filters.get(kind)
+    if num_filters is None:
+        parser.error("Unknwon kind: %s" % kind)
+    pos_prefix = args[1]
+    if len(args) == 4 or len(args) == 4+num_filters:
+        vel_prefix = args[2]
+        filter_args = args[3:-1]
+    else:
+        vel_prefix = None
+        filter_args = args[2:-1]
     path_psf = args[-1]
 else:
     parser.error("Expecting at least three arguments.")
@@ -111,103 +134,151 @@ else:
 sub = parse_slice(options.slice)
 psf = PSFFile(path_psf)
 if options.output_prefix is None:
-    output_prefix = prefix
+    if vel_prefix is None:
+        output_prefix = pos_prefix
+        if output_prefix.endswith(".pos"):
+            output_prefix = output_prefix[:-4]
+    else:
+        output_prefix = os.path.commonprefix([pos_prefix, vel_prefix])
+        while output_prefix[-1] == '.':
+            output_prefix = output_prefix[:-1]
 else:
     output_prefix = options.output_prefix
 
 if kind == 'bond':
-    if len(args) == 3:
+    if len(filter_args) == 0:
         atom_filter1 = AtomFilter()
         atom_filter2 = AtomFilter()
-    elif len(args) == 5:
-        atom_filter1 = AtomFilter(args[-3])
-        atom_filter2 = AtomFilter(args[-2])
+    elif len(filter_args) == 2:
+        atom_filter1 = AtomFilter(filter_args[0])
+        atom_filter2 = AtomFilter(filter_args[1])
     else:
-        parser.error("When kind is bond, three or five arguments are expected, got %i." % len(args))
+        parser.error("When kind is bond, two or none atom filter arguments are expected, got %i." % len(filter_args))
 
     for index1, index2 in psf.bonds:
         if ((atom_filter1(index1) and atom_filter2(index2)) or
             (atom_filter1(index2) and atom_filter2(index1))):
             try:
-                name = '%s.bond.%07i.%07i' % (output_prefix, index1, index2)
-                dump_track(name, vector.dist(
-                    vector.from_prefix("%s.%07i" % (prefix, index1), sub),
-                    vector.from_prefix("%s.%07i" % (prefix, index2), sub),
-                ))
-                log("DONE %s" % name)
+                pos_name = '%s.bond.pos.%07i.%07i' % (output_prefix, index1, index2)
+                if vel_prefix is None:
+                    dump_track(pos_name, vector.dist(
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                    ))
+                else:
+                    vel_name = '%s.bond.vel.%07i.%07i' % (output_prefix, index1, index2)
+                    bond_pos, bond_vel = vector.dist(
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
+                    )
+                    dump_track(pos_name, bond_pos)
+                    dump_track(vel_name, bond_vel)
+                log("DONE %s" % pos_name)
             except TrackNotFoundError, e:
                 log("WARNING %s" % str(e))
 
 elif kind == 'bend':
-    if len(args) == 3:
+    if len(filter_args) == 0:
         atom_filter1 = AtomFilter()
         atom_filter2 = AtomFilter()
         atom_filter3 = AtomFilter()
-    elif len(args) == 6:
-        atom_filter1 = AtomFilter(args[-4])
-        atom_filter2 = AtomFilter(args[-3])
-        atom_filter3 = AtomFilter(args[-2])
+    elif len(filter_args) == 3:
+        atom_filter1 = AtomFilter(filter_args[0])
+        atom_filter2 = AtomFilter(filter_args[1])
+        atom_filter3 = AtomFilter(filter_args[2])
     else:
-        parser.error("When kind is bend, three or six arguments are expected, got %i." % len(args))
+        parser.error("When kind is bend, three or none atom filter arguments are expected, got %i." % len(filter_args))
 
     for index1, index2, index3 in psf.bends:
         if ((atom_filter1(index1) and atom_filter2(index2) and atom_filter3(index3)) or
             (atom_filter1(index3) and atom_filter2(index2) and atom_filter3(index1))):
             try:
-                name = '%s.bend.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
-                dump_track(name, vector.bend(
-                    vector.from_prefix("%s.%07i" % (prefix, index1), sub),
-                    vector.from_prefix("%s.%07i" % (prefix, index2), sub),
-                    vector.from_prefix("%s.%07i" % (prefix, index3), sub),
-                    return_cos=options.cos,
-                ))
-                log("DONE %s" % name)
+                pos_name = '%s.bend.pos.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
+                if vel_prefix is None:
+                    dump_track(pos_name, vector.bend(
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                        return_cos=options.cos,
+                    ))
+                else:
+                    vel_name = '%s.bend.vel.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
+                    bend_pos, bend_vel = vector.bend(
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
+                        return_cos=options.cos,
+                    )
+                    dump_track(pos_name, bend_pos)
+                    dump_track(vel_name, bend_vel)
+                log("DONE %s" % pos_name)
             except TrackNotFoundError, e:
                 log("WARNING %s" % str(e))
 
 elif kind == 'dihed':
-    if len(args) == 3:
+    if len(filter_args) == 0:
         atom_filter1 = AtomFilter()
         atom_filter2 = AtomFilter()
         atom_filter3 = AtomFilter()
         atom_filter4 = AtomFilter()
-    elif len(args) == 7:
-        atom_filter1 = AtomFilter(args[-5])
-        atom_filter2 = AtomFilter(args[-4])
-        atom_filter3 = AtomFilter(args[-3])
-        atom_filter4 = AtomFilter(args[-2])
+    elif len(filter_args) == 4:
+        atom_filter1 = AtomFilter(filter_args[0])
+        atom_filter2 = AtomFilter(filter_args[1])
+        atom_filter3 = AtomFilter(filter_args[2])
+        atom_filter4 = AtomFilter(filter_args[3])
     else:
-        parser.error("When kind is dihed, three or seven arguments are expected, got %i." % len(args))
+        parser.error("When kind is dihed, four or none atom filter arguments are expected, got %i." % len(filter_args))
 
     for index1, index2, index3, index4 in psf.dihedrals:
         if ((atom_filter1(index1) and atom_filter2(index2) and atom_filter3(index3) and atom_filter4(index4)) or
             (atom_filter1(index4) and atom_filter2(index3) and atom_filter3(index2) and atom_filter4(index1))):
             try:
-                name = '%s.dihed.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
-                dump_track(name, vector.dihed(
-                    vector.from_prefix("%s.%07i" % (prefix, index1), sub),
-                    vector.from_prefix("%s.%07i" % (prefix, index2), sub),
-                    vector.from_prefix("%s.%07i" % (prefix, index3), sub),
-                    vector.from_prefix("%s.%07i" % (prefix, index4), sub),
-                    return_cos=options.cos,
-                ))
-                log("DONE %s" % name)
+                pos_name = '%s.dihed.pos.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
+                if vel_prefix is None:
+                    dump_track(pos_name, vector.dihed(
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index4), sub),
+                        return_cos=options.cos,
+                    ))
+                else:
+                    vel_name = '%s.dihed.vel.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
+                    dihed_pos, dihed_vel = vector.dihed(
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index4), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index4), sub),
+                        return_cos=options.cos,
+                    )
+                    dump_track(pos_name, dihed_pos)
+                    dump_track(vel_name, dihed_vel)
+                log("DONE %s" % pos_name)
             except TrackNotFoundError, e:
                 log("WARNING %s" % str(e))
 
 elif kind == 'dtl':
     from molmod.graphs import MatchGenerator, SubgraphMatchDefinition, Graph
 
-    if len(args) == 3:
+    if len(filter_args) == 0:
         atom_filter1 = AtomFilter()
         atom_filter2 = AtomFilter()
         atom_filter3 = AtomFilter()
-    elif len(args) == 6:
-        atom_filter1 = AtomFilter(args[-4])
-        atom_filter2 = AtomFilter(args[-3])
-        atom_filter3 = AtomFilter(args[-2])
+    elif len(filter_args) == 3:
+        atom_filter1 = AtomFilter(filter_args[0])
+        atom_filter2 = AtomFilter(filter_args[1])
+        atom_filter3 = AtomFilter(filter_args[2])
     else:
-        parser.error("When kind is dtl, three or six arguments are expected, got %i." % len(args))
+        parser.error("When kind is dtl, three or none atom filter arguments are expected, got %i." % len(filter_args))
 
     graph = psf.get_graph()
     match_generator = MatchGenerator(SubgraphMatchDefinition(
@@ -221,31 +292,44 @@ elif kind == 'dtl':
         index3 = match.forward[3]
         if atom_filter1(index1) and atom_filter2(index2) and atom_filter3(index3):
             try:
-                name = '%s.dtl.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
-                dump_track(name, vector.dtl(
-                    vector.from_prefix("%s.%07i" % (prefix, index1), sub),
-                    vector.from_prefix("%s.%07i" % (prefix, index2), sub),
-                    vector.from_prefix("%s.%07i" % (prefix, index3), sub),
-                ))
-                log("DONE %s" % name)
+                pos_name = '%s.dtl.pos.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
+                if vel_prefix is None:
+                    dump_track(pos_name, vector.dtl(
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                    ))
+                else:
+                    vel_name = '%s.dtl.vel.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
+                    dtl_pos, dtl_vel = vector.dtl(
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
+                    )
+                    dump_track(pos_name, dtl_pos)
+                    dump_track(vel_name, dtl_vel)
+                log("DONE %s" % pos_name)
             except TrackNotFoundError, e:
                 log("WARNING %s" % str(e))
 
 elif kind == 'oop':
     from molmod.graphs import MatchGenerator, SubgraphMatchDefinition, CriteriaSet, Graph
 
-    if len(args) == 3:
+    if len(filter_args) == 0:
         atom_filter1 = AtomFilter()
         atom_filter2 = AtomFilter()
         atom_filter3 = AtomFilter()
         atom_filter4 = AtomFilter()
-    elif len(args) == 7:
-        atom_filter1 = AtomFilter(args[-5])
-        atom_filter2 = AtomFilter(args[-4])
-        atom_filter3 = AtomFilter(args[-3])
-        atom_filter4 = AtomFilter(args[-2])
+    elif len(filter_args) == 4:
+        atom_filter1 = AtomFilter(filter_args[0])
+        atom_filter2 = AtomFilter(filter_args[1])
+        atom_filter3 = AtomFilter(filter_args[2])
+        atom_filter4 = AtomFilter(filter_args[3])
     else:
-        parser.error("When kind is oop, three or seven arguments are expected, got %i." % len(args))
+        parser.error("When kind is oop, four or none arguments are expected, got %i." % len(filter_args))
 
     graph = psf.get_graph()
     match_generator = MatchGenerator(SubgraphMatchDefinition(
@@ -260,14 +344,29 @@ elif kind == 'oop':
         index3 = match.forward[3]
         index4 = match.forward[4]
         try:
-            name = '%s.oop.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
-            dump_track(name, vector.oop(
-                vector.from_prefix("%s.%07i" % (prefix, index1), sub),
-                vector.from_prefix("%s.%07i" % (prefix, index2), sub),
-                vector.from_prefix("%s.%07i" % (prefix, index3), sub),
-                vector.from_prefix("%s.%07i" % (prefix, index4), sub),
-            ))
-            log("DONE %s" % name)
+            pos_name = '%s.oop.pos.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
+            if vel_prefix is None:
+                dump_track(pos_name, vector.oop(
+                    vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                    vector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                    vector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                    vector.from_prefix("%s.%07i" % (pos_prefix, index4), sub),
+                ))
+            else:
+                vel_name = '%s.oop.vel.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
+                oop_pos, oop_vel = vector.oop(
+                    vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                    vector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                    vector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                    vector.from_prefix("%s.%07i" % (pos_prefix, index4), sub),
+                    vector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
+                    vector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
+                    vector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
+                    vector.from_prefix("%s.%07i" % (vel_prefix, index4), sub),
+                )
+                dump_track(pos_name, oop_pos)
+                dump_track(vel_name, oop_vel)
+            log("DONE %s" % pos_name)
         except TrackNotFoundError, e:
             log("WARNING %s" % str(e))
 
