@@ -34,7 +34,10 @@ class AtomFilter(object):
         comma-separated atom indexes.
         """
         if isinstance(filter_atoms, str):
-            self.filter_atoms = frozenset(int(word) for word in filter_atoms.split(","))
+            if len(filter_atoms) == 0:
+                self.filter_atoms = None
+            else:
+                self.filter_atoms = frozenset(int(word) for word in filter_atoms.split(","))
         elif filter_atoms is None:
             self.filter_atoms = None
         else:
