@@ -62,6 +62,12 @@ The output is written to ${prefix}.bend.${index1}.${index2}.${index3}
 Only three or none ${atoms*} arguments are allowed. Their interpretation is
 similar to the bond case.
 
+Case ${kind}=span (Distance over a bending angle)
+
+The output is written to ${prefix}.span.${index1}.${index2}.${index3}
+Only three or none ${atoms*} arguments are allowed. Their interpretation is
+similar to the bond case.
+
 Case ${kind}=dihed
 
 The output is written to ${prefix}.dihed.${index1}.${index2}.${index3}.${index4}
@@ -108,6 +114,7 @@ parser.add_option(
 kind_num_filters = {
     'bond': 2,
     'bend': 3,
+    'span': 3,
     'dihed': 4,
     'dtl': 3,
     'oop': 4,
@@ -216,6 +223,42 @@ elif kind == 'bend':
                     )
                     dump_track(pos_name, bend_pos)
                     dump_track(vel_name, bend_vel)
+                log("DONE %s" % pos_name)
+            except TrackNotFoundError, e:
+                log("WARNING %s" % str(e))
+
+elif kind == 'span':
+    if len(filter_args) == 0:
+        atom_filter1 = AtomFilter()
+        atom_filter2 = AtomFilter()
+        atom_filter3 = AtomFilter()
+    elif len(filter_args) == 3:
+        atom_filter1 = AtomFilter(filter_args[0])
+        atom_filter2 = AtomFilter(filter_args[1])
+        atom_filter3 = AtomFilter(filter_args[2])
+    else:
+        parser.error("When kind is span, three or none atom filter arguments are expected, got %i." % len(filter_args))
+
+    for index1, index2, index3 in psf.bends:
+        if ((atom_filter1(index1) and atom_filter2(index2) and atom_filter3(index3)) or
+            (atom_filter1(index3) and atom_filter2(index2) and atom_filter3(index1))):
+            try:
+                pos_name = '%s.span.pos.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
+                if vel_prefix is None:
+                    dump_track(pos_name, vector.dist(
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                    ))
+                else:
+                    vel_name = '%s.span.vel.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
+                    span_pos, span_vel = vector.dist(
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
+                        vector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
+                    )
+                    dump_track(pos_name, span_pos)
+                    dump_track(vel_name, span_vel)
                 log("DONE %s" % pos_name)
             except TrackNotFoundError, e:
                 log("WARNING %s" % str(e))

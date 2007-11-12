@@ -765,6 +765,28 @@ class CommandsTestCase(BaseTestCase):
                         vector.from_prefix("tracks/atom.pos.%07i" % index3),
                     )
                 self.assertArraysEqual(bend_pos, bend_pos_check)
+            # span
+            span_filenames = glob.glob("tracks/atom.span.pos*")
+            self.assertEqual(len(span_filenames), nbends)
+            for pos_filename in span_filenames:
+                span_pos = load_track(pos_filename)
+                index1, index2, index3 = [int(word) for word in pos_filename.split(".")[-3:]]
+                vel_filename = pos_filename.replace('pos', 'vel')
+                if os.path.isfile(vel_filename):
+                    span_pos_check, span_vel_check = vector.dist(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.from_prefix("tracks/atom.vel.%07i" % index3),
+                    )
+                    span_vel = load_track(vel_filename)
+                    self.assertArraysEqual(span_vel, span_vel_check)
+                else:
+                    span_pos_check = vector.dist(
+                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                    )
+                self.assertArraysEqual(span_pos, span_pos_check)
             # dihed
             dihed_filenames = glob.glob("tracks/atom.dihed.pos*")
             self.assertEqual(len(dihed_filenames), ndiheds)
@@ -849,6 +871,7 @@ class CommandsTestCase(BaseTestCase):
         self.from_xyz("thf01", "pos")
         self.execute("tr-ic-psf", ["bond", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["bend", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["span", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["dihed", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["dtl", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["oop", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
@@ -858,6 +881,7 @@ class CommandsTestCase(BaseTestCase):
         self.from_xyz("thf01", "pos")
         self.execute("tr-ic-psf", ["bond", "tracks/atom.pos", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["bend", "tracks/atom.pos", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["span", "tracks/atom.pos", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["dihed", "tracks/atom.pos", "5,6,7,8,9,10,11,12", "1,2,3,4", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["dtl", "tracks/atom.pos", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["oop", "tracks/atom.pos", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "3,4", os.path.join(input_dir, "thf01/init.psf")])
@@ -868,6 +892,7 @@ class CommandsTestCase(BaseTestCase):
         self.from_xyz("thf01", "vel", ["-u1"])
         self.execute("tr-ic-psf", ["bond", "tracks/atom.pos", "tracks/atom.vel", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["bend", "tracks/atom.pos", "tracks/atom.vel", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
+        self.execute("tr-ic-psf", ["span", "tracks/atom.pos", "tracks/atom.vel", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["dihed", "tracks/atom.pos", "tracks/atom.vel", "5,6,7,8,9,10,11,12", "1,2,3,4", "1,2,3,4", "5,6,7,8,9,10,11,12", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["dtl", "tracks/atom.pos", "tracks/atom.vel", "0,1,2,3,4", "0,1,2,3,4", "0,1,2,3,4", os.path.join(input_dir, "thf01/init.psf")])
         self.execute("tr-ic-psf", ["oop", "tracks/atom.pos", "tracks/atom.vel", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "1,2,3,4,9,10,11,12", "3,4", os.path.join(input_dir, "thf01/init.psf")])
