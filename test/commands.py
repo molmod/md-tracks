@@ -28,7 +28,7 @@ from ccio.psf import PSFFile
 from ccio.xyz import XYZReader, XYZFile
 from molmod.units import angstrom, fs
 from molmod.constants import lightspeed, boltzman
-from molmod.data import periodic
+from molmod.data.periodic import periodic
 
 import numpy, os, glob, shutil
 

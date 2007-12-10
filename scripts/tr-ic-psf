@@ -314,7 +314,7 @@ elif kind == 'dtl':
 
     graph = psf.get_graph()
     match_generator = MatchGenerator(SubgraphMatchDefinition(
-        Graph([(1,2),(1,3)]),
+        Graph(set([frozenset([1,2]),frozenset([1,3])])),
         node_tags = {1: 1, 2: 2, 3: 3}
     ))
 
@@ -365,9 +365,8 @@ elif kind == 'oop':
 
     graph = psf.get_graph()
     match_generator = MatchGenerator(SubgraphMatchDefinition(
-        Graph([(4,1), (4,2), (4,3)]),
-        #[CriteriaSet("foo", {1: atom_filter1, 2: atom_filter2, 3: atom_filter3, 4: atom_filter4})],
-        [CriteriaSet("foo", {1: atom_filter1, 2: atom_filter2, 3: atom_filter3, 4: atom_filter4})],
+        Graph(set([frozenset([4,1]), frozenset([4,2]), frozenset([4,3])])),
+        [CriteriaSet({1: atom_filter1, 2: atom_filter2, 3: atom_filter3, 4: atom_filter4})],
     ))
 
     for match in match_generator(graph):

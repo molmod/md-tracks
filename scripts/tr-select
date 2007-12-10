@@ -21,7 +21,7 @@
 
 
 from ccio.psf import PSFFile
-from molmod.data import periodic
+from molmod.data.periodic import periodic
 
 import numpy
 from optparse import OptionParser

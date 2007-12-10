@@ -23,7 +23,7 @@
 from tracks.core import load_track, dump_track
 import molmod.units
 import molmod.constants
-from molmod.data import periodic
+from molmod.data.periodic import periodic
 
 from optparse import OptionParser
 import numpy
@@ -56,7 +56,6 @@ for name in dir(numpy):
         g[name] = value
 for symbol, atom in periodic.atoms_by_symbol.iteritems():
     g["at%s" % symbol.capitalize()] = atom
-
 
 details = """
 Constants
