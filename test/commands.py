@@ -27,7 +27,7 @@ import tracks.vector as vector
 from ccio.psf import PSFFile
 from ccio.xyz import XYZReader, XYZFile
 from molmod.units import angstrom, fs
-from molmod.constants import lightspeed, boltzman
+from molmod.constants import lightspeed, boltzmann
 from molmod.data.periodic import periodic
 
 import numpy, os, glob, shutil
@@ -1079,9 +1079,9 @@ class CommandsTestCase(BaseTestCase):
 
     def test_calc(self):
         self.from_cp2k_ener("thf01")
-        self.execute("tr-calc", ["k=tracks/kinetic_energy", "k/(3*13)*2/boltzman", "tracks/tcheck"])
+        self.execute("tr-calc", ["k=tracks/kinetic_energy", "k/(3*13)*2/boltzmann", "tracks/tcheck"])
         k = load_track("tracks/kinetic_energy")
-        t = k/(3*13)*2/boltzman
+        t = k/(3*13)*2/boltzmann
         tcheck = load_track("tracks/tcheck")
         self.assertArraysEqual(t, tcheck)
         result = float(self.execute("tr-calc", ["cos(atAr.mass)"])[0])
