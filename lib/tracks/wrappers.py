@@ -46,8 +46,9 @@ class Wrapper(object):
         command = "%s %s" % (self.name, " ".join(args))
         if self.verbose:
             print command
-        if os.system(command) != 0:
-            raise WrapperError("An error occured while executing command: \n%s" % command)
+        retcode = os.system(command)
+        if retcode != 0:
+            raise WrapperError("An error occured while executing command (retcode=%i): \n%s" % (retcode, command))
 
 # when scripts are added, this list must be updated
 names = [
