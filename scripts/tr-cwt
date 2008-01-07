@@ -1,0 +1,151 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import load_track, dump_track
+from tracks.parse import parse_slice, parse_x_step, parse_unit
+
+from molmod.constants import lightspeed
+from molmod.units import cm, fs
+
+import numpy
+from optparse import OptionParser
+
+usage = """%prog sigma time_axis signal1 [signal2 ...] output_prefix
+
+%prog computes the sums of the moduli squared of the continuous wavelet
+transforms of the given signal, using the Morlet wavelet with parameter sigma.
+
+The transforms are written to ${output_prefix}.scale.{index}. The frequency axis
+is written to ${output_prefix}.frequencies. The wavenumber axis is written to
+${output_prefix}.wavenumbers. The sampling of the wavenumber axis can be tuned
+with the options, but the default options should be satisfactory in most cases.
+
+%prog -h prints out all available options."""
+
+parser = OptionParser(usage)
+parser.add_option(
+    "-s", "--slice", default="::",
+    help="Subsample the input tracks with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+)
+parser.add_option(
+    "--kmin", default="300/cm",
+    help="The minimum value for the wavenumber axis [default=%default]",
+)
+parser.add_option(
+    "--kmax", default="4600/cm",
+    help="The maximum value for the wavenumber axis [default=%default]",
+)
+parser.add_option(
+    "--kstep", default="50/cm",
+    help="The sample interval on the wavenumber axis [default=%default]",
+)
+(options, args) = parser.parse_args()
+
+
+sub = parse_slice(options.slice)
+if len(args) >= 4:
+    sigma = float(args[0])
+    time = load_track(args[1])
+    time_step = time[1] - time[0]
+    paths_in = args[2:-1]
+    output_prefix = args[-1]
+else:
+    parser.error("Expecting at least four arguments.")
+if sigma < 5:
+    parser.error("Sigma should be at least 5.")
+options.kmin = parse_unit(options.kmin)
+options.kmax = parse_unit(options.kmax)
+options.kstep = parse_unit(options.kstep)
+
+
+class Morlet(object):
+    def __init__(self, sigma):
+        self.sigma = sigma
+
+        omega_prev = 0
+        omega_max = sigma
+        print omega_max
+        while abs(omega_prev - omega_max) > 1e10:
+            omega_prev = omega_max
+            omega_max = numpy.sqrt(1+(omega_max**2-1)*numpy.exp(-self.sigma*omega_max)) + self.sigma
+            print omega_max
+        self.omega_max = omega_max
+
+    def __call__(self, time_step, a):
+        def mother(tau):
+            c_sigma = (1+numpy.exp(-self.sigma**2)-2*numpy.exp(-0.75*sigma**2))**(-0.5)
+            K_sigma = numpy.exp(-0.5*self.sigma**2)
+            return numpy.array([
+                c_sigma*numpy.pi**(-0.25)*numpy.exp(-0.5*tau**2)*(numpy.cos(self.sigma*tau) - K_sigma),
+                c_sigma*numpy.pi**(-0.25)*numpy.exp(-0.5*tau**2)*(numpy.sin(self.sigma*tau) - K_sigma),
+            ], float)
+
+        time = numpy.arange(0, 4*a, time_step)
+        time = numpy.concatenate((-time[::-1], time[1:]))
+        return a**(-0.5)*mother(time/a)
+
+    def freq_to_scale(self, freq):
+        return self.omega_max/(2*numpy.pi*freq)
+
+
+morlet = Morlet(sigma)
+wavenumbers = numpy.arange(options.kmin, options.kmax+options.kstep*0.5, options.kstep)[::-1]
+frequencies = lightspeed*wavenumbers
+
+left_margin = numpy.zeros(len(wavenumbers), float)
+right_margin = numpy.zeros(len(wavenumbers), float)
+
+num_scales=None
+for index, freq in enumerate(frequencies):
+    print "SCALE %i/%i" % (index+1, len(frequencies))
+    scale = morlet.freq_to_scale(freq)
+    morlet_sample = morlet(time_step, scale)
+    if index==1:
+        dump_track("%s.mother.real" % output_prefix, morlet_sample[0])
+        dump_track("%s.mother.imag" % output_prefix, morlet_sample[1])
+    left_margin[index] = 0.25*time_step*morlet_sample.shape[1]
+    right_margin[index] = time[-1] - 0.25*time_step*morlet_sample.shape[1]
+    result = 0.0
+    for path_in in paths_in:
+        signal = load_track(path_in)[sub]
+        if len(signal) != len(time):
+            raise ValueError("Each signal must contain the same amount of data is the time_axis.")
+        if morlet_sample.shape[1] > len(signal):
+            print "WARNING Quiting early, wavelet becomes longer than signal."
+            num_scales = index
+            break
+        transform_c = numpy.correlate(morlet_sample[0], signal, mode='same')
+        transform_s = numpy.correlate(morlet_sample[1], signal, mode='same')
+        result += transform_c**2 + transform_s**2
+    if num_scales is not None:
+        break
+    dump_track("%s.scale.%07i" % (output_prefix, index), result)
+if num_scales is None:
+    num_scales = len(wavenumbers)
+
+dump_track("%s.frequencies" % output_prefix, frequencies[:num_scales])
+dump_track("%s.wavenumbers" % output_prefix, wavenumbers[:num_scales])
+dump_track("%s.left_margin" % output_prefix, left_margin[:num_scales])
+dump_track("%s.right_margin" % output_prefix, right_margin[:num_scales])
+

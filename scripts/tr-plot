@@ -199,9 +199,6 @@ class LineDescriptor(PlotDescriptor):
         help="Specify the line style: '-', '--', ':', ... (see matplotlib.sf.net)",
     )
 
-    def __init__(self, args):
-        PlotDescriptor.__init__(self, args)
-
     def plot(self, xunit, yunit):
         self.init_line_data(xunit, yunit)
         kwargs = {}
@@ -324,6 +321,64 @@ class VLineDescriptor(StraightHLineDescriptor):
 PlotDescriptor.kinds["vline"] = VLineDescriptor
 
 
+contour_usage = """Data arguments: time {frequncies|wavenumbers} transform_prefix"""
+class ContourDescriptor(PlotDescriptor):
+    parser = OptionParser(contour_usage)
+    parser.add_option(
+        "-n", dest="num_levels", default=10,
+        help="Specify the number of contour levels.",
+    )
+    parser.add_option(
+        "-f", dest="filled", default=False, action="store_true",
+        help="Make a filled contour plot.",
+    )
+    parser.add_option(
+        "--zlog", default=False, action="store_true",
+        help="Plot log(abs(z)) instead of z",
+    )
+    parser.add_option(
+        "--zmin", default=None,
+        help="The lower boundary for the color scale",
+    )
+    parser.add_option(
+        "--zmax", default=None,
+        help="The upper boundary for the color scale",
+    )
+
+    def __init__(self, args):
+        PlotDescriptor.__init__(self, args)
+        if len(self.args)!=3:
+            self.parser.error("Excpecting three data arguments. Got %i" % len(self.args))
+        self.x = load_track(self.args[0])
+        self.y = load_track(self.args[1])
+        self.transform_prefix = self.args[2]
+        self.options.label = None
+
+    def plot(self, xunit, yunit):
+        z = numpy.zeros((len(self.y), len(self.x)), float)
+        for index in xrange(len(self.y)):
+            z[index] = load_track("%s.scale.%07i" % (self.transform_prefix, index))
+        if self.options.zlog:
+            z = numpy.log(abs(z))
+            print z.min(), z.max()
+        if self.options.zmin is None:
+            self.options.zmin = z.min()
+        else:
+            self.options.zmin = parse_unit(self.options.zmin)
+        if self.options.zmax is None:
+            self.options.zmax = z.max()
+        else:
+            self.options.zmax = parse_unit(self.options.zmax)
+        num_levels = int(self.options.num_levels)
+        levels = numpy.arange(0,num_levels,1,float)/(num_levels-1)*(self.options.zmax-self.options.zmin)+self.options.zmin
+        if self.options.filled:
+            pylab.contourf(self.x/xunit,self.y/yunit,z,levels)
+        else:
+            pylab.contour(self.x/xunit,self.y/yunit,z,levels)
+        pylab.colorbar()
+
+PlotDescriptor.kinds["contour"] = ContourDescriptor
+
 
 # C) parse the arguments
 blocks = [[]]
@@ -405,6 +460,6 @@ if global_options.yinv:
     pylab.gca().get_yaxis().set_major_formatter(InvScalarFormatter())
 pylab.xlim(parse_lim(global_options.xlim, xunit))
 pylab.ylim(parse_lim(global_options.ylim, yunit))
-if global_options.legend:
+if global_options.legend and len(labels) > 0:
     pylab.legend(patches, labels, loc=0)
 pylab.savefig(image)

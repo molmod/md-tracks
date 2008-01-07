@@ -1219,3 +1219,30 @@ class CommandsTestCase(BaseTestCase):
         values = [int(line.split()[-2]) for line in lines]
         self.assertEqual(values, [100, 0, -100, 100])
 
+    def test_cwt(self):
+        signal = numpy.zeros(1000, float)
+        time = numpy.arange(1000)*fs
+        #signal[:500] = numpy.sin(time[:500]*2*numpy.pi/(50*fs))
+        #signal[500:1000] = numpy.sin(time[500:1000]*2*numpy.pi/(25*fs))
+        freq_mod = (numpy.cos(2*time/time[-1]*2*numpy.pi)+5)/6/(17*fs)
+        time_step = time[1]-time[0]
+        signal = numpy.sin((freq_mod*2*numpy.pi*time_step).cumsum())
+        dump_track("time", time)
+        dump_track("signal", signal)
+        dump_track("wavenum_mod", freq_mod/lightspeed)
+        self.execute("tr-cwt", ["--kmax=2500/cm", "--kstep=20/cm", "20", "time", "signal", "cwt"])
+        self.execute("tr-plot", ["--xunit=fs",
+            ":line", "time", "cwt.mother.real",
+            ":line", "time", "cwt.mother.imag",
+        os.path.join(output_dir, "cwt_wavelets.png")])
+        self.execute("tr-plot", ["--xunit=fs",
+            ":line", "time", "signal",
+        os.path.join(output_dir, "cwt_signal.png")])
+        self.execute("tr-plot", ["--xunit=fs", "--yunit=1/cm", "--no-legend",
+            ":contour", "time", "cwt.wavenumbers", "cwt",
+            ":line", "time", "wavenum_mod", "--color=k",
+            ":line", "cwt.left_margin", "cwt.wavenumbers", "--color=k", "-d", "--",
+            ":line", "cwt.right_margin", "cwt.wavenumbers", "--color=k", "-d", "--",
+            os.path.join(output_dir, "cwt_spectrogram.png")
+        ])
+
