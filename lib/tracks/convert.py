@@ -20,8 +20,8 @@
 
 
 from tracks.core import MultiTracksReader, MultiTracksWriter
-from ccio.xyz import XYZReader, XYZWriter
-from ccio.cp2k import CellReader
+from molmod.io.xyz import XYZReader, XYZWriter
+from molmod.io.cp2k import CellReader
 from molmod.units import angstrom, fs
 
 import os, numpy, itertools

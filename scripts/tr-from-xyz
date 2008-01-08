@@ -25,7 +25,7 @@ from tracks.parse import parse_slice
 from tracks.util import AtomFilter
 from tracks.log import log
 from molmod.units import parse_unit
-from ccio.psf import PSFFile
+from molmod.io.psf import PSFFile
 
 from optparse import OptionParser
 

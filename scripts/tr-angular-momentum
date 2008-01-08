@@ -23,7 +23,7 @@
 from tracks.core import load_track, dump_track
 from tracks.log import log
 from molmod.data.periodic import periodic
-from ccio.psf import PSFFile
+from molmod.io.psf import PSFFile
 
 import numpy, os
 from optparse import OptionParser

@@ -20,7 +20,7 @@
 # --
 
 
-from ccio.psf import PSFFile
+from molmod.io.psf import PSFFile
 from molmod.graphs import MatchGenerator, RingMatchDefinition
 
 import numpy
