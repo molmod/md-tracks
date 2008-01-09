@@ -295,6 +295,25 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(xyz_reader_copy.symbols,['C','H'])
         for (title_orig, coordinates_orig), (tile_copy, coordinates_copy) in zip(xyz_reader_orig, xyz_reader_copy):
             self.assertArraysAlmostEqual(coordinates_orig[[2,5]], coordinates_copy, 1e-7)
+        self.from_xyz("water32", "pos")
+        # unit_cell_version without ref.psf
+        self.execute("tr-to-xyz", [
+            os.path.join(input_dir, "water32/init.xyz"),
+            "9.865*A,", "tracks/atom.pos", os.path.join(output_dir, "water32.noref.pos.xyz"),
+        ])
+        # unit_cell_version with ref.psf
+        self.execute("tr-to-xyz", [
+            os.path.join(input_dir, "water32/init.xyz"),
+            os.path.join(input_dir, "water32/init.psf"),
+            "9.865*A,", "tracks/atom.pos", os.path.join(output_dir, "water32.ref.pos.xyz"),
+        ])
+        self.from_xyz("ar108", "pos")
+        self.from_cp2k_cell("ar108")
+        # unit_cell_version without ref.psf, but with a cell in tracks
+        self.execute("tr-to-xyz", [
+            os.path.join(input_dir, "ar108/init.xyz"),
+            "tracks/cell", "tracks/atom.pos", os.path.join(output_dir, "argon.noref.pos.xyz"),
+        ])
 
     def test_read_write_slice_length(self):
         self.from_cp2k_ener("water32")
@@ -458,7 +477,6 @@ class CommandsTestCase(BaseTestCase):
         tmp1 = load_track("tracks/temperature")
         tmp2 = load_track("tracks/temperature.int.deriv")
         self.assertArraysAlmostEqual(tmp1[1:], tmp2, 1e-5)
-
 
     def test_rfft_irfft(self):
         self.from_xyz("thf01", "vel", ["-s:1000:", "-u1"]) # irrft always results in an even number of datapoints

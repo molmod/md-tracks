@@ -83,6 +83,7 @@ def cpmd_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     f.close()
     mtw.finalize()
 
+
 def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
     import itertools
     names = ["cell.a.x", "cell.a.y", "cell.a.z", "cell.b.x", "cell.b.y", "cell.b.z", "cell.c.x", "cell.c.y", "cell.c.z", "cell.a", "cell.b", "cell.c", "cell.alpha", "cell.beta", "cell.gamma"]
@@ -130,7 +131,7 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
     mtw.finalize()
 
 
-def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angstrom, atom_indexes=None):
+def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angstrom, atom_indexes=None, unit_cell_iter=None, groups=None):
     """Converts a set of tracks into an xyz file."""
     if atom_indexes is None:
         atom_indexes = range(len(symbols))
@@ -147,5 +148,17 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
     xyz_writer = XYZWriter(f, symbols, file_unit=file_unit)
     mtr = MultiTracksReader(filenames)
     for row in itertools.islice(mtr, sub.start, sub.stop, sub.step):
-        xyz_writer.dump("None", numpy.array(row).reshape((-1,3)))
+        coordinates = numpy.array(row).reshape((-1,3))
+        if unit_cell_iter is not None:
+            try:
+                uc = unit_cell_iter.next()
+            except StopIteration:
+                raise ValueError("Not enough frames in the unit cell tracks.")
+            if groups is None:
+                coordinates -= numpy.dot(uc.cell, numpy.floor(numpy.dot(uc.cell_reciproke, coordinates.transpose()))).transpose()
+            else:
+                for group in groups:
+                    center = coordinates[group].mean(axis=0)
+                    coordinates[group] -= numpy.dot(uc.cell, numpy.floor(numpy.dot(uc.cell_reciproke, center)))
+        xyz_writer.dump("None", coordinates)
     f.close()

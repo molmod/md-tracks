@@ -45,10 +45,12 @@ must be given.
 The last four arguments have the following interpretation:
 
 * cell: The unit cell parameters. Several formats are supported:
+    - a,: an cubic unit cell with ridge a.
     - a,b,c: The parameters of an orthorhombic cell.
     - a,b,c,alpha,beta,gamma: The parameters for a triclinic cell.
     - ax,ay,az,bx,by,bz,cx,cy,cz: The cartesian parameters for a triclinic cell.
     - cell_prefix: A track prefix can be used to indicate a time dependent unit cell.
+    (The presence of comma's is used to differentiate between all the possibilities.)
 * rmax: The maximum (inter-atomic) distance for which the rdf is computed.
 * nbins: The number of bins in the histogram. (including the empty ones)
 * output_prefix: The prefix used for all the output files.

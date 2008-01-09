@@ -21,7 +21,7 @@
 
 
 from tracks.convert import tracks_to_xyz
-from tracks.parse import parse_slice
+from tracks.parse import parse_slice, yield_unit_cells
 from tracks.util import AtomFilter
 from tracks.log import log
 from molmod.units import parse_unit
@@ -31,12 +31,23 @@ from molmod.io.psf import PSFFile
 from optparse import OptionParser
 
 
-usage = """%prog [options] ref.xyz prefix output.xyz
+usage = """%prog [options] ref.xyz [[ref.psf] unit_cell] prefix output.xyz
 
 %prog reads the atomic coordinates from tracks with the following format:
 ${prefix}.${index}.${c} where ${index} is the atom index and ${c} is x, y or z.
 The atom symbols are read from ${ref.xyz}. The output trajectory is written to
 ${output.xyz}.
+
+Optionally a unit_cell parameter can be given. The effect is that the atom
+coordinates will be wrapped into the periodic box. If ref.psf is also given,
+molecules will be wrapped as a whole. The unit_cell can be given in differnt
+formats:
+    - a,: an cubic unit cell with ridge a.
+    - a,b,c: The parameters of an orthorhombic cell.
+    - a,b,c,alpha,beta,gamma: The parameters for a triclinic cell.
+    - ax,ay,az,bx,by,bz,cx,cy,cz: The cartesian parameters for a triclinic cell.
+    - cell_prefix: A track prefix can be used to indicate a time dependent unit cell.
+    (The presence of comma's is used to differentiate between all the possibilities.)
 
 %prog -h prints out all available options."""
 
@@ -65,13 +76,31 @@ parser.add_option(
 
 log.verbose = options.verbose
 if len(args) == 3:
-    ref_path, prefix, output_path = args
+    ref_xyz_path, prefix, output_path = args
+    ref_psf_path = None
+    unit_cell_str = None
+elif len(args) == 4:
+    ref_xyz_path, unit_cell_str, prefix, output_path = args
+    ref_psf_path = None
+elif len(args) == 5:
+    ref_xyz_path, ref_psf_path, unit_cell_str, prefix, output_path = args
 else:
-    parser.error("Expecting three arguments.")
+    parser.error("Expecting three, four or five arguments.")
 
-ref = XYZFile(ref_path)
+ref = XYZFile(ref_xyz_path)
 sub = parse_slice(options.slice)
 file_unit = parse_unit(options.unit)
 atom_filter = AtomFilter(options.filter_atoms)
 
-tracks_to_xyz(prefix, output_path, ref.symbols, sub, file_unit, atom_filter.filter_atoms)
+if unit_cell_str is None:
+    unit_cell_iter = None
+    groups = None
+else:
+    unit_cell_iter = yield_unit_cells(unit_cell_str)
+    if ref_psf_path is None:
+        groups = None
+    else:
+        psf = PSFFile(ref_psf_path)
+        groups = psf.get_groups()
+
+tracks_to_xyz(prefix, output_path, ref.symbols, sub, file_unit, atom_filter.filter_atoms, unit_cell_iter, groups)

@@ -19,15 +19,16 @@
 # --
 
 
-from tracks.core import TrackNotFoundError, load_track
+from tracks.core import TrackNotFoundError, load_track, MultiTracksReader
 from molmod.units import parse_unit
+from molmod.unit_cell import UnitCell
 
-import sys
+import sys, numpy, itertools
 
 
 __all__ = [
-    "Error", "parse_slice", "get_delta", "parse_x_step", "parse_x_last",
-    "parse_x_length",
+    "Error", "parse_slice", "fix_slice", "get_delta", "parse_x_step",
+    "parse_x_last", "parse_x_length", "yield_unit_cells",
 ]
 
 
@@ -44,6 +45,13 @@ def parse_slice(s):
         else:
             result.append(int(word))
     return slice(*result)
+
+
+def fix_slice(s):
+    if s is None:
+        return slice(0, sys.maxint, 1)
+    else:
+        return s
 
 
 def _parse_x_track(s, fn, convert=parse_unit):
@@ -100,3 +108,49 @@ def parse_x_length(s):
         return len(x_axis)
     return _parse_x_track(s, fn, int)
 
+
+def yield_unit_cells(unit_cell_str, sub=None):
+    sub = fix_slice(sub)
+    if "," in unit_cell_str:
+        parameters = list(parse_unit(word) for word in unit_cell_str.split(",") if len(word) > 0)
+        print parameters, len(parameters)
+        if len(parameters) == 1:
+            a= parameters[0]
+            uc = UnitCell(
+                numpy.array([[a,0,0],[0,a,0],[0,0,a]], float),
+                numpy.array([True, True, True]),
+            )
+        elif len(parameters) == 3:
+            a,b,c = parameters
+            uc = UnitCell(
+                numpy.array([[a,0,0],[0,b,0],[0,0,c]], float),
+                numpy.array([True, True, True]),
+            )
+        elif len(parameters) == 6:
+            a,b,c,alpha,beta,gamma = parameters
+            uc = UnitCell(
+                numpy.array([[1,0,0],[0,1,0],[0,0,1]], float),
+                numpy.array([True, True, True]),
+            )
+            uc.set_parameterst(numpy.array([a,b,c]), numpy.array([alpha,beta,gamma]))
+        elif len(parameters) == 9:
+            uc = UnitCell(
+                numpy.array(parameters, float).reshape((3,3)),
+                numpy.array([True, True, True]),
+            )
+        else:
+            raise ValueError("If the --cell option contains comma's, one, three, six or nine value(s) are expected.")
+        while True:
+            yield uc
+    else:
+        filenames = ["%s.%s" % (unit_cell_str, suffix) for suffix in ["a.x", "a.y", "a.z", "b.x", "b.y", "b.z", "c.x", "c.y", "c.z"]]
+        mtr = MultiTracksReader(filenames)
+        uc = UnitCell(
+            numpy.array([[1,0,0],[0,1,0],[0,0,1]], float),
+            numpy.array([True, True, True]),
+        )
+        flat = uc.cell.ravel()
+        for row in itertools.islice(mtr.yield_rows(), sub.start, sub.stop, sub.step):
+            flat[:] = row
+            uc.update_reciproke()
+            yield uc
