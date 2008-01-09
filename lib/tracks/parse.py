@@ -113,7 +113,6 @@ def yield_unit_cells(unit_cell_str, sub=None):
     sub = fix_slice(sub)
     if "," in unit_cell_str:
         parameters = list(parse_unit(word) for word in unit_cell_str.split(",") if len(word) > 0)
-        print parameters, len(parameters)
         if len(parameters) == 1:
             a= parameters[0]
             uc = UnitCell(
