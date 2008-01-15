@@ -479,6 +479,7 @@ class CommandsTestCase(BaseTestCase):
         self.assertArraysAlmostEqual(tmp1[1:], tmp2, 1e-5)
 
     def test_rfft_irfft(self):
+        # test on the whole thing
         self.from_xyz("thf01", "vel", ["-s:1000:", "-u1"]) # irrft always results in an even number of datapoints
         self.from_cp2k_ener("thf01")
         self.execute("tr-rfft", glob.glob("tracks/atom.vel.*.?"))
@@ -488,6 +489,17 @@ class CommandsTestCase(BaseTestCase):
         for filename in glob.glob("tracks/atom.vel.*.?"):
             other_filename = "%s.rfft.irfft" % filename
             tmp1 = load_track(filename)
+            tmp2 = load_track(other_filename)
+            self.assertEqual(tmp1.shape, tmp2.shape)
+            self.assertArraysAlmostEqual(tmp1, tmp2, 1e-7)
+        # test with a slice
+        self.execute("tr-rfft", ["--slice=100:203:2",] + glob.glob("tracks/atom.vel.*.?"))
+        self.execute("tr-irfft", glob.glob("tracks/atom.vel.*.rfft"))
+        self.assertEqual(len(glob.glob("tracks/atom.vel.*.?")), len(glob.glob("tracks/*.rfft")))
+        self.assertEqual(len(glob.glob("tracks/atom.vel.*.?")), len(glob.glob("tracks/*.rfft.irfft")))
+        for filename in glob.glob("tracks/atom.vel.*.?"):
+            other_filename = "%s.rfft.irfft" % filename
+            tmp1 = load_track(filename)[100:203:2]
             tmp2 = load_track(other_filename)
             self.assertEqual(tmp1.shape, tmp2.shape)
             self.assertArraysAlmostEqual(tmp1, tmp2, 1e-7)
