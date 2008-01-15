@@ -91,13 +91,13 @@ global_parser.add_option(
 )
 global_parser.add_option(
     "--xlim", default=",",
-    help="The range for the x-axis in the unit defined by XUNIT. "
+    help="The range for the x-axis. (One has to supply units like 8*A.) "
          "Format: [min],[max]. If min and/or max are omitted, they are set "
          "automatically. [default=%default]",
 )
 global_parser.add_option(
     "--ylim", default=",",
-    help="The range for the y-axis in the unit defined by YUNIT. "
+    help="The range for the y-axis. (One has to supply units like 8*A.) "
          "Format: [min],[max]. If min and/or max are omitted, they are set "
          "automatically. [default=%default]",
 )
