@@ -31,11 +31,11 @@ from optparse import OptionParser
 
 usage = """%prog [options] input1 [input2 ...] {time_axis|time_step} output
 
-%prog computes the auto-correlation function from a set of tracks (${input1},
-${input2}, ...) and stores the result in a track ${output}. The normalized auto-
-correlation function will be stored in ${output}.normalized. The next-to-last
-argument is a track that contains the time-axis, or it can also be the time step
-between two discrete data points.
+%prog computes the average auto-correlation function for a set of tracks
+(${input1}, ${input2}, ...) and stores the result in a track ${output}.
+The normalized auto- correlation function will be stored in
+${output}.normalized. The next-to-last argument is a track that contains the
+time-axis, or it can also be the time step between two discrete data points.
 
 %prog -h prints out all available options."""
 
@@ -86,6 +86,7 @@ for path_in in paths_in:
     tmp = numpy.correlate(f, f[:average_steps], 'valid')/average_steps
     result += tmp
     log("PROCESSED %s" % path_in)
+result /= len(paths_in)
 
 dump_track(path_out, result)
 log("WRITTEN %s" % path_out)
