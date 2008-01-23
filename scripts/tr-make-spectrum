@@ -55,6 +55,7 @@ for path_in in paths_in:
     result += F
     log("PROCESSED %s" % path_in)
 
-nsteps = len(result)*2 # divide the result by the number of time steps
-dump_track(path_out, result/nsteps)
+nsteps = len(result)*2
+# divide the result by the number of time steps and by the number of input paths
+dump_track(path_out, result/nsteps/len(paths_in))
 log("WRITTEN %s" % path_out)
