@@ -20,6 +20,7 @@
 
 
 from tracks.log import log
+from tracks import context
 
 import numpy, os, struct
 
@@ -114,7 +115,12 @@ def dump_track(filename, data):
 
 
 class MultiTracksReader(object):
-    def __init__(self, filenames, buffer_size=100*1024*1024, dot_interval=50):
+    def __init__(self, filenames, buffer_size=None, dot_interval=None):
+        if buffer_size is None:
+            buffer_size = context.default_buffer_size
+        print buffer_size
+        if dot_interval is None:
+            dot_interval = context.default_dot_interval
         self.tracks = [Track(filename) for filename in filenames]
         self.dtypes = [track._get_header_dtype() for track in self.tracks]
         self.buffer_length = buffer_size/sum(dtype.itemsize for dtype in self.dtypes)
@@ -154,7 +160,12 @@ class MultiTracksReader(object):
 
 
 class MultiTracksWriter(object):
-    def __init__(self, filenames, dtypes=None, buffer_size=100*1024*1024, dot_interval=50, clear=True):
+    def __init__(self, filenames, dtypes=None, buffer_size=None, dot_interval=None, clear=True):
+        if buffer_size is None:
+            buffer_size = context.default_buffer_size
+        print buffer_size
+        if dot_interval is None:
+            dot_interval = context.default_dot_interval
         # make sure the files can be created
         for filename in filenames:
             directory = os.path.dirname(filename)

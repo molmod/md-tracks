@@ -17,3 +17,11 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
 # --
+
+
+class Context(object):
+    def __init__(self):
+        self.default_buffer_size = 100*1024*1024
+        self.default_dot_interval = 50
+
+context = Context()
