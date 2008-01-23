@@ -28,7 +28,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] input1 input2 [input 3...]
+usage = """%prog [options] input1 input2 [input3...]
 
 %prog applies principal component analysis to the input tracks. An overview
 of the eigenvalues and eigenvectors is printed on screen.
