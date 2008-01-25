@@ -1269,7 +1269,7 @@ class CommandsTestCase(BaseTestCase):
             ":line", "time", "signal",
         os.path.join(output_dir, "cwt_signal.png")])
         self.execute("tr-plot", ["--xunit=fs", "--yunit=1/cm", "--no-legend",
-            ":contour", "time", "cwt.wavenumbers", "cwt",
+            ":contour", "time", "cwt.wavenumbers", "cwt.scale",
             ":line", "time", "wavenum_mod", "--color=k",
             ":line", "cwt.left_margin", "cwt.wavenumbers", "--color=k", "-d", "--",
             ":line", "cwt.right_margin", "cwt.wavenumbers", "--color=k", "-d", "--",

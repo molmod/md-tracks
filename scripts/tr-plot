@@ -321,7 +321,7 @@ class VLineDescriptor(StraightHLineDescriptor):
 PlotDescriptor.kinds["vline"] = VLineDescriptor
 
 
-contour_usage = """Data arguments: time {frequncies|wavenumbers} transform_prefix"""
+contour_usage = """Data arguments: X Y Z_prefix"""
 class ContourDescriptor(PlotDescriptor):
     parser = OptionParser(contour_usage)
     parser.add_option(
@@ -357,7 +357,7 @@ class ContourDescriptor(PlotDescriptor):
     def plot(self, xunit, yunit):
         z = numpy.zeros((len(self.y), len(self.x)), float)
         for index in xrange(len(self.y)):
-            z[index] = load_track("%s.scale.%07i" % (self.transform_prefix, index))
+            z[index] = load_track("%s.%07i" % (self.transform_prefix, index))
         if self.options.zlog:
             z = numpy.log(abs(z))
             print z.min(), z.max()
