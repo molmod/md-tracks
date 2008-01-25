@@ -118,7 +118,6 @@ class MultiTracksReader(object):
     def __init__(self, filenames, buffer_size=None, dot_interval=None):
         if buffer_size is None:
             buffer_size = context.default_buffer_size
-        print buffer_size
         if dot_interval is None:
             dot_interval = context.default_dot_interval
         self.tracks = [Track(filename) for filename in filenames]
@@ -163,7 +162,6 @@ class MultiTracksWriter(object):
     def __init__(self, filenames, dtypes=None, buffer_size=None, dot_interval=None, clear=True):
         if buffer_size is None:
             buffer_size = context.default_buffer_size
-        print buffer_size
         if dot_interval is None:
             dot_interval = context.default_dot_interval
         # make sure the files can be created
