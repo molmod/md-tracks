@@ -344,12 +344,19 @@ class ContourDescriptor(PlotDescriptor):
         "--zmax", default=None,
         help="The upper boundary for the color scale",
     )
+    parser.add_option(
+        "-s", "--slice", default="::",
+        help="Subsample the X input tracks with the given slice start:stop:step "
+             "where start, stop and step must be integers or can be omitted. "
+             "The slice interpretation is pythonic. [default=%default]",
+    )
 
     def __init__(self, args):
         PlotDescriptor.__init__(self, args)
         if len(self.args)!=3:
             self.parser.error("Excpecting three data arguments. Got %i" % len(self.args))
-        self.x = load_track(self.args[0])
+        self.sub = parse_slice(self.options.slice)
+        self.x = load_track(self.args[0])[self.sub]
         self.y = load_track(self.args[1])
         self.transform_prefix = self.args[2]
         self.options.label = None
@@ -357,7 +364,7 @@ class ContourDescriptor(PlotDescriptor):
     def plot(self, xunit, yunit):
         z = numpy.zeros((len(self.y), len(self.x)), float)
         for index in xrange(len(self.y)):
-            z[index] = load_track("%s.%07i" % (self.transform_prefix, index))
+            z[index] = load_track("%s.%07i" % (self.transform_prefix, index))[self.sub]
         if self.options.zlog:
             z = numpy.log(abs(z))
             print z.min(), z.max()
