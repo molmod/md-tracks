@@ -379,6 +379,7 @@ class ContourDescriptor(PlotDescriptor):
         num_levels = int(self.options.num_levels)
         levels = numpy.arange(0,num_levels,1,float)/(num_levels-1)*(self.options.zmax-self.options.zmin)+self.options.zmin
         if self.options.filled:
+            pylab.contour(self.x/xunit,self.y/yunit,z,levels) # avoid white lines between the filled regions
             pylab.contourf(self.x/xunit,self.y/yunit,z,levels)
         else:
             pylab.contour(self.x/xunit,self.y/yunit,z,levels)
