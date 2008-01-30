@@ -20,6 +20,7 @@
 
 
 import os
+from subprocess import Popen, PIPE
 
 
 __all__ = ["WrapperError", "Wrapper"]
@@ -46,9 +47,17 @@ class Wrapper(object):
         command = "%s %s" % (self.name, " ".join(args))
         if self.verbose:
             print command
-        retcode = os.system(command)
+        if self.verbose:
+            p = Popen(command.split(), stdin=PIPE, stdout=PIPE)
+        else:
+            p = Popen(command.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        output = list(line[:-1] for line in p.stdout)
+        retcode = p.wait()
         if retcode != 0:
             raise WrapperError("An error occured while executing command (retcode=%i): \n%s" % (retcode, command))
+        if self.verbose:
+            print output
+        return output
 
 # when scripts are added, this list must be updated
 names = [

@@ -19,15 +19,22 @@
 # --
 
 
-import common
+from common import *
 
-import import_test
+from tracks.wrappers import tr_read
+from tracks.core import dump_track
+from tracks.log import log
 
-import unittest
-from commands import *
-from core import *
-from fit import *
-from wrappers import *
-unittest.main()
+import unittest, numpy, os
 
 
+log.verbose = False
+
+
+class WrapperTestCase(BaseTestCase):
+    def test_tr_read(self):
+        values = numpy.arange(0, 10, 0.1, float)
+        dump_track(os.path.join(tmp_dir, "tmp"), values)
+        output = tr_read(os.path.join(tmp_dir, "tmp"))
+        check_values = numpy.array([float(word) for word in output], float)
+        self.assertArraysAlmostEqual(values, check_values, 1e-10)
