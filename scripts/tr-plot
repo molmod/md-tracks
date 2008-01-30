@@ -345,6 +345,10 @@ class ContourDescriptor(PlotDescriptor):
         help="The upper boundary for the color scale",
     )
     parser.add_option(
+        "--zunit", default='au',
+        help="The unit for the z-axis. [default=%default]",
+    )
+    parser.add_option(
         "-s", "--slice", default="::",
         help="Subsample the X input tracks with the given slice start:stop:step "
              "where start, stop and step must be integers or can be omitted. "
@@ -367,7 +371,6 @@ class ContourDescriptor(PlotDescriptor):
             z[index] = load_track("%s.%07i" % (self.transform_prefix, index))[self.sub]
         if self.options.zlog:
             z = numpy.log(abs(z))
-            print z.min(), z.max()
         if self.options.zmin is None:
             self.options.zmin = z.min()
         else:
@@ -376,6 +379,12 @@ class ContourDescriptor(PlotDescriptor):
             self.options.zmax = z.max()
         else:
             self.options.zmax = parse_unit(self.options.zmax)
+
+        z_unit = parse_unit(self.options.zunit)
+        z /= z_unit
+        self.options.zmin /= z_unit
+        self.options.zmax /= z_unit
+
         num_levels = int(self.options.num_levels)
         levels = numpy.arange(0,num_levels,1,float)/(num_levels-1)*(self.options.zmax-self.options.zmin)+self.options.zmin
         if self.options.filled:
