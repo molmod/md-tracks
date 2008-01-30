@@ -409,7 +409,7 @@ if global_options.plot_help:
         cls.parser.print_help()
     sys.exit(0)
 if len(global_args) > 0:
-    parser.error("Expecting no global arguments. Got %s" % global_args)
+    global_parser.error("Expecting no global arguments. Got %s" % global_args)
 
 image = blocks[-1][-1]
 del blocks[-1][-1]
