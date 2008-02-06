@@ -1199,7 +1199,10 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-rdf", prefixes_Ar + ["-s::2", "--bin-tracks", "tracks/cell", "20*A", "80", "tracks/rdf"])
         lines = []
         for bin_filename in sorted(glob.glob("tracks/rdf.bin.???????")):
-            output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
+            output = self.execute("tr-blav", [
+                bin_filename, "tracks/time", "-b10",
+                #"--plot-error=%s" % os.path.join(output_dir, "rdf_ar108_blav_%s.png" % os.path.basename(bin_filename)),
+            ])
             lines.append(output[0])
         self.execute("tr-write", ["tracks/rdf.hist", "tracks/rdf.hist.error"], stdin=lines)
         self.execute("tr-plot", [

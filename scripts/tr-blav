@@ -112,19 +112,27 @@ if l == 0:
 unit = parse_unit(options.unit)
 time_unit = parse_unit(options.time_unit)
 
+select = numpy.arange(len(x)-l, len(x))
 # perform a fit with a + b/t, a is an estimate of the error
 (yinf, by), resids, rank, svals = numpy.linalg.lstsq(
-    numpy.array([numpy.ones(l, float), 1/x[-l:]]).transpose(),
-    y[-l:],
+    numpy.array([numpy.ones(len(select), float), 1/x[select]]).transpose(),
+    y[select],
 )
-(cinf, bc), resids, rank, svals = numpy.linalg.lstsq(
-    numpy.array([numpy.ones(l, float), 1/x[-l:]]).transpose(),
-    c[-l:],
-)
-(sinf, bs), resids, rank, svals = numpy.linalg.lstsq(
-    numpy.array([numpy.ones(l, float), 1/x[-l:]]).transpose(),
-    s[-l:],
-)
+
+select = select[numpy.isfinite(c[select])]
+if len(select) > 3:
+    (cinf, bc), resids, rank, svals = numpy.linalg.lstsq(
+        numpy.array([numpy.ones(len(select), float), 1/x[select]]).transpose(),
+        c[select],
+    )
+    (sinf, bs), resids, rank, svals = numpy.linalg.lstsq(
+        numpy.array([numpy.ones(len(select), float), 1/x[select]]).transpose(),
+        s[select],
+    )
+else:
+    cinf = numpy.inf
+    sinf = numpy.inf
+
 
 print "%s %s %s %s" % (f.mean()/unit, yinf/unit, cinf/time_unit, sinf)
 
