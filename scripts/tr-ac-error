@@ -29,7 +29,7 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] ac_prefix ndim {time_axis|time_step} duration tau
+usage = """%prog [options] ac_prefix ndim {time_axis|time_step duration} tau
 
 %prog computes the error on an auto-correlation function. (See A. Rev. Phys.
 Chem. (1980) vol. 31, p. 491-521). The output is written to ${ac_prefix}.error
