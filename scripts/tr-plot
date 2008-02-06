@@ -213,6 +213,66 @@ class LineDescriptor(PlotDescriptor):
 PlotDescriptor.kinds["line"] = LineDescriptor
 
 
+scatter_usage = """Data arguments: x y
+- x is the track with the x-data
+- y is the track with the y-data
+If the track x contains more data than y, only the x[:len(y)] will be used for
+plotting.
+"""
+class ScatterDescriptor(PlotDescriptor):
+    parser = OptionParser(scatter_usage)
+    parser.add_option(
+        "-c", "--color",
+        help="Specifiy the marker color for this scatter",
+    )
+    parser.add_option(
+        "-e", "--edge-color",
+        help="Specifiy the marker edge color for this scatter",
+    )
+    parser.add_option(
+        "-l", "--label",
+        help="Specifiy a label for this scatter",
+    )
+    parser.add_option(
+        "-s", "--slice", default="::",
+        help="Subsample the input tracks with the given slice start:stop:step "
+             "where start, stop and step must be integers or can be omitted. "
+             "The slice interpretation is pythonic. [default=%default]",
+    )
+    parser.add_option(
+        "-m", dest="marker",
+        help="Specify the symbol that is used for the data points in the "
+             "scatter plot. Possible options: o, ^, v, <, >, s, +, x, D, d, 1, "
+             "2, 3, 4, h, H, p, |, _. Some markers might require propper "
+             "quoting.",
+    )
+
+    def init_scatter_data(self, xunit, yunit):
+        sub = parse_slice(self.options.slice)
+        if len(self.args) == 2:
+            self.x = load_track(self.args[0])[sub]
+            self.y = load_track(self.args[1])[sub]
+            label = "%s vs. %s" % (self.args[0], self.args[1])
+        else:
+            self.parser.error("A scatter description must contain two tracks. Got:\n%s" % " ".join(self.args))
+        if len(self.x) > len(self.y): # allow the x-axis to contain more data
+            self.x = self.x[:len(self.y)]
+        self.x = self.x/xunit
+        self.y = self.y/yunit
+        if self.options.label is None:
+            self.options.label = label
+
+    def plot(self, xunit, yunit):
+        self.init_scatter_data(xunit, yunit)
+        kwargs = {}
+        kwargs['marker'] = 'o'
+        if self.options.color is not None: kwargs["color"] = self.options.color
+        if self.options.edge_color is not None: kwargs["markeredgecolor"] = self.options.edge_color
+        if self.options.marker is not None: kwargs["marker"] = self.options.marker
+        self.patch = pylab.plot(self.x, self.y, linestyle='None', **kwargs)[0]
+PlotDescriptor.kinds["scatter"] = ScatterDescriptor
+
+
 class BarDescriptor(PlotDescriptor):
     parser = OptionParser(line_usage)
     parser.add_option(

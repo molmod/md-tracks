@@ -1279,3 +1279,10 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(output_dir, "cwt_spectrogram.png")
         ])
 
+    def test_scatter_plot(self):
+        dump_track("x", numpy.random.normal(0,1,200))
+        dump_track("y", numpy.random.normal(0,1,200))
+        self.execute("tr-plot", [
+            ":scatter", "x", "y", "-c", "#44FFAA", "-e", "#2266FF", "-m", "d",
+            os.path.join(output_dir, "scatter_plot.png")
+        ])
