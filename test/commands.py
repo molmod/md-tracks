@@ -1286,3 +1286,19 @@ class CommandsTestCase(BaseTestCase):
             ":scatter", "x", "y", "-c", "#44FFAA", "-e", "#2266FF", "-m", "d",
             os.path.join(output_dir, "scatter_plot.png")
         ])
+
+    def test_reduce(self):
+        time = numpy.arange(100000)
+        signal = numpy.random.normal(0,1,len(time))
+        signal *= (1+numpy.cos(0.0001*time))
+        signal += numpy.sin(0.00015*time)
+        dump_track("time", time)
+        dump_track("signal", signal)
+        self.execute("tr-reduce", ["time", "1003"])
+        self.execute("tr-reduce", ["signal", "1003"])
+        self.execute("tr-plot", [
+            ":line", "time", "signal", "-c", "#DDDDDD",
+            ":line", "time.reduced", "signal.reduced", "signal.reduced.err",
+            os.path.join(output_dir, "reduce.png")
+        ])
+
