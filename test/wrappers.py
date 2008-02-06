@@ -25,7 +25,7 @@ from tracks.wrappers import tr_read
 from tracks.core import dump_track
 from tracks.log import log
 
-import unittest, numpy, os
+import unittest, numpy, os, glob
 
 
 log.verbose = False
@@ -38,3 +38,11 @@ class WrapperTestCase(BaseTestCase):
         output = tr_read(os.path.join(tmp_dir, "tmp"))
         check_values = numpy.array([float(word) for word in output], float)
         self.assertArraysAlmostEqual(values, check_values, 1e-10)
+
+    def test_names(self):
+        from tracks.wrappers import names
+        names = set(names)
+        for name in names:
+            self.assert_(os.path.isfile(os.path.join(scripts_dir, name)), "%s missing in scripts_dir" % name)
+        for filename in glob.glob(os.path.join(scripts_dir, "*")):
+            self.assert_((os.path.basename(filename) in names), "%s missing in names list" % filename)
