@@ -35,10 +35,10 @@ usage = """%prog [options] [unit1] output1 [[unit2] output2 ...]
 must be formatted as follows: one line contains all data that belong to one
 time step. On each line the values are white-space separated. Optionally, each
 output* argument can be prepended with a unit. %prog will interpret the data on
-stdin using these units. The data in the tracks are always stored in atomic units. 
-unit1 defaults to au. The other unit arguments default to the unit of the 
+stdin using these units. The data in the tracks are always stored in atomic units.
+unit1 defaults to au. The other unit arguments default to the unit of the
 previous input. Instead of a track filename, one can also give a bare minus sign
-as argument, indicating that the corresponding column on the stdin has to be 
+as argument, indicating that the corresponding column on the stdin has to be
 ignored.
 
 %prog -h prints out all available options."""
