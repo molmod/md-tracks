@@ -207,8 +207,8 @@ class LineDescriptor(PlotDescriptor):
         self.patch = pylab.plot(self.x, self.y, linewidth=1, **kwargs)[0]
         kwargs["color"] = self.patch.get_color()
         if self.error is not None:
-            pylab.plot(self.x, self.y+self.error, linestyle='-', alpha=0.5, **kwargs)
-            pylab.plot(self.x, self.y-self.error, linestyle='-', alpha=0.5, **kwargs)
+            pylab.plot(self.x, self.y+self.error, alpha=0.5, label="_nolegend_", **kwargs)
+            pylab.plot(self.x, self.y-self.error, alpha=0.5, label="_nolegend_", **kwargs)
 
 PlotDescriptor.kinds["line"] = LineDescriptor
 
