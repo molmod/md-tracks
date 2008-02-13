@@ -1321,7 +1321,7 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-reduce", ["signal", "1003"])
         self.execute("tr-plot", [
             ":line", "time", "signal", "-c", "#DDDDDD",
-            ":line", "time.reduced", "signal.reduced", "signal.reduced.err",
+            ":line", "time.reduced", "signal.reduced", "signal.reduced.std",
             os.path.join(output_dir, "reduce.png")
         ])
 

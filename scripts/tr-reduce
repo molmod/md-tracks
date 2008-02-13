@@ -55,7 +55,7 @@ usage = """%prog [options] input block_size [output_prefix]
 
 %prog subsamples the input by taking block averages. The block averages are
 written to ${output_prefix}.reduced. The standard deviation of the values within
-per block are written to ${output_prefix}.reduced.err. if the argument
+per block are written to ${output_prefix}.reduced.std. if the argument
 output_prefix is omitted, it defaults to input. This is tool is mainly usefull
 for plotting very long time series in a comprehensible fashion.
 
@@ -84,7 +84,7 @@ if len(args) == 3 or len(args) == 2:
     else:
         prefix_out = path_in
     path_out = "%s.reduced" % prefix_out
-    path_err = "%s.reduced.err" % prefix_out
+    path_std = "%s.reduced.std" % prefix_out
 else:
     parser.error("Expecting two or three arguments.")
 
@@ -94,12 +94,12 @@ inp = load_track(path_in)
 inp = inp[:(len(inp)/block_size)*block_size]
 inp = inp.reshape((-1,block_size))
 reduced = inp.mean(axis=1)
-reduced_err = inp.std(axis=1)
+reduced_std = inp.std(axis=1)
 
 dump_track(path_out, reduced)
 log("WRITTEN %s" % path_out)
-dump_track(path_err, reduced_err)
-log("WRITTEN %s" % path_err)
+dump_track(path_std, reduced_std)
+log("WRITTEN %s" % path_std)
 # Tracks provides tools for analyzing large trajectory files.
 # Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
