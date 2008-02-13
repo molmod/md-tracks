@@ -105,7 +105,7 @@ for path_in in paths_in:
     if len(f) != length:
         raise Error("All input tracks must have the same length.")
     if options.non_zero_average:
-        f -= f.mean()
+        f = f - f.mean()
     tmp = numpy.correlate(f, f[:average_steps], 'valid')/average_steps
     result += tmp
     log("PROCESSED %s" % path_in)
