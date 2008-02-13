@@ -17,29 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 #
-# Contact information:
-#
-# Supervisors
-#
-# Prof. Dr. Michel Waroquier and Prof. Dr. Ir. Veronique Van Speybroeck
-#
-# Center for Molecular Modeling
-# Ghent University
-# Proeftuinstraat 86, B-9000 GENT - BELGIUM
-# Tel: +32 9 264 65 59
-# Fax: +32 9 264 65 60
-# Email: Michel.Waroquier@UGent.be
-# Email: Veronique.VanSpeybroeck@UGent.be
-#
-# Author
-#
-# Ir. Toon Verstraelen
-# Center for Molecular Modeling
-# Ghent University
-# Proeftuinstraat 86, B-9000 GENT - BELGIUM
-# Tel: +32 9 264 65 56
-# Email: Toon.Verstraelen@UGent.be
-#
 # --
 
 
@@ -182,4 +159,5 @@ if options.plot_ctime is not None:
     pylab.axhline(cinf/time_unit, color="r", linewidth=1)
     pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
     pylab.savefig(options.plot_ctime)
+
 

@@ -1,5 +1,5 @@
-python-tracks (0.001) unstable; urgency=low
+python-tracks (0.001) stable; urgency=low
 
   * Initial Release.
 
- -- Toon Verstraelen <Toon.Verstraelen@UGent.be>  Tue, 09 Oct 2007 17:10:55 +0200
+ -- Toon Verstraelen <Toon.Verstraelen@UGent.be>  Wed, 13 Feb 2008 21:22:55 +0200
