@@ -77,7 +77,7 @@ class Wrapper(object):
         output = list(line[:-1] for line in p.stdout)
         retcode = p.wait()
         if self.verbose:
-            print output
+            print "\n".join(output)
         if retcode != 0:
             if not self.verbose:
                 print "Command output:"
