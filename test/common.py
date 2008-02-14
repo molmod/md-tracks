@@ -20,17 +20,24 @@
 
 
 import os, sys, glob
-retcode = os.system("(cd ..; python setup.py build)")
-if retcode != 0: sys.exit(retcode)
 
 orig_dir = os.getcwd()
-scripts_dir = glob.glob(os.path.join(os.path.dirname(orig_dir), "build/scripts*"))[0]
-lib_dir = glob.glob(os.path.join(os.path.dirname(orig_dir), "build/lib*"))[0]
+if '-i' in sys.argv:
+    # use the installed library for testing
+    sys.argv.remove('-i')
+    scripts_dir = "/usr/bin"
+    lib_dir = None
+else:
+    retcode = os.system("(cd ..; python setup.py build)")
+    if retcode != 0: sys.exit(retcode)
+    scripts_dir = glob.glob(os.path.join(os.path.dirname(orig_dir), "build/scripts*"))[0]
+    lib_dir = glob.glob(os.path.join(os.path.dirname(orig_dir), "build/lib*"))[0]
+    sys.path.insert(0, lib_dir)
+
 tmp_dir = os.path.join(orig_dir, "tmp")
 input_dir = os.path.join(orig_dir, "input")
 output_dir = os.path.join(orig_dir, "output")
 
-sys.path.insert(0, lib_dir)
 if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 

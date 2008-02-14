@@ -40,11 +40,12 @@ class WrapperTestCase(BaseTestCase):
         self.assertArraysAlmostEqual(values, check_values, 1e-10)
 
     def test_names(self):
-        from tracks.wrappers import names
-        names = set(names)
-        for name in names:
-            self.assert_(os.path.isfile(os.path.join(scripts_dir, name)), "%s missing in scripts_dir" % name)
-        for filename in glob.glob(os.path.join(scripts_dir, "*")):
-            self.assert_((os.path.basename(filename) in names), "%s missing in names list" % filename)
+        if lib_dir is not None:
+            from tracks.wrappers import names
+            names = set(names)
+            for name in names:
+                self.assert_(os.path.isfile(os.path.join(scripts_dir, name)), "%s missing in scripts_dir" % name)
+            for filename in glob.glob(os.path.join(scripts_dir, "*")):
+                self.assert_((os.path.basename(filename) in names), "%s missing in names list" % filename)
 
 
