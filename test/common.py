@@ -19,25 +19,29 @@
 # --
 
 
-import os, sys, unittest, shutil
+import os, sys, glob
+retcode = os.system("(cd ..; python setup.py build)")
+if retcode != 0: sys.exit(retcode)
+
+orig_dir = os.getcwd()
+scripts_dir = glob.glob(os.path.join(os.path.dirname(orig_dir), "build/scripts*"))[0]
+lib_dir = glob.glob(os.path.join(os.path.dirname(orig_dir), "build/lib*"))[0]
+tmp_dir = os.path.join(orig_dir, "tmp")
+input_dir = os.path.join(orig_dir, "input")
+output_dir = os.path.join(orig_dir, "output")
+
+sys.path.insert(0, lib_dir)
+if not os.path.isdir(output_dir):
+    os.mkdir(output_dir)
+
+
+import unittest, shutil
 
 
 __all__ = [
     "orig_dir", "scripts_dir", "lib_dir", "tmp_dir", "input_dir", "output_dir",
     "BaseTestCase",
 ]
-
-
-orig_dir = os.getcwd()
-scripts_dir = os.path.join(os.path.dirname(os.getcwd()), "scripts")
-lib_dir = os.path.join(os.path.dirname(os.getcwd()), "lib")
-tmp_dir = os.path.join(os.getcwd(), "tmp")
-input_dir = os.path.join(os.getcwd(), "input")
-output_dir = os.path.join(os.getcwd(), "output")
-if not os.path.isdir(output_dir):
-    os.mkdir(output_dir)
-
-sys.path.insert(0, lib_dir)
 
 
 class BaseTestCase(unittest.TestCase):
