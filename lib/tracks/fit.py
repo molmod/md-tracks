@@ -1,5 +1,5 @@
 # Tracks provides tools for analyzing large trajectory files.
-# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
 # This file is part of Tracks.
 #
@@ -150,6 +150,7 @@ class FitCostFunction(object):
             for index2 in xrange(len(parameters)):
                 result[index1,index2] = numpy.dot(mg[index1],mg[index2]) + numpy.dot(errors,mh[index1,index2])
         return 2*result/len(self.wavenumbers)
+
 
 
 

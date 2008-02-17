@@ -1,5 +1,5 @@
 # Tracks provides tools for analyzing large trajectory files.
-# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
 # This file is part of Tracks.
 #
@@ -47,5 +47,6 @@ class WrapperTestCase(BaseTestCase):
                 self.assert_(os.path.isfile(os.path.join(scripts_dir, name)), "%s missing in scripts_dir" % name)
             for filename in glob.glob(os.path.join(scripts_dir, "*")):
                 self.assert_((os.path.basename(filename) in names), "%s missing in names list" % filename)
+
 
 

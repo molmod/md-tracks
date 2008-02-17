@@ -1,5 +1,5 @@
 # Tracks provides tools for analyzing large trajectory files.
-# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
 # This file is part of Tracks.
 #
@@ -140,6 +140,7 @@ class FitTestCase(unittest.TestCase):
                     self.assert_(error < epsilon, "cost hessian incorrect, parameters (%i,%i)" % (index1,index2))
                 else:
                     self.assert_(error/oom < 1e-2, "cost hessian incorrect, parameters (%i,%i)" % (index1,index2))
+
 
 
 

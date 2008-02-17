@@ -1,5 +1,5 @@
 # Tracks provides tools for analyzing large trajectory files.
-# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
 # This file is part of Tracks.
 #
@@ -162,5 +162,6 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
                     coordinates[group] -= numpy.dot(uc.cell, numpy.floor(numpy.dot(uc.cell_reciproke, center)))
         xyz_writer.dump("None", coordinates)
     f.close()
+
 
 

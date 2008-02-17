@@ -1,5 +1,5 @@
 # Tracks provides tools for analyzing large trajectory files.
-# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
 # This file is part of Tracks.
 #
@@ -153,5 +153,6 @@ def yield_unit_cells(unit_cell_str, sub=None):
             flat[:] = row
             uc.update_reciproke()
             yield uc
+
 
 

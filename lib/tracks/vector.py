@@ -1,5 +1,5 @@
 # Tracks provides tools for analyzing large trajectory files.
-# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
 # This file is part of Tracks.
 #
@@ -255,6 +255,7 @@ def dtl(p1, p2, p3, v1=None, v2=None, v3=None):
                          - p_delta_line_normed*dot(p_delta_line_normed, v_delta)
         v_dtl = dot(p_proj, v_proj)/p_dtl
         return p_dtl, v_dtl
+
 
 
 

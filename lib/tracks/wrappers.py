@@ -1,5 +1,5 @@
 # Tracks provides tools for analyzing large trajectory files.
-# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
 # This file is part of Tracks.
 #
@@ -82,5 +82,6 @@ for name in names:
     python_name = name.replace("-", "_")
     exec("%s = Wrapper(name)" % python_name)
     __all__.append(python_name)
+
 
 

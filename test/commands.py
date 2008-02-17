@@ -1,5 +1,5 @@
 # Tracks provides tools for analyzing large trajectory files.
-# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
 # This file is part of Tracks.
 #
@@ -1305,6 +1305,7 @@ class CommandsTestCase(BaseTestCase):
             ":line", "time.reduced", "signal.reduced", "signal.reduced.std",
             os.path.join(output_dir, "reduce.png")
         ])
+
 
 
 

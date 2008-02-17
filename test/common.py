@@ -1,5 +1,5 @@
 # Tracks provides tools for analyzing large trajectory files.
-# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
 # This file is part of Tracks.
 #
@@ -89,6 +89,7 @@ class BaseTestCase(unittest.TestCase):
     def assertArrayAlmostZero(self, arr, abserr_threshold):
         abserr = abs(arr).max()
         self.assert_(abserr <= abserr_threshold, "The absolute error is larger than given threshold: %5.3e > %5.3e" % (abserr, abserr_threshold))
+
 
 
 

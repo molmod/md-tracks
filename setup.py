@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # Tracks provides tools for analyzing large trajectory files.
-# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
 # This file is part of Tracks.
 #
@@ -43,6 +43,7 @@ if __name__ == "__main__":
             'Programming Language :: Python',
         ],
     )
+
 
 
 
