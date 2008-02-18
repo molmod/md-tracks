@@ -32,6 +32,13 @@ __all__ = [
 ]
 
 
+def yield_real_lines(f):
+    for line in f:
+        line = line[:line.find("#")]
+        if len(line.strip()) > 0:
+            yield line
+
+
 def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit=angstrom, atom_indexes=None, clear=True):
     """Convert an xyz file into separate tracks."""
     xyz_reader = XYZReader(filename, sub, file_unit=file_unit)
@@ -60,7 +67,7 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     dtypes = [numpy.dtype(d) for d in dtypes]
     mtw = MultiTracksWriter(filenames, dtypes, clear=clear)
     f = file(filename)
-    for line in itertools.islice(f, sub.start, sub.stop, sub.step):
+    for line in itertools.islice(yield_real_lines(f), sub.start, sub.stop, sub.step):
         row = [float(word) for word in line.split()[:6]]
         row[1] = row[1]*fs
         mtw.dump_row(row)
