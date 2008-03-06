@@ -30,7 +30,7 @@ if __name__ == "__main__":
         description='Tracks provides tools for analyzing large trajectory files.',
         author='Toon Verstraelen',
         author_email='Toon.Verstraelen@UGent.be',
-        url='https://molmod.ugent.be/zeobuilder',
+        url='http://molmod.ugent.be/code/',
         package_dir = {'tracks': 'lib/tracks'},
         packages = ['tracks'],
         scripts=glob("scripts/*"),
