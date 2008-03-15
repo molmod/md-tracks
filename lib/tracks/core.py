@@ -101,13 +101,16 @@ class Track(object):
         dtype, f = self._get_read_buffer(sub.start)
         stop_bytes = min(sub.stop*dtype.itemsize, self._get_data_size())
         length = stop_bytes/dtype.itemsize - sub.start
-        return numpy.fromfile(f, dtype, length, '')[::sub.step]
+        result = numpy.fromfile(f, dtype, length, '')[::sub.step]
+        f.close()
+        return result
 
     def append(self, data):
         if len(data.shape) != 1:
             raise Error("Only 1-dimensional arrays can be stored in tracks.")
         f = self._get_append_buffer(data.dtype)
         data.tofile(f)
+        f.close()
 
     def size(self):
         dtype = self._get_header_dtype()
