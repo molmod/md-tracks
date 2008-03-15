@@ -135,7 +135,7 @@ class PlotDescriptor(object):
     def init_line_data(self, xunit, yunit):
         sub = parse_slice(self.options.slice)
         if len(self.args) == 1:
-            self.y = load_track(self.args[0])[sub]
+            self.y = load_track(self.args[0], sub)
             self.x = None
             self.error = None
             label = self.args[0]
@@ -143,25 +143,25 @@ class PlotDescriptor(object):
             if len(self.args[0]) == 0:
                 self.x = None
             else:
-                self.x = load_track(self.args[0])[sub]
-            self.y = load_track(self.args[1])[sub]
+                self.x = load_track(self.args[0], sub)
+            self.y = load_track(self.args[1], sub)
             self.error = None
             label = self.args[1]
         elif len(self.args) == 3:
             if len(self.args[0]) == 0:
                 self.x = None
             else:
-                self.x = load_track(self.args[0])[sub]
-            self.y = load_track(self.args[1])[sub]
+                self.x = load_track(self.args[0], sub)
+            self.y = load_track(self.args[1], sub)
             if len(self.args[2]) == 0:
                 self.error = None
             else:
-                self.error = load_track(self.args[2])[sub]
+                self.error = load_track(self.args[2], sub)
             label = self.args[1]
         else:
             self.parser.error("A line description should at most contain three tracks. Got:\n%s" % " ".join(self.args))
         if self.x is None:
-            self.x = numpy.arange(len(self.y), dtype=float)[sub]
+            self.x = numpy.arange(sub.start, sub.stop, sub.step, dtype=float)
         elif len(self.x) > len(self.y): # allow the x-axis to contain more data
             self.x = self.x[:len(self.y)]
         self.x = self.x/xunit
@@ -250,8 +250,8 @@ class ScatterDescriptor(PlotDescriptor):
     def init_scatter_data(self, xunit, yunit):
         sub = parse_slice(self.options.slice)
         if len(self.args) == 2:
-            self.x = load_track(self.args[0])[sub]
-            self.y = load_track(self.args[1])[sub]
+            self.x = load_track(self.args[0], sub)
+            self.y = load_track(self.args[1], sub)
             label = "%s vs. %s" % (self.args[0], self.args[1])
         else:
             self.parser.error("A scatter description must contain two tracks. Got:\n%s" % " ".join(self.args))
@@ -420,7 +420,7 @@ class ContourDescriptor(PlotDescriptor):
         if len(self.args)!=3:
             self.parser.error("Excpecting three data arguments. Got %i" % len(self.args))
         self.sub = parse_slice(self.options.slice)
-        self.x = load_track(self.args[0])[self.sub]
+        self.x = load_track(self.args[0], self.sub)
         self.y = load_track(self.args[1])
         self.transform_prefix = self.args[2]
         self.options.label = None
@@ -428,7 +428,7 @@ class ContourDescriptor(PlotDescriptor):
     def plot(self, xunit, yunit):
         z = numpy.zeros((len(self.y), len(self.x)), float)
         for index in xrange(len(self.y)):
-            z[index] = load_track("%s.%07i" % (self.transform_prefix, index))[self.sub]
+            z[index] = load_track("%s.%07i" % (self.transform_prefix, index), self.sub)
         if self.options.zlog:
             z = numpy.log(abs(z))
         if self.options.zmin is None:

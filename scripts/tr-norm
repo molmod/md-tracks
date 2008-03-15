@@ -60,7 +60,7 @@ sub = parse_slice(options.slice)
 
 result = 0.0
 for path_in in paths_in:
-    f = load_track(path_in)[sub]
+    f = load_track(path_in, sub)
     result += f*f
     log("PROCESSED %s" % path_in)
 

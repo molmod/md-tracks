@@ -30,6 +30,9 @@ import unittest, os, numpy
 log.verbose = False
 
 
+__all__ = ["TrackTestCase", "MultiTrackTestCase"]
+
+
 class TrackTestCase(BaseTestCase):
     def get_arrays(self):
         floats = [numpy.float32, numpy.float64]
@@ -85,16 +88,17 @@ class TrackTestCase(BaseTestCase):
             track.append(rnd1)
             rnd2 = []
             for index in xrange(10):
-                rnd2.append(track.read(start=index*5, length=5))
+                rnd2.append(track.read(slice(index*5, (index+1)*5)))
             rnd2 = numpy.concatenate(rnd2)
             self.assertArraysEqual(rnd1, rnd2)
             self.assertEqual(rnd1.dtype, rnd2.dtype)
+            break
 
     def test_read_behind(self):
         for rnd1 in self.get_arrays():
             track = Track("test", clear=True)
             track.append(rnd1)
-            rnd2 = track.read(50,10)
+            rnd2 = track.read(slice(50,60))
             self.assertEqual(len(rnd2), 0)
             self.assertEqual(rnd1.dtype, rnd2.dtype)
 

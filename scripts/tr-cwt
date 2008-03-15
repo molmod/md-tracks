@@ -128,7 +128,7 @@ for index, freq in enumerate(frequencies):
     right_margin[index] = time[-1] - 0.25*time_step*morlet_sample.shape[1]
     result = 0.0
     for path_in in paths_in:
-        signal = load_track(path_in)[sub]
+        signal = load_track(path_in, sub)
         if len(signal) != len(time):
             raise ValueError("Each signal must contain the same amount of data is the time_axis.")
         if morlet_sample.shape[1] > len(signal):

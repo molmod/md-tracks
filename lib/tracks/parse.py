@@ -20,6 +20,8 @@
 
 
 from tracks.core import TrackNotFoundError, load_track, MultiTracksReader
+from tracks.util import fix_slice
+
 from molmod.units import parse_unit
 from molmod.unit_cell import UnitCell
 
@@ -27,7 +29,7 @@ import sys, numpy, itertools
 
 
 __all__ = [
-    "Error", "parse_slice", "fix_slice", "get_delta", "parse_x_step",
+    "Error", "parse_slice", "get_delta", "parse_x_step",
     "parse_x_last", "parse_x_length", "yield_unit_cells",
 ]
 
@@ -45,13 +47,6 @@ def parse_slice(s):
         else:
             result.append(int(word))
     return slice(*result)
-
-
-def fix_slice(s):
-    if s is None:
-        return slice(0, sys.maxint, 1)
-    else:
-        return s
 
 
 def _parse_x_track(s, fn, convert=parse_unit):

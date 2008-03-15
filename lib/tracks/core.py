@@ -20,6 +20,7 @@
 
 
 from tracks.log import log
+from tracks.util import fix_slice
 from tracks import context
 
 import numpy, os, struct
@@ -67,6 +68,13 @@ class Track(object):
             raise Error("Wrong header: %s is not a correct track filename" % self.filename)
         return numpy.dtype(header[8:].replace("0",""))
 
+    def _get_data_size(self):
+        f = file(self.filename, "rb")
+        f.seek(0, 2)
+        size = f.tell() - self.header_size
+        f.close()
+        return size
+
     def _get_read_buffer(self, start):
         if not os.path.isfile(self.filename):
             raise TrackNotFoundError("File not found: %s" % self.filename)
@@ -88,16 +96,12 @@ class Track(object):
         if os.path.isfile(self.filename):
             os.remove(self.filename)
 
-    def read(self, start=0, length=-1):
-        dtype, f = self._get_read_buffer(start)
-        #return numpy.fromfile(f, dtype, length, '')
-        # Don't use numpy.fromfile because it print annoying warning messages
-        # on stderr when reading behind the end of the file.
-        size = length*dtype.itemsize
-        data = f.read(length*dtype.itemsize)
-        if len(data) < size:
-            length = len(data)/dtype.itemsize
-        return numpy.ndarray(shape=(length,), dtype=dtype, buffer=data)
+    def read(self, sub=None):
+        sub = fix_slice(sub)
+        dtype, f = self._get_read_buffer(sub.start)
+        stop_bytes = min(sub.stop*dtype.itemsize, self._get_data_size())
+        length = stop_bytes/dtype.itemsize - sub.start
+        return numpy.fromfile(f, dtype, length, '')[::sub.step]
 
     def append(self, data):
         if len(data.shape) != 1:
@@ -106,9 +110,8 @@ class Track(object):
         data.tofile(f)
 
 
-def load_track(filename):
-    return Track(filename).read()
-
+def load_track(filename, sub=None):
+    return Track(filename).read(sub)
 
 def dump_track(filename, data):
     Track(filename, clear=True).append(data)
@@ -131,7 +134,7 @@ class MultiTracksReader(object):
         while True:
             start = buffer_counter*self.buffer_length
             log(" %i " % start, False)
-            buffers = [track.read(start, self.buffer_length) for track in self.tracks]
+            buffers = [track.read(slice(start, start+self.buffer_length)) for track in self.tracks]
             shortest = min(len(b) for b in buffers)
             longest = max(len(b) for b in buffers)
             if shortest == self.buffer_length:

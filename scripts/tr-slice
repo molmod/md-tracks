@@ -47,6 +47,6 @@ else:
     parser.error("Expecting three arguments.")
 
 sub = parse_slice(sub)
-dump_track(path_out, load_track(path_in)[sub])
+dump_track(path_out, load_track(path_in, sub))
 
 

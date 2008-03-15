@@ -83,7 +83,7 @@ sub = parse_slice(options.slice)
 
 for path_in in paths_in:
     path_out = "%s.rfft" % path_in
-    f = load_track(path_in)[sub]
+    f = load_track(path_in, sub)
     size = len(f)/divide
     result = 0.0
     for index in xrange(divide):

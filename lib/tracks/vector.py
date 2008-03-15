@@ -72,7 +72,7 @@ class TrackVector(object):
 
 
 def from_prefix(prefix, sub=slice(None)):
-    return TrackVector([load_track('%s.%s' % (prefix, c))[sub] for c in 'xyz'])
+    return TrackVector([load_track('%s.%s' % (prefix, c), sub) for c in 'xyz'])
 
 
 def dot(tv1, tv2):

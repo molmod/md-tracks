@@ -19,9 +19,19 @@
 # --
 
 
+import sys
+
+
 __all__ = [
-    "AtomFilter",
+    "fix_slice", "AtomFilter",
 ]
+
+
+def fix_slice(s):
+    if s is None:
+        return slice(0, sys.maxint, 1)
+    else:
+        return slice(s.start or 0, s.stop or sys.maxint, s.step or 1)
 
 
 class AtomFilter(object):

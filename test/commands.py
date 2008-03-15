@@ -349,8 +349,8 @@ class CommandsTestCase(BaseTestCase):
             sub = parse_slice(subs)
             # slice in read
             self.from_cp2k_ener("thf01")
-            t1 = load_track("tracks/time")[sub]
-            k1 = load_track("tracks/kinetic_energy")[sub]
+            t1 = load_track("tracks/time", sub)
+            k1 = load_track("tracks/kinetic_energy", sub)
             lines = self.execute("tr-read", ["-s%s" % subs, "ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
             self.execute("tr-write", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
             t2 = load_track("tracks/time")
@@ -359,8 +359,8 @@ class CommandsTestCase(BaseTestCase):
             self.assertArraysAlmostEqual(k1, k2, 1e-5)
             # slice in write
             self.from_cp2k_ener("thf01")
-            t1 = load_track("tracks/time")[sub]
-            k1 = load_track("tracks/kinetic_energy")[sub]
+            t1 = load_track("tracks/time", sub)
+            k1 = load_track("tracks/kinetic_energy", sub)
             lines = self.execute("tr-read", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
             self.execute("tr-write", ["-s%s" % subs, "ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
             t2 = load_track("tracks/time")
@@ -503,7 +503,7 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(len(glob.glob("tracks/atom.vel.*.?")), len(glob.glob("tracks/*.rfft.irfft")))
         for filename in glob.glob("tracks/atom.vel.*.?"):
             other_filename = "%s.rfft.irfft" % filename
-            tmp1 = load_track(filename)[100:203:2]
+            tmp1 = load_track(filename, slice(100,203,2))
             tmp2 = load_track(other_filename)
             self.assertEqual(tmp1.shape, tmp2.shape)
             self.assertArraysAlmostEqual(tmp1, tmp2, 1e-7)
