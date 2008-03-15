@@ -37,10 +37,9 @@ of prefixes defines the Cartesian coordinates to be used. Optionally a second
 group of Cartesian coordinates can be defined. The two groups are separated by
 a minus sign. If only one group is given, the rdf is computed based on the
 distances between the coordinates in this group. If a second group is given,
-the distances between the distances between the coordinates of both groups are
-considered. For each prefix, it is assumed that three files exist: ${prefix}.x,
-${prefix}.y and ${prefix}.z. If only one group is defined, at least two prefixes
-must be given.
+the distances between the coordinates of both groups are considered. For each
+prefix, it is assumed that three files exist: ${prefix}.x, ${prefix}.y and
+${prefix}.z. If only one group is defined, at least two prefixes must be given.
 
 The last four arguments have the following interpretation:
 
