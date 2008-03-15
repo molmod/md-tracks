@@ -24,7 +24,7 @@ from common import *
 from tracks.core import *
 from tracks.log import log
 
-import unittest, os, numpy
+import unittest, numpy
 
 
 log.verbose = False

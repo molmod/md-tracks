@@ -21,7 +21,7 @@
 
 
 from tracks.core import dump_track
-from tracks.parse import parse_x_last, parse_x_length
+from tracks.parse import parse_x_duration, parse_x_length
 from molmod.units import parse_unit
 from molmod.constants import lightspeed
 
@@ -50,7 +50,7 @@ parser = OptionParser(usage)
 
 if len(args) == 3:
     nwavenumber = parse_x_length(args[0])
-    duration = parse_x_last(args[1])
+    duration = parse_x_duration(args[1])
     output_path = args[2]
 else:
     parser.error("Expecting three arguments.")

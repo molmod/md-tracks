@@ -61,6 +61,8 @@ class Track(object):
         return f
 
     def _get_header_dtype(self):
+        if not os.path.isfile(self.filename):
+            raise TrackNotFoundError("File not found: %s" % self.filename)
         f = file(self.filename, "rb")
         header = f.read(self.header_size)
         f.close()
@@ -69,6 +71,8 @@ class Track(object):
         return numpy.dtype(header[8:].replace("0",""))
 
     def _get_data_size(self):
+        if not os.path.isfile(self.filename):
+            raise TrackNotFoundError("File not found: %s" % self.filename)
         f = file(self.filename, "rb")
         f.seek(0, 2)
         size = f.tell() - self.header_size

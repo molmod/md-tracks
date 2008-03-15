@@ -19,16 +19,31 @@
 # --
 
 
-import common
+from common import *
 
-import import_test
+from tracks.core import dump_track
+from tracks.parse import *
+from tracks.log import log
 
-import unittest
-from commands import *
-from core import *
-from fit import *
-from wrappers import *
-from parse import *
-unittest.main()
+import unittest, numpy
 
+
+log.verbose = False
+
+
+__all__ = ["ParseTestCase"]
+
+
+class ParseTestCase(BaseTestCase):
+    def test_step(self):
+        dump_track("test", numpy.arange(50))
+        self.assertEqual(parse_x_step("test"), 1)
+
+    def test_duration(self):
+        dump_track("test", numpy.arange(50))
+        self.assertEqual(parse_x_duration("test"), 49)
+
+    def test_length(self):
+        dump_track("test", numpy.arange(50))
+        self.assertEqual(parse_x_length("test"), 50)
 

@@ -19,7 +19,7 @@
 # --
 
 
-from tracks.core import TrackNotFoundError, load_track, MultiTracksReader
+from tracks.core import TrackNotFoundError, Track, MultiTracksReader
 from tracks.util import fix_slice
 
 from molmod.units import parse_unit
@@ -30,7 +30,7 @@ import sys, numpy, itertools
 
 __all__ = [
     "Error", "parse_slice", "get_delta", "parse_x_step",
-    "parse_x_last", "parse_x_length", "yield_unit_cells",
+    "parse_x_duration", "parse_x_length", "yield_unit_cells",
 ]
 
 
@@ -52,8 +52,8 @@ def parse_slice(s):
 def _parse_x_track(s, fn, convert=parse_unit):
     try:
         # first try to read the file
-        x_axis = load_track(s)
-        return fn(x_axis)
+        x_track = Track(s)
+        return fn(x_track)
     except TrackNotFoundError:
         # then interpret s as a measure with units
         try:
@@ -77,19 +77,22 @@ def parse_x_step(s, measure="time"):
 
     The return value is the discretization step in a.u.
     """
-    return _parse_x_track(s, get_delta)
+    def fn(x_track):
+        return get_delta(x_track.read(slice(10)))
+    return _parse_x_track(s, fn)
 
 
-def parse_x_last(s):
-    """Convert s into the total time or interval size.
+def parse_x_duration(s):
+    """Convert s into the total duration or interval size.
 
     The argument can be a track file with the x-axis, or the interval size
     multiplied by a unit, e.g. 20*ps.
 
     The return value is the total size in a.u.
     """
-    def fn(x_axis):
-        return x_axis[-1] - x_axis[0]
+    def fn(x_track):
+        size = x_track.size()
+        return x_track.read(slice(size-1,size))[0] - x_track.read(slice(1))[0]
     return _parse_x_track(s, fn)
 
 
@@ -99,8 +102,8 @@ def parse_x_length(s):
     The argument can be a track file or an integer. The return value is the size
     of the array or the given integer.
     """
-    def fn(x_axis):
-        return len(x_axis)
+    def fn(x_track):
+        return x_track.size()
     return _parse_x_track(s, fn, int)
 
 
