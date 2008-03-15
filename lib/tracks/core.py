@@ -29,7 +29,7 @@ import numpy, os, struct
 __all__ = [
     "Error", "TrackNotFoundError",
     "Track",
-    "load_track", "dump_track",
+    "load_track", "dump_track", "track_size",
     "MultiTracksReader", "MultiTracksWriter",
 ]
 
@@ -109,12 +109,20 @@ class Track(object):
         f = self._get_append_buffer(data.dtype)
         data.tofile(f)
 
+    def size(self):
+        dtype = self._get_header_dtype()
+        size_bytes = self._get_data_size()
+        return size_bytes/dtype.itemsize
+
 
 def load_track(filename, sub=None):
     return Track(filename).read(sub)
 
 def dump_track(filename, data):
     Track(filename, clear=True).append(data)
+
+def track_size(filename):
+    return Track(filename).size()
 
 
 class MultiTracksReader(object):
