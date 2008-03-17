@@ -1126,28 +1126,28 @@ class CommandsTestCase(BaseTestCase):
         result = float(self.execute("tr-calc", ["cos(atAr.mass)"])[0])
         self.assertAlmostEqual(result, numpy.cos(periodic["Ar"].mass), 5)
 
-    def test_closest_distance1(self):
+    def test_shortest_distance1(self):
         self.from_xyz("thf01", "pos")
         group_a = ["tracks/atom.pos.0000005", "tracks/atom.pos.0000003", "tracks/atom.pos.0000007", "tracks/atom.pos.0000008"]
         group_b = ["tracks/atom.pos.0000009", "tracks/atom.pos.0000010", "tracks/atom.pos.0000011", "tracks/atom.pos.0000012"]
-        self.execute("tr-closest-distance", group_a + ["-"] + group_b + ["tracks/atom.pos.cd"])
-        closest_distances = load_track("tracks/atom.pos.cd")
-        equal = numpy.zeros(len(closest_distances), int)
+        self.execute("tr-shortest-distance", group_a + ["-"] + group_b + ["tracks/atom.pos.cd"])
+        shortest_distances = load_track("tracks/atom.pos.cd")
+        equal = numpy.zeros(len(shortest_distances), int)
         for atom_a in group_a:
             for atom_b in group_b:
                 distances = vector.dist(
                     vector.TrackVector.from_prefix(atom_a),
                     vector.TrackVector.from_prefix(atom_b),
                 )
-                self.assert_((distances >= closest_distances).all())
-                equal += (closest_distances == distances)
+                self.assert_((distances >= shortest_distances).all())
+                equal += (shortest_distances == distances)
         self.assert_((equal > 0).all())
 
-    def test_closest_distance2(self):
+    def test_shortest_distance2(self):
         self.from_xyz("water32", "pos")
         group_a = ["tracks/atom.pos.0000005", "tracks/atom.pos.0000003", "tracks/atom.pos.0000007", "tracks/atom.pos.0000008"]
         group_b = ["tracks/atom.pos.0000009", "tracks/atom.pos.0000010", "tracks/atom.pos.0000011", "tracks/atom.pos.0000012"]
-        self.execute("tr-closest-distance", group_a + ["-"] + group_b + ["tracks/atom.pos.cd", "--cell=9.865*A,"])
+        self.execute("tr-shortest-distance", group_a + ["-"] + group_b + ["tracks/atom.pos.cd", "--cell=9.865*A,"])
 
     def test_pca(self):
         self.from_xyz("thf01", "pos")

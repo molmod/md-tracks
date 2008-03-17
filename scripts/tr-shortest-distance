@@ -32,7 +32,7 @@ from optparse import OptionParser
 
 usage = """%prog [options] prefix_a1 [prefix_a2 ...] - prefix_b1 [prefix_b2] output
 
-%prog computes the closest distance at each time step between the Cartesian
+%prog computes the shortest distance at each time step between the Cartesian
 coordinates in the files ${prefix_a*}.${c} and ${prefix_b*}.${c}, where ${c}
 is x, y or z. The result is written to ${output}.
 
@@ -63,7 +63,7 @@ if options.unit_cell_str is None:
 else:
     cell = TrackCell.from_cell_str(options.unit_cell_str)
 
-closest_distances = None
+shortest_distances = None
 
 for prefix_a in prefixes_a:
     vec_a = TrackVector.from_prefix(prefix_a)
@@ -73,10 +73,10 @@ for prefix_a in prefixes_a:
         if cell is not None:
             delta = cell.shortest_vector(delta)
         distances = delta.norm()
-        if closest_distances is None:
-            closest_distances = distances
+        if shortest_distances is None:
+            shortest_distances = distances
         else:
-            selection = distances < closest_distances
-            closest_distances[selection] = distances[selection]
+            selection = distances < shortest_distances
+            shortest_distances[selection] = distances[selection]
 
-dump_track(path_out, closest_distances)
+dump_track(path_out, shortest_distances)
