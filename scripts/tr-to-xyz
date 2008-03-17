@@ -24,7 +24,8 @@ from tracks.convert import tracks_to_xyz
 from tracks.parse import parse_slice, yield_unit_cells
 from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.util import AtomFilter
-from tracks.log import log
+from tracks.log import log, usage_tail
+
 from molmod.units import parse_unit
 from molmod.io.xyz import XYZFile
 from molmod.io.psf import PSFFile
@@ -49,8 +50,7 @@ formats:
     - ax,ay,az,bx,by,bz,cx,cy,cz: The cartesian parameters for a triclinic cell.
     - cell_prefix: A track prefix can be used to indicate a time dependent unit cell.
     (The presence of comma's is used to differentiate between all the possibilities.)
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

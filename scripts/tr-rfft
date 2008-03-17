@@ -23,7 +23,7 @@
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option
-from tracks.log import log
+from tracks.log import log, usage_tail
 
 import numpy
 from optparse import OptionParser
@@ -32,7 +32,8 @@ from optparse import OptionParser
 usage = """%prog [options] input1 [input2 ...]
 
 %prog performs a forward real Fourier transform on the tracks given by
-${input1}, ${input2}, ... and stores each transform in ${input*}.rfft"""
+${input1}, ${input2}, ... and stores each transform in ${input*}.rfft
+""" + usage_tail
 
 parser = OptionParser(usage)
 parser.add_option(

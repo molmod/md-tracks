@@ -23,7 +23,7 @@
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option
-from tracks.log import log
+from tracks.log import log, usage_tail
 
 import numpy
 from optparse import OptionParser
@@ -34,8 +34,7 @@ usage = """%prog [options] input1 input2 [input3 ...] output_prefix
 %prog computes the mean, the standard deviation and the standard error on the
 mean of the input tracks and writes the result to ${output_prefix}.mean,
 ${output_prefix}.std and ${output_prefix}.error.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

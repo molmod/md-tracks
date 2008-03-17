@@ -20,6 +20,8 @@
 # --
 
 
+from tracks.log import usage_tail
+
 from molmod.io.psf import PSFFile
 from molmod.graphs import MatchGenerator, RingMatchDefinition
 

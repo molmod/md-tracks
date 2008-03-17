@@ -22,7 +22,7 @@
 
 from tracks.core import load_track, dump_track
 from tracks.optparse import add_quiet_option
-from tracks.log import log
+from tracks.log import log, usage_tail
 
 from molmod.data.periodic import periodic
 from molmod.io.psf import PSFFile
@@ -42,8 +42,7 @@ where ${c} is x, y, or z. The masses are also taken from the psf file. The
 output is written to ${output_prefix}.ang.mom.${molecule_index}.${c}
 where ${c} is x, y or z. If the last argument is omitted,
 ${output_prefix}=${inpuy_prefix_directory}/ang.mom
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_quiet_option(parser)

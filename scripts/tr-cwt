@@ -23,6 +23,7 @@
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_slice, parse_x_step, parse_unit
 from tracks.optparse import add_slice_option
+from tracks.log import usage_tail
 
 from molmod.constants import lightspeed
 from molmod.units import cm, fs
@@ -39,8 +40,7 @@ The transforms are written to ${output_prefix}.scale.{index}. The frequency axis
 is written to ${output_prefix}.frequencies. The wavenumber axis is written to
 ${output_prefix}.wavenumbers. The sampling of the wavenumber axis can be tuned
 with the options, but the default options should be satisfactory in most cases.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

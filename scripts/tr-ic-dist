@@ -23,7 +23,7 @@
 from tracks.core import dump_track
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option
-from tracks.log import log
+from tracks.log import log, usage_tail
 import tracks.vector as vector
 
 import numpy
@@ -41,8 +41,7 @@ If the arguments ${vel_prefix*} are given, also the time derivative of the
 distance is computed.  Tracks with the given prefixes must exist, and their
 filenames must look like: ${vel_prefix*}.c where c is x, y or z. The output is
 stored in ${vel_output}.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

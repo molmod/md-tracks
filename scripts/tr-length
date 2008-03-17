@@ -22,6 +22,8 @@
 
 from tracks.core import track_size
 from tracks.parse import parse_slice
+from tracks.log import usage_tail
+
 from molmod.units import parse_unit
 
 import numpy
@@ -31,8 +33,7 @@ from optparse import OptionParser
 usage = """%prog [options] input
 
 %prog prints out the length of the track ${input}.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 (options, args) = parser.parse_args()

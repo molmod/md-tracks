@@ -21,6 +21,7 @@
 
 
 from tracks.core import load_track
+from tracks.log import usage_tail
 
 import numpy
 from optparse import OptionParser
@@ -30,8 +31,7 @@ usage = """%prog [options] input1 input2 [input3 ...]
 
 %prog computes the correlation coefficient between ${input1} and all the
 subsequent inputs. The results are printed on screen.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 (options, args) = parser.parse_args()

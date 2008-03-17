@@ -23,6 +23,7 @@
 from tracks.core import load_track
 from tracks.parse import parse_slice
 from tracks.optparse import add_slice_option
+from tracks.log import usage_tail
 
 from molmod.units import parse_unit
 
@@ -44,9 +45,7 @@ the following structure:
 where ${kind} is 'line' or 'bar'. A plot specification must start with a colon,
 i.e. ':'. The available options and the number of data arguments depend on the
 kind of plot.
-
-%prog -h prints the global options.
-%prog --plot-help print the options for the line specifications."""
+""" + usage_tail
 
 global_parser = OptionParser(global_usage)
 global_parser.add_option(

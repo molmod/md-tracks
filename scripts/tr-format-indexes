@@ -19,6 +19,7 @@
 #
 # --
 
+from tracks.log import usage_tail
 
 from optparse import OptionParser
 
@@ -35,7 +36,7 @@ usage = """%prog [options] format indexes
 
 This function is mainly meant to process the output of tr-select and
 tr-select-rings.
-"""
+""" + usage_tail
 
 parser = OptionParser(usage)
 (options, args) = parser.parse_args()

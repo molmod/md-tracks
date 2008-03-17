@@ -23,7 +23,8 @@
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_x_step, parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option
-from tracks.log import log
+from tracks.log import log, usage_tail
+
 from molmod.units import parse_unit
 
 import numpy
@@ -38,8 +39,7 @@ estimates of the following values:
  * the error on the mean
  * the correlation time
  * the statistical inefficiency
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 parser.add_option(

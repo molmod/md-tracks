@@ -22,7 +22,7 @@
 
 from tracks.core import load_track, dump_track
 from tracks.optparse import add_quiet_option
-from tracks.log import log
+from tracks.log import log, usage_tail
 
 import numpy
 from optparse import OptionParser
@@ -33,8 +33,7 @@ usage = """%prog [options] input1 [input2 ...]
 %prog performs an inverse real Fourier transform on the tracks given by
 ${input1}, ${input2}, ... and stores each transform in a file in
 ${input*}.irfft.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_quiet_option(parser)

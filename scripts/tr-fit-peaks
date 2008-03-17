@@ -22,7 +22,7 @@
 
 from tracks.core import load_track, dump_track
 from tracks.optparse import add_quiet_option
-from tracks.log import log
+from tracks.log import log, usage_tail
 from tracks.fit import PeakModel, FitCostFunction
 
 from molmod.units import parse_unit
@@ -45,8 +45,7 @@ The mandatory arguments are the following:
 The model has the following analytical form:
 
 amplitude(l) = b + sum_i A_i*exp(-((l-lc_i)/sigma_i)**2)
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 parser.add_option(

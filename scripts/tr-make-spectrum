@@ -22,7 +22,8 @@
 
 from tracks.core import load_track, dump_track
 from tracks.optparse import add_quiet_option
-from tracks.log import log
+from tracks.log import log, usage_tail
+
 from molmod.data.periodic import periodic
 
 from optparse import OptionParser
@@ -32,8 +33,7 @@ usage = """%prog input1 [input2 ...] output
 
 %prog computes the power spectrum from the individual Fourier transforms given
 as ${input1}, ${input2}, ... and stores the result in ${output}.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_quiet_option(parser)

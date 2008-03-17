@@ -23,7 +23,8 @@
 from tracks.core import MultiTracksWriter
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option
-from tracks.log import log
+from tracks.log import log, usage_tail
+
 from molmod.units import parse_unit
 
 import numpy, sys, itertools
@@ -41,8 +42,7 @@ unit1 defaults to au. The other unit arguments default to the unit of the
 previous input. Instead of a track filename, one can also give a bare minus sign
 as argument, indicating that the corresponding column on the stdin has to be
 ignored.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

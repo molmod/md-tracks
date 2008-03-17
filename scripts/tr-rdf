@@ -23,7 +23,8 @@
 from tracks.core import load_track, dump_track, MultiTracksReader, MultiTracksWriter
 from tracks.parse import parse_slice, yield_unit_cells
 from tracks.optparse import add_quiet_option, add_slice_option
-from tracks.log import log
+from tracks.log import log, usage_tail
+
 from molmod.units import parse_unit
 from molmod.unit_cell import UnitCell
 
@@ -64,8 +65,7 @@ If the option --bin-tracks is used, the last file is not generated, but instead
 a series of files ${output_prefix}.bin.${bin_index} are created. Each file is a
 track with the time-dependent number of counts in each corresponding bin. This
 data can be used to compute a correct statistical error on the rdf with tr-blav.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

@@ -24,8 +24,9 @@ from tracks.core import dump_track, TrackNotFoundError
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.util import AtomFilter
-from tracks.log import log
+from tracks.log import log, usage_tail
 import tracks.vector as vector
+
 from molmod.io.psf import PSFFile
 
 import numpy, os
@@ -74,8 +75,7 @@ and optionally:
 ${prefix}.${kind}.vel.${index1}.${index2}
 ${prefix}.${kind}.vel.${index1}.${index2}.${index3}
 ${prefix}.${kind}.vel.${index1}.${index2}.${index3}.${index4}
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

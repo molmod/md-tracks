@@ -20,6 +20,8 @@
 # --
 
 
+from tracks.log import usage_tail
+
 from molmod.io.psf import PSFFile
 from molmod.data.periodic import periodic
 
@@ -142,8 +144,7 @@ e.g. if you are interested in the velocity auto-correlation of all oxygen atoms
 in a simulation, this command will do the job:
 
 tr-ac $(%prog example.psf 'a.number==8' -p tracks/atom.vel --xyz) tracks/time tracks/oxygen.vel.ac
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 (options, args) = parser.parse_args()

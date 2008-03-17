@@ -23,7 +23,7 @@
 from tracks.core import MultiTracksReader, Track, dump_track, MultiTracksWriter
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option
-from tracks.log import log
+from tracks.log import log, usage_tail
 
 import numpy
 from optparse import OptionParser
@@ -33,8 +33,7 @@ usage = """%prog [options] input1 input2 [input3...]
 
 %prog applies principal component analysis to the input tracks. An overview
 of the eigenvalues and eigenvectors is printed on screen.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_quiet_option(parser)

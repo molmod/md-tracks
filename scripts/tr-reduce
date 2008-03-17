@@ -23,7 +23,7 @@
 from tracks.core import load_track, dump_track
 from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.parse import parse_slice
-from tracks.log import log
+from tracks.log import log, usage_tail
 
 import numpy
 from optparse import OptionParser
@@ -36,8 +36,7 @@ written to ${output_prefix}.reduced. The standard deviation of the values within
 per block are written to ${output_prefix}.reduced.std. if the argument
 output_prefix is omitted, it defaults to input. This is tool is mainly usefull
 for plotting very long time series in a comprehensible fashion.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

@@ -23,7 +23,8 @@
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_x_step
 from tracks.optparse import add_quiet_option
-from tracks.log import log
+from tracks.log import log, usage_tail
+
 from molmod.units import parse_unit
 
 import numpy
@@ -37,8 +38,7 @@ usage = """%prog [options] input1 [input2 ...] {time_axis|time_step} output
 The normalized auto- correlation function will be stored in
 ${output}.normalized. The next-to-last argument is a track that contains the
 time-axis, or it can also be the time step between two discrete data points.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 parser.add_option(

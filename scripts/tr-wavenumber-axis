@@ -22,6 +22,8 @@
 
 from tracks.core import dump_track
 from tracks.parse import parse_x_duration, parse_x_length
+from tracks.log import usage_tail
+
 from molmod.units import parse_unit
 from molmod.constants import lightspeed
 
@@ -41,8 +43,7 @@ arguments:
   time_axis -- the time track (the last value will be taken to read the duration of the simulation.)
   duration -- The total duration of the dynamics simulation in fs
   output -- The name of the track where the wavenumber axis is written to.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 (options, args) = parser.parse_args()

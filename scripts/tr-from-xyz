@@ -24,7 +24,8 @@ from tracks.convert import xyz_to_tracks
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option, add_append_option
 from tracks.util import AtomFilter
-from tracks.log import log
+from tracks.log import log, usage_tail
+
 from molmod.units import parse_unit
 from molmod.io.psf import PSFFile
 
@@ -45,8 +46,7 @@ atom.${middle_word}.${index}.${c} where
  * ${c} is x, y or z.
 The tracks are stored in atomic units in the ${output_directory}. If the
 ${output_directory} argument is not given, it defaults to 'tracks'.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

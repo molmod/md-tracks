@@ -23,7 +23,7 @@
 from tracks.convert import cpmd_ener_to_tracks
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option, add_append_option
-from tracks.log import log
+from tracks.log import log, usage_tail
 
 from optparse import OptionParser
 
@@ -35,8 +35,7 @@ usage = """%prog filename [output_directory]
 Each track is associated with a column of the file:
 step, fict_kinectic_energy, temperature, potential_energy, classical_energy, hamiltonian_energy, ms_displacement
 The tracks are stored in atomic units.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

@@ -22,6 +22,7 @@
 
 from tracks.core import load_track, dump_track
 from tracks.optparse import add_slice_option
+from tracks.log import usage_tail
 
 import molmod.units
 import molmod.constants
@@ -39,8 +40,7 @@ that uses ${var*}, If not input or output tracks are given, the outcome of the
 expression is printed on screen. Th following constants and functions are defined
 
 %(details)s
-
-%%prog -h prints out all available options."""
+""" + usage_tail.replace("%", "%%")
 
 
 def load_constants(m):

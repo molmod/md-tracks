@@ -23,7 +23,8 @@
 from tracks.core import load_track, dump_track
 from tracks.parse import get_delta
 from tracks.optparse import add_quiet_option
-from tracks.log import log
+from tracks.log import log, usage_tail
+
 from molmod.units import parse_unit
 
 import numpy
@@ -44,7 +45,7 @@ and ${ac_prefix}.normalized.error. The arguments are:
   time_step  --  The discretization step of the input tracks of tr-ac.
   duration -- The total simulation time.
   tau  --  An estimate of the correlation time.
-"""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_quiet_option(parser)

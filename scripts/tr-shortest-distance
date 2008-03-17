@@ -25,7 +25,7 @@ from tracks.cell import TrackCell
 from tracks.vector import TrackVector
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_cell_option
-from tracks.log import log
+from tracks.log import log, usage_tail
 
 import numpy, itertools
 from optparse import OptionParser
@@ -36,8 +36,7 @@ usage = """%prog [options] prefix_a1 [prefix_a2 ...] - prefix_b1 [prefix_b2] out
 %prog computes the shortest distance at each time step between the Cartesian
 coordinates in the files ${prefix_a*}.${c} and ${prefix_b*}.${c}, where ${c}
 is x, y or z. The result is written to ${output}.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_quiet_option(parser)

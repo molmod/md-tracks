@@ -23,7 +23,8 @@
 from tracks.core import MultiTracksReader
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option
-from tracks.log import log
+from tracks.log import log, usage_tail
+
 from molmod.units import parse_unit
 
 import numpy, itertools
@@ -38,8 +39,7 @@ each input track can be prepended with a unit that will be used to write the
 data on screen. (The tracks store the data in atomic units.) The first unit
 defaults to au. If an input has no unit defined, the unit for the previous
 input is used.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

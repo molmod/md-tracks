@@ -23,6 +23,8 @@
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_slice
 from tracks.optparse import add_slice_option
+from tracks.log import usage_tail
+
 from molmod.units import parse_unit
 
 import numpy
@@ -38,8 +40,7 @@ output = (input1 - <input1>)*(input2 - <input2>)
 when input2 is given, where <...> stands for the average over the whole track.
 This script is usefull when deriving macroscopic properties from fluctuations
 in a molecular dynamics simulation. The output can be studied with tr-blav.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)

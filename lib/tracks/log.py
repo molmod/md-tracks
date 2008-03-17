@@ -23,7 +23,7 @@ import sys
 
 
 __all__ = [
-    "Logger", "log"
+    "Logger", "log", "usage_tail",
 ]
 
 
@@ -55,4 +55,18 @@ class Logger(object):
 log = Logger()
 
 
+usage_tail = """
+The option -h prints out all available options
 
+--------------------------------------------------------------------------------
+TRACKS is developed at the Center for Molecular Modeling and is distributed
+as free software, under the conditions of the GNU General public license,
+version 3. For more information about TRACKS, visit:
+
+http://molmod.ugent.be/code
+
+If you like TRACKS, become a registered user via the website at no cost!
+This will advance our funding proposals and facilitates the continuity of this
+project.
+--------------------------------------------------------------------------------
+"""

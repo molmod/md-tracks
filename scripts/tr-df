@@ -23,7 +23,8 @@
 from tracks.core import load_track, dump_track, MultiTracksReader, MultiTracksWriter
 from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option
-from tracks.log import log
+from tracks.log import log, usage_tail
+
 from molmod.units import parse_unit
 
 import numpy, itertools
@@ -46,8 +47,7 @@ If --bin-tracks is used, ${output_prefix}.hist will not be created, but a series
 of files ${output_prefix}.bin.${bin_index}, which contains the count of the
 corresponding bin at each time step. This can be used to compute a correct error
 estimate on each bin count with tr-blav.
-
-%prog -h prints out all available options."""
+""" + usage_tail
 
 parser = OptionParser(usage)
 add_slice_option(parser)
