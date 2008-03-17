@@ -20,7 +20,9 @@
 # --
 
 
-from tracks.core import MultiTracksReader, MultiTracksWriter
+from tracks.core import dump_track
+from tracks.cell import TrackCell
+from tracks.vector import TrackVector
 from tracks.parse import parse_slice, yield_unit_cells
 from tracks.log import log
 
@@ -42,43 +44,39 @@ parser.add_option(
     help="Don't print any output."
 )
 parser.add_option(
-    "-c", "--cell", dest="unit_cell_str", default="",
+    "-c", "--cell", dest="unit_cell_str", default=None,
     help="Take into account the given periodic boundary conditions.",
 )
 (options, args) = parser.parse_args()
 
 path_out = args[-1]
 prefixes_a, prefixes_b = " ".join(args[:-1]).split(" - ")
-def get_mtr(prefixes):
-    prefixes = prefixes.split()
-    if len(prefixes) == 0: parser.error("Expecting at least one coordinate in each group.")
-    filenames = sum((["%s.x" % prefix, "%s.y" % prefix,"%s.z" % prefix] for prefix in prefixes), [])
-    return MultiTracksReader(filenames), prefixes
+prefixes_a = prefixes_a.split()
+if len(prefixes_a) == 0:
+    parser.error("At least one prefix_a expected.")
+prefixes_b = prefixes_b.split()
+if len(prefixes_b) == 0:
+    parser.error("At least one prefix_b expected.")
 
-mtr_a, prefixes_a = get_mtr(prefixes_a)
-mtr_b, prefixes_b = get_mtr(prefixes_b)
+if options.unit_cell_str is None:
+    cell = None
+else:
+    cell = TrackCell.from_cell_str(options.unit_cell_str)
 
-if len(set(prefixes_a) & set(prefixes_b)) > 0:
-    parser.error("The two sets of prefixes must be disjoint.")
+closest_distances = None
 
-n_a = len(prefixes_a)
-n_b = len(prefixes_b)
+for prefix_a in prefixes_a:
+    vec_a = TrackVector.from_prefix(prefix_a)
+    for prefix_b in prefixes_b:
+        vec_b = TrackVector.from_prefix(prefix_b)
+        delta = vec_a - vec_b
+        if cell is not None:
+            delta = cell.shortest_vector(delta)
+        distances = delta.norm()
+        if closest_distances is None:
+            closest_distances = distances
+        else:
+            selection = distances < closest_distances
+            closest_distances[selection] = distances[selection]
 
-mtw = MultiTracksWriter([path_out], [numpy.dtype(float)])
-for row_a, row_b, unit_cell in itertools.izip(mtr_a.yield_rows(), mtr_b.yield_rows(), yield_unit_cells(options.unit_cell_str)):
-    row_a = numpy.array(row_a).reshape((-1,3))
-    row_b = numpy.array(row_b).reshape((-1,3))
-    closest_distance = None
-    for i_a in xrange(n_a):
-        for i_b in xrange(n_b):
-            delta = row_a[i_a] - row_b[i_b]
-            delta = unit_cell.shortest_vector(delta)
-            distance = numpy.linalg.norm(delta)
-            if closest_distance is None or distance < closest_distance:
-                closest_distance = distance
-    mtw.dump_row([closest_distance])
-mtw.finalize()
-
-
-
-
+dump_track(path_out, closest_distances)

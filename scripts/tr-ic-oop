@@ -73,22 +73,22 @@ else:
 sub = parse_slice(options.slice)
 if vel_prefix1 is None:
     dump_track(pos_output_path, vector.oop(
-        vector.from_prefix(pos_prefix1, sub),
-        vector.from_prefix(pos_prefix2, sub),
-        vector.from_prefix(pos_prefix3, sub),
-        vector.from_prefix(pos_prefix4, sub),
+        vector.TrackVector.from_prefix(pos_prefix1, sub),
+        vector.TrackVector.from_prefix(pos_prefix2, sub),
+        vector.TrackVector.from_prefix(pos_prefix3, sub),
+        vector.TrackVector.from_prefix(pos_prefix4, sub),
     ))
     log("WRITTEN: %s" % pos_output_path)
 else:
     pos_oop, vel_oop = vector.oop(
-        vector.from_prefix(pos_prefix1, sub),
-        vector.from_prefix(pos_prefix2, sub),
-        vector.from_prefix(pos_prefix3, sub),
-        vector.from_prefix(pos_prefix4, sub),
-        vector.from_prefix(vel_prefix1, sub),
-        vector.from_prefix(vel_prefix2, sub),
-        vector.from_prefix(vel_prefix3, sub),
-        vector.from_prefix(vel_prefix4, sub),
+        vector.TrackVector.from_prefix(pos_prefix1, sub),
+        vector.TrackVector.from_prefix(pos_prefix2, sub),
+        vector.TrackVector.from_prefix(pos_prefix3, sub),
+        vector.TrackVector.from_prefix(pos_prefix4, sub),
+        vector.TrackVector.from_prefix(vel_prefix1, sub),
+        vector.TrackVector.from_prefix(vel_prefix2, sub),
+        vector.TrackVector.from_prefix(vel_prefix3, sub),
+        vector.TrackVector.from_prefix(vel_prefix4, sub),
     )
     dump_track(pos_output_path, pos_oop)
     log("WRITTEN: %s" % pos_output_path)

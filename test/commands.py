@@ -761,17 +761,17 @@ class CommandsTestCase(BaseTestCase):
                 vel_filename = pos_filename.replace('pos', 'vel')
                 if os.path.isfile(vel_filename):
                     bond_pos_check, bond_vel_check = vector.dist(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index2),
                     )
                     bond_vel = load_track(vel_filename)
                     self.assertArraysEqual(bond_vel, bond_vel_check)
                 else:
                     bond_pos_check = vector.dist(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index2),
                     )
                 self.assertArraysEqual(bond_pos, bond_pos_check)
             # bend
@@ -783,20 +783,20 @@ class CommandsTestCase(BaseTestCase):
                 vel_filename = pos_filename.replace('pos', 'vel')
                 if os.path.isfile(vel_filename):
                     bend_pos_check, bend_vel_check = vector.bend(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index2),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index3),
                     )
                     bend_vel = load_track(vel_filename)
                     self.assertArraysEqual(bend_vel, bend_vel_check)
                 else:
                     bend_pos_check = vector.bend(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index3),
                     )
                 self.assertArraysEqual(bend_pos, bend_pos_check)
             # span
@@ -808,17 +808,17 @@ class CommandsTestCase(BaseTestCase):
                 vel_filename = pos_filename.replace('pos', 'vel')
                 if os.path.isfile(vel_filename):
                     span_pos_check, span_vel_check = vector.dist(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index3),
                     )
                     span_vel = load_track(vel_filename)
                     self.assertArraysEqual(span_vel, span_vel_check)
                 else:
                     span_pos_check = vector.dist(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index3),
                     )
                 self.assertArraysEqual(span_pos, span_pos_check)
             # dihed
@@ -830,23 +830,23 @@ class CommandsTestCase(BaseTestCase):
                 vel_filename = pos_filename.replace('pos', 'vel')
                 if os.path.isfile(vel_filename):
                     dihed_pos_check, dihed_vel_check = vector.dihed(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index4),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index2),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index3),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index4),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index4),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index4),
                     )
                     dihed_vel = load_track(vel_filename)
                     self.assertArraysEqual(dihed_vel, dihed_vel_check)
                 else:
                     dihed_pos_check = vector.dihed(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index4),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index4),
                     )
                 self.assertArraysEqual(dihed_pos, dihed_pos_check)
             # dtl
@@ -858,20 +858,20 @@ class CommandsTestCase(BaseTestCase):
                 vel_filename = pos_filename.replace('pos', 'vel')
                 if os.path.isfile(vel_filename):
                     dtl_pos_check, dtl_vel_check = vector.dtl(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index2),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index3),
                     )
                     dtl_vel = load_track(vel_filename)
                     self.assertArraysEqual(dtl_vel, dtl_vel_check)
                 else:
                     dtl_pos_check = vector.dtl(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index3),
                     )
                 self.assertArraysEqual(dtl_pos, dtl_pos_check)
             # oop
@@ -883,23 +883,23 @@ class CommandsTestCase(BaseTestCase):
                 vel_filename = pos_filename.replace('pos', 'vel')
                 if os.path.isfile(vel_filename):
                     oop_pos_check, oop_vel_check = vector.oop(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index4),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index1),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index2),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index3),
-                        vector.from_prefix("tracks/atom.vel.%07i" % index4),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index4),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.vel.%07i" % index4),
                     )
                     oop_vel = load_track(vel_filename)
                     self.assertArraysEqual(oop_vel, oop_vel_check)
                 else:
                     oop_pos_check = vector.oop(
-                        vector.from_prefix("tracks/atom.pos.%07i" % index1),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index2),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index3),
-                        vector.from_prefix("tracks/atom.pos.%07i" % index4),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index1),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index2),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index3),
+                        vector.TrackVector.from_prefix("tracks/atom.pos.%07i" % index4),
                     )
                 self.assertArraysEqual(oop_pos, oop_pos_check)
         self.from_xyz("thf01", "pos")
@@ -1136,8 +1136,8 @@ class CommandsTestCase(BaseTestCase):
         for atom_a in group_a:
             for atom_b in group_b:
                 distances = vector.dist(
-                    vector.from_prefix(atom_a),
-                    vector.from_prefix(atom_b),
+                    vector.TrackVector.from_prefix(atom_a),
+                    vector.TrackVector.from_prefix(atom_b),
                 )
                 self.assert_((distances >= closest_distances).all())
                 equal += (closest_distances == distances)

@@ -70,16 +70,16 @@ else:
 sub = parse_slice(options.slice)
 if vel_output_path is None:
     dump_track(pos_output_path, vector.dist(
-        vector.from_prefix(pos_prefix1, sub),
-        vector.from_prefix(pos_prefix2, sub),
+        vector.TrackVector.from_prefix(pos_prefix1, sub),
+        vector.TrackVector.from_prefix(pos_prefix2, sub),
     ))
     log("WRITTEN: %s" % pos_output_path)
 else:
     dist_pos, dist_vel = vector.dist(
-        vector.from_prefix(pos_prefix1, sub),
-        vector.from_prefix(pos_prefix2, sub),
-        vector.from_prefix(vel_prefix1, sub),
-        vector.from_prefix(vel_prefix2, sub),
+        vector.TrackVector.from_prefix(pos_prefix1, sub),
+        vector.TrackVector.from_prefix(pos_prefix2, sub),
+        vector.TrackVector.from_prefix(vel_prefix1, sub),
+        vector.TrackVector.from_prefix(vel_prefix2, sub),
     )
     dump_track(pos_output_path, dist_pos)
     log("WRITTEN: %s" % pos_output_path)

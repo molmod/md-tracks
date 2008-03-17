@@ -25,14 +25,18 @@ import numpy
 
 
 __all__ = [
-    "TrackVector", "from_prefix",
+    "TrackVector",
     "dot", "cross", "triple",
     "bend", "dihed", "dist",
 ]
 
 
 class TrackVector(object):
-    def __init__(self, data, sub=slice(None)):
+    @classmethod
+    def from_prefix(cls, prefix, sub=slice(None)):
+        return cls([load_track('%s.%s' % (prefix, c), sub) for c in 'xyz'])
+
+    def __init__(self, data):
         self.data = data
 
     def __sub__(self, other):
@@ -69,10 +73,6 @@ class TrackVector(object):
 
     def norm(self):
         return numpy.sqrt(sum(c*c for c in self.data))
-
-
-def from_prefix(prefix, sub=slice(None)):
-    return TrackVector([load_track('%s.%s' % (prefix, c), sub) for c in 'xyz'])
 
 
 def dot(tv1, tv2):
