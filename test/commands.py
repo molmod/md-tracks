@@ -1126,7 +1126,7 @@ class CommandsTestCase(BaseTestCase):
         result = float(self.execute("tr-calc", ["cos(atAr.mass)"])[0])
         self.assertAlmostEqual(result, numpy.cos(periodic["Ar"].mass), 5)
 
-    def test_closest_distance(self):
+    def test_closest_distance1(self):
         self.from_xyz("thf01", "pos")
         group_a = ["tracks/atom.pos.0000005", "tracks/atom.pos.0000003", "tracks/atom.pos.0000007", "tracks/atom.pos.0000008"]
         group_b = ["tracks/atom.pos.0000009", "tracks/atom.pos.0000010", "tracks/atom.pos.0000011", "tracks/atom.pos.0000012"]
@@ -1142,6 +1142,12 @@ class CommandsTestCase(BaseTestCase):
                 self.assert_((distances >= closest_distances).all())
                 equal += (closest_distances == distances)
         self.assert_((equal > 0).all())
+
+    def test_closest_distance2(self):
+        self.from_xyz("water32", "pos")
+        group_a = ["tracks/atom.pos.0000005", "tracks/atom.pos.0000003", "tracks/atom.pos.0000007", "tracks/atom.pos.0000008"]
+        group_b = ["tracks/atom.pos.0000009", "tracks/atom.pos.0000010", "tracks/atom.pos.0000011", "tracks/atom.pos.0000012"]
+        self.execute("tr-closest-distance", group_a + ["-"] + group_b + ["tracks/atom.pos.cd", "--cell=9.865*A,"])
 
     def test_pca(self):
         self.from_xyz("thf01", "pos")

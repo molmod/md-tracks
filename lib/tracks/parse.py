@@ -109,6 +109,13 @@ def parse_x_length(s):
 
 def yield_unit_cells(unit_cell_str, sub=None):
     sub = fix_slice(sub)
+    if len(unit_cell_str) == 0:
+        uc = UnitCell(
+            numpy.array([[1,0,0],[0,1,0],[0,0,1]], float),
+            numpy.array([False,False,False]),
+        )
+        while True:
+            yield uc
     if "," in unit_cell_str:
         parameters = list(parse_unit(word) for word in unit_cell_str.split(",") if len(word) > 0)
         if len(parameters) == 1:
