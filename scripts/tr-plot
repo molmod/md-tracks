@@ -22,6 +22,8 @@
 
 from tracks.core import load_track
 from tracks.parse import parse_slice
+from tracks.optparse import add_slice_option
+
 from molmod.units import parse_unit
 
 import numpy, sys, pylab
@@ -188,12 +190,7 @@ class LineDescriptor(PlotDescriptor):
         "-l", "--label",
         help="Specifiy a label for this line",
     )
-    parser.add_option(
-        "-s", "--slice", default="::",
-        help="Subsample the input tracks with the given slice start:stop:step "
-             "where start, stop and step must be integers or can be omitted. "
-             "The slice interpretation is pythonic. [default=%default]",
-    )
+    add_slice_option(parser)
     parser.add_option(
         "-d", dest="linestyle",
         help="Specify the line style: '-', '--', ':', ... (see matplotlib.sf.net)",
@@ -233,12 +230,7 @@ class ScatterDescriptor(PlotDescriptor):
         "-l", "--label",
         help="Specifiy a label for this scatter",
     )
-    parser.add_option(
-        "-s", "--slice", default="::",
-        help="Subsample the input tracks with the given slice start:stop:step "
-             "where start, stop and step must be integers or can be omitted. "
-             "The slice interpretation is pythonic. [default=%default]",
-    )
+    add_slice_option(parser)
     parser.add_option(
         "-m", dest="marker",
         help="Specify the symbol that is used for the data points in the "
@@ -283,12 +275,7 @@ class BarDescriptor(PlotDescriptor):
         "-l", "--label",
         help="Specifiy a label for this line",
     )
-    parser.add_option(
-        "-s", "--slice", default="::",
-        help="Subsample the input tracks with the given slice start:stop:step "
-             "where start, stop and step must be integers or can be omitted. "
-             "The slice interpretation is pythonic. [default=%default]",
-    )
+    add_slice_option(parser)
 
     def plot(self, xunit, yunit):
         self.init_line_data(xunit, yunit)
@@ -408,12 +395,7 @@ class ContourDescriptor(PlotDescriptor):
         "--zunit", default='au',
         help="The unit for the z-axis. [default=%default]",
     )
-    parser.add_option(
-        "-s", "--slice", default="::",
-        help="Subsample the X input tracks with the given slice start:stop:step "
-             "where start, stop and step must be integers or can be omitted. "
-             "The slice interpretation is pythonic. [default=%default]",
-    )
+    add_slice_option(parser)
 
     def __init__(self, args):
         PlotDescriptor.__init__(self, args)

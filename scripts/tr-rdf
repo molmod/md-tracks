@@ -22,6 +22,7 @@
 
 from tracks.core import load_track, dump_track, MultiTracksReader, MultiTracksWriter
 from tracks.parse import parse_slice, yield_unit_cells
+from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.log import log
 from molmod.units import parse_unit
 from molmod.unit_cell import UnitCell
@@ -44,11 +45,11 @@ ${prefix}.z. If only one group is defined, at least two prefixes must be given.
 The last four arguments have the following interpretation:
 
 * cell: The unit cell parameters. Several formats are supported:
-    - a,: an cubic unit cell with ridge a.
+    - a,: A cubic unit cell with ridge a.
     - a,b,c: The parameters of an orthorhombic cell.
     - a,b,c,alpha,beta,gamma: The parameters for a triclinic cell.
     - ax,ay,az,bx,by,bz,cx,cy,cz: The cartesian parameters for a triclinic cell.
-    - cell_prefix: A track prefix can be used to indicate a time dependent unit cell.
+    - cell_prefix: A track prefix can be used for a time dependent unit cell.
     (The presence of comma's is used to differentiate between all the possibilities.)
 * rmax: The maximum (inter-atomic) distance for which the rdf is computed.
 * nbins: The number of bins in the histogram. (including the empty ones)
@@ -67,16 +68,8 @@ data can be used to compute a correct statistical error on the rdf with tr-blav.
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
-parser.add_option(
-    "-s", "--slice", default="::",
-    help="Subsample the input track with the given slice start:stop:step "
-         "where start, stop and step must be integers or can be omitted. "
-         "The slice interpretation is pythonic. [default=%default]",
-)
-parser.add_option(
-    "-q", "--quiet", action="store_false", dest="verbose", default=True,
-    help="Don't print any output."
-)
+add_slice_option(parser)
+add_quiet_option(parser)
 parser.add_option(
     "--bin-tracks", action="store_true", default=False,
     help="Create a separate track for each bin, to be processed with tr-blav."

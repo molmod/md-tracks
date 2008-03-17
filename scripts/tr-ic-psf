@@ -22,6 +22,7 @@
 
 from tracks.core import dump_track, TrackNotFoundError
 from tracks.parse import parse_slice
+from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.util import AtomFilter
 from tracks.log import log
 import tracks.vector as vector
@@ -77,20 +78,12 @@ ${prefix}.${kind}.vel.${index1}.${index2}.${index3}.${index4}
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
-parser.add_option(
-    "-s", "--slice", default="::",
-    help="Subsample the input tracks with the given slice start:stop:step "
-         "where start, stop and step must be integers or can be omitted. "
-         "The slice interpretation is pythonic. [default=%default]",
-)
+add_slice_option(parser)
+add_quiet_option(parser)
 parser.add_option(
     "-o", "--output-prefix",
     help="Use this prefix for the output files, if not given the prefix of the"
          "Cartesian coordinate tracks is used.",
-)
-parser.add_option(
-    "-q", "--quiet", action="store_false", dest="verbose", default=True,
-    help="Don't print any output."
 )
 parser.add_option(
     "-c", "--cos", action="store_true", default=False,

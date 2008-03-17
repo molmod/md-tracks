@@ -22,6 +22,7 @@
 
 from tracks.core import load_track, dump_track
 from tracks.parse import get_delta
+from tracks.optparse import add_quiet_option
 from tracks.log import log
 from molmod.units import parse_unit
 
@@ -46,10 +47,7 @@ and ${ac_prefix}.normalized.error. The arguments are:
 """
 
 parser = OptionParser(usage)
-parser.add_option(
-    "-q", "--quiet", action="store_false", dest="verbose", default=True,
-    help="Don't print any output."
-)
+add_quiet_option(parser)
 (options, args) = parser.parse_args()
 
 

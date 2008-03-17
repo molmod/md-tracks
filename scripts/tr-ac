@@ -22,6 +22,7 @@
 
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_x_step
+from tracks.optparse import add_quiet_option
 from tracks.log import log
 from molmod.units import parse_unit
 
@@ -51,10 +52,7 @@ parser.add_option(
     "-n", "--non-zero-average", default=False, action="store_true",
     help="Take into account that the average of the tracks is non-zero.",
 )
-parser.add_option(
-    "-q", "--quiet", action="store_false", dest="verbose", default=True,
-    help="Don't print any output."
-)
+add_quiet_option(parser)
 (options, args) = parser.parse_args()
 
 

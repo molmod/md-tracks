@@ -22,6 +22,7 @@
 
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_x_step, parse_slice
+from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.log import log
 from molmod.units import parse_unit
 
@@ -59,20 +60,12 @@ parser.add_option(
     "-t", "--time-unit", default='au',
     help="The correlation time is printed in the given TIME_UNIT. [default=%default]",
 )
-parser.add_option(
-    "-q", "--quiet", action="store_false", dest="verbose", default=True,
-    help="Don't print any output."
-)
+add_quiet_option(parser)
 parser.add_option(
     "-b", "--min-blocks", default="100",
     help="The minimum number of blocks to be considered."
 )
-parser.add_option(
-    "-s", "--slice", default="::",
-    help="Subsample the input track with the given slice start:stop:step "
-         "where start, stop and step must be integers or can be omitted. "
-         "The slice interpretation is pythonic. [default=%default]",
-)
+add_slice_option(parser)
 (options, args) = parser.parse_args()
 
 

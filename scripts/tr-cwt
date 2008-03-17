@@ -22,6 +22,7 @@
 
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_slice, parse_x_step, parse_unit
+from tracks.optparse import add_slice_option
 
 from molmod.constants import lightspeed
 from molmod.units import cm, fs
@@ -42,12 +43,7 @@ with the options, but the default options should be satisfactory in most cases.
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
-parser.add_option(
-    "-s", "--slice", default="::",
-    help="Subsample the input tracks with the given slice start:stop:step "
-         "where start, stop and step must be integers or can be omitted. "
-         "The slice interpretation is pythonic. [default=%default]",
-)
+add_slice_option(parser)
 parser.add_option(
     "--kmin", default="300/cm",
     help="The minimum value for the wavenumber axis [default=%default]",

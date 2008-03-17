@@ -21,6 +21,8 @@
 
 
 from tracks.core import load_track, dump_track
+from tracks.optparse import add_slice_option
+
 import molmod.units
 import molmod.constants
 from molmod.data.periodic import periodic
@@ -108,12 +110,7 @@ details = details % {
 
 
 parser = OptionParser(usage % {"details": details})
-parser.add_option(
-    "-s", "--slice", default="::",
-    help="Subsample the input tracks with the given slice start:stop:step "
-         "where start, stop and step must be integers or can be omitted. "
-         "The slice interpretation is pythonic. [default=%default]",
-)
+add_slice_option(parser)
 (options, args) = parser.parse_args()
 
 

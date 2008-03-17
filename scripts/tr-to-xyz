@@ -22,6 +22,7 @@
 
 from tracks.convert import tracks_to_xyz
 from tracks.parse import parse_slice, yield_unit_cells
+from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.util import AtomFilter
 from tracks.log import log
 from molmod.units import parse_unit
@@ -52,12 +53,8 @@ formats:
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
-parser.add_option(
-    "-s", "--slice", default="::",
-    help="Subsample the trajectory with the given slice start:stop:step "
-         "where start, stop and step must be integers or can be omitted. "
-         "The slice interpretation is pythonic. [default=%default]",
-)
+add_slice_option(parser)
+add_quiet_option(parser)
 parser.add_option(
     "-u", "--unit", default="angstrom",
     help="The unit in which the data in the xyz file are written. [default=%default]",
@@ -66,10 +63,6 @@ parser.add_option(
     "-a", "--filter-atoms",
     help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
          "comma separated list of of integers. Counting starts at zero.",
-)
-parser.add_option(
-    "-q", "--quiet", help="Don't print any output.",
-    action="store_false", dest="verbose", default=True,
 )
 (options, args) = parser.parse_args()
 

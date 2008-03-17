@@ -22,6 +22,7 @@
 
 from tracks.core import MultiTracksReader, Track, dump_track, MultiTracksWriter
 from tracks.parse import parse_slice
+from tracks.optparse import add_quiet_option
 from tracks.log import log
 
 import numpy
@@ -36,10 +37,7 @@ of the eigenvalues and eigenvectors is printed on screen.
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
-parser.add_option(
-    "-q", "--quiet", action="store_false", dest="verbose", default=True,
-    help="Don't print any output.",
-)
+add_quiet_option(parser)
 parser.add_option(
     "-n", "--non-zero-mean", action="store_true", default=False,
     help="Substract the mean from the input tracks prior to pca.",

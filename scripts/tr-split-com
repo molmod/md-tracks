@@ -21,6 +21,7 @@
 
 
 from tracks.core import load_track, dump_track
+from tracks.optparse import add_quiet_option
 from tracks.log import log
 from molmod.data.periodic import periodic
 from molmod.io.psf import PSFFile
@@ -49,10 +50,7 @@ nor the x, y or z. For example: tracks/atom.pos
 %prog -h prints out all available options."""
 
 parser = OptionParser(usage)
-parser.add_option(
-    "-q", "--quiet", action="store_false", dest="verbose", default=True,
-    help="Don't print any output."
-)
+add_quiet_option(parser)
 parser.add_option(
     "-m", "--filter-molecules",
     help="Only consider the molecules listed in FILTER_MOLECULES. This is a "
