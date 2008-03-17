@@ -47,20 +47,26 @@ class Wrapper(object):
         command = "%s %s" % (self.name, " ".join(args))
         if self.verbose:
             print command
-        if self.verbose:
-            p = Popen(shlex.split(command), stdin=PIPE, stdout=PIPE)
-        else:
-            p = Popen(shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        output = list(line[:-1] for line in p.stdout)
-        retcode = p.wait()
-        if self.verbose:
-            print "\n".join(output)
+        p = Popen(shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        output = []
+        error = []
+        while True:
+            for line in p.stdout:
+                if len(line) == 0: break
+                if self.verbose: sys.stdout.write(line)
+                output.append(line[:-1])
+            for line in p.stderr:
+                if len(line) == 0: break
+                if self.verbose: sys.stderr.write(line)
+                error.append(line[:-1])
+            retcode = p.poll()
+            if retcode is not None: break
         if retcode != 0:
             if not self.verbose:
                 print "Command output:"
                 print "\n".join(output)
                 print "Command error:"
-                print "".join(p.stderr)
+                print "\n".join(error)
             raise WrapperError("An error occured while executing command (retcode=%i): \n%s" % (retcode, command))
         return output
 
