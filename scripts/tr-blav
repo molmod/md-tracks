@@ -21,7 +21,7 @@
 
 
 from tracks.core import load_track, dump_track
-from tracks.parse import parse_x_step
+from tracks.parse import parse_x_step, parse_slice
 from tracks.log import log
 from molmod.units import parse_unit
 
@@ -67,6 +67,12 @@ parser.add_option(
     "-b", "--min-blocks", default="100",
     help="The minimum number of blocks to be considered."
 )
+parser.add_option(
+    "-s", "--slice", default="::",
+    help="Subsample the input track with the given slice start:stop:step "
+         "where start, stop and step must be integers or can be omitted. "
+         "The slice interpretation is pythonic. [default=%default]",
+)
 (options, args) = parser.parse_args()
 
 
@@ -82,7 +88,8 @@ else:
     parser.error("Expecting two arguments.")
 
 min_blocks = int(options.min_blocks)
-f = load_track(path_in)
+sub = parse_slice(options.slice)
+f = load_track(path_in, sub)
 
 x = [] # block sizes
 y = [] # error on the mean

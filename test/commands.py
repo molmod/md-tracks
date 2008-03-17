@@ -962,6 +962,11 @@ class CommandsTestCase(BaseTestCase):
             "--plot-error=%s" % os.path.join(output_dir, "blav_error.png"),
             "--plot-ctime=%s" % os.path.join(output_dir, "blav_ctime.png"),
         ])
+        self.execute("tr-blav", [
+            "tracks/temperature", "tracks/time", "-b10", "-tfs", "--slice=10::4",
+            "--plot-error=%s" % os.path.join(output_dir, "blav_error_sliced.png"),
+            "--plot-ctime=%s" % os.path.join(output_dir, "blav_ctime_sliced.png"),
+        ])
 
     def test_split_com(self):
         self.from_xyz("water32", "vel", ["-u1"])
