@@ -54,3 +54,9 @@ def add_cell_option(parser):
              "The presence of comma's is used to differentiate between all "
              "the possibilities."
     )
+
+def add_cos_option(parser):
+    parser.add_option(
+        "--cos", action="store_true", default=False,
+        help="Compute the cosine instead of the angle."
+    )

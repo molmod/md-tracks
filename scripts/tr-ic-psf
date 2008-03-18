@@ -22,7 +22,8 @@
 
 from tracks.core import dump_track, TrackNotFoundError
 from tracks.parse import parse_slice
-from tracks.optparse import add_quiet_option, add_slice_option, add_cell_option
+from tracks.optparse import add_quiet_option, add_slice_option, \
+    add_cell_option, add_cos_option
 from tracks.util import AtomFilter
 from tracks.log import log, usage_tail
 import tracks.vector as vector
@@ -81,14 +82,11 @@ parser = OptionParser(usage)
 add_slice_option(parser)
 add_quiet_option(parser)
 add_cell_option(parser)
+add_cos_option(parser)
 parser.add_option(
     "-o", "--output-prefix",
     help="Use this prefix for the output files, if not given the prefix of the"
          "Cartesian coordinate tracks is used.",
-)
-parser.add_option(
-    "--cos", action="store_true", default=False,
-    help="Compute the cosine instead of the angle."
 )
 (options, args) = parser.parse_args()
 
