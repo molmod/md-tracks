@@ -29,6 +29,7 @@ from core import *
 from fit import *
 from wrappers import *
 from parse import *
+from cell import *
 unittest.main()
 
 
