@@ -24,6 +24,7 @@ from common import *
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_slice
 import tracks.vector as vector
+import tracks.cell as cell
 
 from molmod.io.psf import PSFFile
 from molmod.io.xyz import XYZReader, XYZFile
@@ -1131,8 +1132,8 @@ class CommandsTestCase(BaseTestCase):
         self.from_xyz("thf01", "pos")
         group_a = ["tracks/atom.pos.0000005", "tracks/atom.pos.0000003", "tracks/atom.pos.0000007", "tracks/atom.pos.0000008"]
         group_b = ["tracks/atom.pos.0000009", "tracks/atom.pos.0000010", "tracks/atom.pos.0000011", "tracks/atom.pos.0000012"]
-        self.execute("tr-shortest-distance", group_a + ["-"] + group_b + ["tracks/atom.pos.cd"])
-        shortest_distances = load_track("tracks/atom.pos.cd")
+        self.execute("tr-shortest-distance", group_a + ["-"] + group_b + ["tracks/atom.pos.sd"])
+        shortest_distances = load_track("tracks/atom.pos.sd")
         equal = numpy.zeros(len(shortest_distances), int)
         for atom_a in group_a:
             for atom_b in group_b:
@@ -1146,9 +1147,21 @@ class CommandsTestCase(BaseTestCase):
 
     def test_shortest_distance2(self):
         self.from_xyz("water32", "pos")
-        group_a = ["tracks/atom.pos.0000005", "tracks/atom.pos.0000003", "tracks/atom.pos.0000007", "tracks/atom.pos.0000008"]
-        group_b = ["tracks/atom.pos.0000009", "tracks/atom.pos.0000010", "tracks/atom.pos.0000011", "tracks/atom.pos.0000012"]
-        self.execute("tr-shortest-distance", group_a + ["-"] + group_b + ["tracks/atom.pos.cd", "--cell=9.865*A,"])
+        group_a = ["tracks/atom.pos.0000000", "tracks/atom.pos.0000001", "tracks/atom.pos.0000002", "tracks/atom.pos.0000003"]
+        group_b = ["tracks/atom.pos.0000015", "tracks/atom.pos.0000016", "tracks/atom.pos.0000017", "tracks/atom.pos.0000018"]
+        self.execute("tr-shortest-distance", group_a + ["-"] + group_b + ["tracks/atom.pos.sd", "--cell=9.865*A,"])
+        shortest_distances = load_track("tracks/atom.pos.sd")
+        equal = numpy.zeros(len(shortest_distances), int)
+        for atom_a in group_a:
+            for atom_b in group_b:
+                distances = vector.dist(
+                    vector.TrackVector.from_prefix(atom_a),
+                    vector.TrackVector.from_prefix(atom_b),
+                    track_cell=cell.TrackCell.from_cell_str("9.865*A,")
+                )
+                self.assert_((distances >= shortest_distances).all())
+                equal += (shortest_distances == distances)
+        self.assert_((equal > 0).all())
 
     def test_pca(self):
         self.from_xyz("thf01", "pos")

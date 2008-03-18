@@ -95,9 +95,12 @@ def triple(tv1, tv2, tv3):
     )
 
 
-def dist(p1, p2, v1=None, v2=None):
+def dist(p1, p2, v1=None, v2=None, track_cell=None):
     """Compute the distance between two atoms at each time step."""
-    pd = (p1 - p2).norm()
+    p_delta = p1 - p2
+    if track_cell is not None:
+        p_delta = track_cell.shortest_vector(p_delta)
+    pd = (p_delta).norm()
     if v1 is None:
         return pd
     else:
@@ -105,10 +108,13 @@ def dist(p1, p2, v1=None, v2=None):
         return pd, vd
 
 
-def bend(p1, p2, p3, v1=None, v2=None, v3=None, return_cos=False):
+def bend(p1, p2, p3, v1=None, v2=None, v3=None, return_cos=False, track_cell=None):
     """Compute the bending angle of three atoms at each time step."""
     p_delta_a = p1 - p2
     p_delta_b = p3 - p2
+    if track_cell is not None:
+        p_delta_a = track_cell.shortest_vector(p_delta_a)
+        p_delta_b = track_cell.shortest_vector(p_delta_b)
     # compute the norms
     p_norm_a = p_delta_a.norm()
     p_norm_b = p_delta_b.norm()
@@ -136,11 +142,15 @@ def bend(p1, p2, p3, v1=None, v2=None, v3=None, return_cos=False):
 
 
 
-def dihed(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None, return_cos=False):
+def dihed(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None, return_cos=False, track_cell=None):
     """Compute the dihedral angle of four atoms at each time step."""
     p_delta_a = p1 - p2
     p_delta_b = p3 - p2
     p_delta_c = p4 - p3
+    if track_cell is not None:
+        p_delta_a = track_cell.shortest_vector(p_delta_a)
+        p_delta_b = track_cell.shortest_vector(p_delta_b)
+        p_delta_c = track_cell.shortest_vector(p_delta_c)
     # compute the norm of b
     p_norm_b = p_delta_b.norm()
     # normalize the vector b
@@ -191,11 +201,15 @@ def dihed(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None, return_cos=False):
             return p_angle, v_angle
 
 
-def oop(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None):
+def oop(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None, track_cell=None):
     """Compute the distance from p4 to the plane defined by p1, p2 and p3 at each time step."""
     p_delta_a = p1 - p2
     p_delta_b = p3 - p2
     p_ortho_1 = p4 - p1
+    if track_cell is not None:
+        p_delta_a = track_cell.shortest_vector(p_delta_a)
+        p_delta_b = track_cell.shortest_vector(p_delta_b)
+        p_ortho_1 = track_cell.shortest_vector(p_ortho_1)
 
     p_norm_a = p_delta_a.norm()
     p_normed_a = p_delta_a/p_norm_a
@@ -235,12 +249,17 @@ def oop(p1, p2, p3, p4, v1=None, v2=None, v3=None, v4=None):
         return p_oop, v_oop
 
 
-def dtl(p1, p2, p3, v1=None, v2=None, v3=None):
+def dtl(p1, p2, p3, v1=None, v2=None, v3=None, track_cell=None):
     """Compute the distance from p3 to the line defined by p1 and p2 at each time step."""
     p_delta_line = p1 - p2
+    p_delta = p1 - p3
+    if track_cell is not None:
+        p_delta_line = track_cell.shortest_vector(p_delta_line)
+        p_delta = track_cell.shortest_vector(p_delta)
+
+
     p_delta_line_norm = p_delta_line.norm()
     p_delta_line_normed = p_delta_line/p_delta_line_norm
-    p_delta = p1 - p3
     p_proj = p_delta - p_delta_line_normed*dot(p_delta_line_normed, p_delta)
     p_dtl = p_proj.norm()
     if v1 is None:

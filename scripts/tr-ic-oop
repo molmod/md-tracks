@@ -22,7 +22,7 @@
 
 from tracks.core import dump_track
 from tracks.parse import parse_slice
-from tracks.optparse import add_quiet_option, add_slice_option
+from tracks.optparse import add_quiet_option, add_slice_option, add_cell_option
 from tracks.log import log, usage_tail
 import tracks.vector as vector
 
@@ -46,6 +46,7 @@ The output is stored in ${vel_output}.
 parser = OptionParser(usage)
 add_slice_option(parser)
 add_quiet_option(parser)
+add_cell_option(parser)
 (options, args) = parser.parse_args()
 
 
@@ -63,12 +64,19 @@ else:
     parser.error("Expecting five or ten arguments.")
 
 sub = parse_slice(options.slice)
+
+if options.unit_cell_str is None:
+    track_cell = None
+else:
+    track_cell = cell.TrackCell.from_cell_str(options.unit_cell_str, sub)
+
 if vel_prefix1 is None:
     dump_track(pos_output_path, vector.oop(
         vector.TrackVector.from_prefix(pos_prefix1, sub),
         vector.TrackVector.from_prefix(pos_prefix2, sub),
         vector.TrackVector.from_prefix(pos_prefix3, sub),
         vector.TrackVector.from_prefix(pos_prefix4, sub),
+        track_cell=track_cell,
     ))
     log("WRITTEN: %s" % pos_output_path)
 else:
@@ -81,6 +89,7 @@ else:
         vector.TrackVector.from_prefix(vel_prefix2, sub),
         vector.TrackVector.from_prefix(vel_prefix3, sub),
         vector.TrackVector.from_prefix(vel_prefix4, sub),
+        track_cell=track_cell,
     )
     dump_track(pos_output_path, pos_oop)
     log("WRITTEN: %s" % pos_output_path)

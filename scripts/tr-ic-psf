@@ -22,7 +22,7 @@
 
 from tracks.core import dump_track, TrackNotFoundError
 from tracks.parse import parse_slice
-from tracks.optparse import add_quiet_option, add_slice_option
+from tracks.optparse import add_quiet_option, add_slice_option, add_cell_option
 from tracks.util import AtomFilter
 from tracks.log import log, usage_tail
 import tracks.vector as vector
@@ -80,13 +80,14 @@ ${prefix}.${kind}.vel.${index1}.${index2}.${index3}.${index4}
 parser = OptionParser(usage)
 add_slice_option(parser)
 add_quiet_option(parser)
+add_cell_option(parser)
 parser.add_option(
     "-o", "--output-prefix",
     help="Use this prefix for the output files, if not given the prefix of the"
          "Cartesian coordinate tracks is used.",
 )
 parser.add_option(
-    "-c", "--cos", action="store_true", default=False,
+    "--cos", action="store_true", default=False,
     help="Compute the cosine instead of the angle."
 )
 (options, args) = parser.parse_args()
@@ -121,6 +122,12 @@ else:
 
 sub = parse_slice(options.slice)
 psf = PSFFile(path_psf)
+
+if options.unit_cell_str is None:
+    track_cell = None
+else:
+    track_cell = cell.TrackCell.from_cell_str(options.unit_cell_str, sub)
+
 if options.output_prefix is None:
     if vel_prefix is None:
         output_prefix = pos_prefix
@@ -153,6 +160,7 @@ if kind == 'bond':
                     dump_track(pos_name, vector.dist(
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                        track_cell=track_cell,
                     ))
                 else:
                     vel_name = '%s.bond.vel.%07i.%07i' % (output_prefix, index1, index2)
@@ -161,6 +169,7 @@ if kind == 'bond':
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
+                        track_cell=track_cell,
                     )
                     dump_track(pos_name, bond_pos)
                     dump_track(vel_name, bond_vel)
@@ -191,6 +200,7 @@ elif kind == 'bend':
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
                         return_cos=options.cos,
+                        track_cell=track_cell,
                     ))
                 else:
                     vel_name = '%s.bend.vel.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
@@ -202,6 +212,7 @@ elif kind == 'bend':
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
                         return_cos=options.cos,
+                        track_cell=track_cell,
                     )
                     dump_track(pos_name, bend_pos)
                     dump_track(vel_name, bend_vel)
@@ -230,6 +241,7 @@ elif kind == 'span':
                     dump_track(pos_name, vector.dist(
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                        track_cell=track_cell,
                     ))
                 else:
                     vel_name = '%s.span.vel.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
@@ -238,6 +250,7 @@ elif kind == 'span':
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
+                        track_cell=track_cell,
                     )
                     dump_track(pos_name, span_pos)
                     dump_track(vel_name, span_vel)
@@ -271,6 +284,7 @@ elif kind == 'dihed':
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index4), sub),
                         return_cos=options.cos,
+                        track_cell=track_cell,
                     ))
                 else:
                     vel_name = '%s.dihed.vel.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
@@ -284,6 +298,7 @@ elif kind == 'dihed':
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index4), sub),
                         return_cos=options.cos,
+                        track_cell=track_cell,
                     )
                     dump_track(pos_name, dihed_pos)
                     dump_track(vel_name, dihed_vel)
@@ -323,6 +338,7 @@ elif kind == 'dtl':
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                        track_cell=track_cell,
                     ))
                 else:
                     vel_name = '%s.dtl.vel.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
@@ -333,6 +349,7 @@ elif kind == 'dtl':
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
                         vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
+                        track_cell=track_cell,
                     )
                     dump_track(pos_name, dtl_pos)
                     dump_track(vel_name, dtl_vel)
@@ -375,6 +392,7 @@ elif kind == 'oop':
                     vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
                     vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
                     vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index4), sub),
+                    track_cell=track_cell,
                 ))
             else:
                 vel_name = '%s.oop.vel.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
@@ -387,6 +405,7 @@ elif kind == 'oop':
                     vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
                     vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
                     vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index4), sub),
+                    track_cell=track_cell,
                 )
                 dump_track(pos_name, oop_pos)
                 dump_track(vel_name, oop_vel)
