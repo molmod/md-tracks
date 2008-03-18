@@ -22,6 +22,7 @@
 from tracks.core import MultiTracksReader, MultiTracksWriter
 from molmod.io.xyz import XYZReader, XYZWriter
 from molmod.io.cp2k import CellReader
+from molmod.io.atrj import ATRJReader
 from molmod.units import angstrom, fs
 
 import os, numpy, itertools
@@ -170,5 +171,36 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
         xyz_writer.dump("None", coordinates)
     f.close()
 
+
+def atrj_to_tracks(filename, destination, sub=slice(None), atom_indexes=None, clear=True):
+    """Convert an xyz file into separate tracks."""
+    atrj_reader = ATRJReader(filename, sub)
+
+    if atom_indexes is None:
+        atom_indexes = range(atrj_reader.num_atoms)
+    else:
+        atom_indexes = list(atom_indexes)
+
+    filenames = []
+    dtypes = []
+    for index in atom_indexes:
+        for cor in ["x", "y", "z"]:
+            filenames.append(os.path.join(destination, "atom.pos.%07i.%s" % (index, cor)))
+            dtypes.append(numpy.dtype(float))
+    filenames.append(os.path.join(destination, "time"))
+    dtypes.append(numpy.dtype(float))
+    filenames.append(os.path.join(destination, "step"))
+    dtypes.append(numpy.dtype(int))
+    filenames.append(os.path.join(destination, "total_energy"))
+    dtypes.append(numpy.dtype(float))
+
+    mtw = MultiTracksWriter(filenames, clear=clear)
+    for frame in atrj_reader:
+        l = frame.coordinates[atom_indexes].ravel().tolist()
+        l.append(frame.time)
+        l.append(frame.step)
+        l.append(frame.total_energy)
+        mtw.dump_row(l)
+    mtw.finalize()
 
 

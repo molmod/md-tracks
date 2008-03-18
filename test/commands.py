@@ -28,7 +28,7 @@ import tracks.cell as cell
 
 from molmod.io.psf import PSFFile
 from molmod.io.xyz import XYZReader, XYZFile
-from molmod.units import angstrom, fs
+from molmod.units import angstrom, fs, ps, kcalmol
 from molmod.constants import lightspeed, boltzmann
 from molmod.data.periodic import periodic
 
@@ -284,6 +284,36 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(tmp[0], 0.207014E-05, 6)
         self.assertAlmostEqual(tmp[1], 0.817859E-05, 6)
         self.assertAlmostEqual(tmp[-1], 0.397302E-01, 6)
+
+    def test_from_atrj(self):
+        # normal test
+        self.execute("tr-from-atrj", [os.path.join(input_dir, "bartek.atrj")])
+        time = load_track("tracks/time")
+        self.assertArraysAlmostEqual(time, numpy.array([1, 2, 3])*ps, 1e-5)
+        step = load_track("tracks/step")
+        self.assertArraysAlmostEqual(step, numpy.array([1000, 2000, 3000]), 1e-5)
+        step = load_track("tracks/total_energy")
+        self.assertArraysAlmostEqual(step, numpy.array([341.860357, 334.433566, 336.136295])*kcalmol, 1e-5)
+        cor = load_track("tracks/atom.pos.0000000.x")
+        self.assertArraysAlmostEqual(cor, numpy.array([11.953453, 11.953817, 11.850193])*angstrom, 1e-5)
+        cor = load_track("tracks/atom.pos.0000027.y")
+        self.assertArraysAlmostEqual(cor, numpy.array([8.354914, 9.718356, 9.159180])*angstrom, 1e-5)
+        cor = load_track("tracks/atom.pos.0001292.z")
+        self.assertArraysAlmostEqual(cor, numpy.array([0.622863, 0.901589, -0.250132])*angstrom, 1e-5)
+        # slicing test
+        self.execute("tr-from-atrj", [os.path.join(input_dir, "bartek.atrj"), "--slice=::2"])
+        time = load_track("tracks/time")
+        self.assertArraysAlmostEqual(time, numpy.array([1, 3])*ps, 1e-5)
+        step = load_track("tracks/step")
+        self.assertArraysAlmostEqual(step, numpy.array([1000, 3000]), 1e-5)
+        step = load_track("tracks/total_energy")
+        self.assertArraysAlmostEqual(step, numpy.array([341.860357, 336.136295])*kcalmol, 1e-5)
+        cor = load_track("tracks/atom.pos.0000000.x")
+        self.assertArraysAlmostEqual(cor, numpy.array([11.953453, 11.850193])*angstrom, 1e-5)
+        cor = load_track("tracks/atom.pos.0000027.y")
+        self.assertArraysAlmostEqual(cor, numpy.array([8.354914, 9.159180])*angstrom, 1e-5)
+        cor = load_track("tracks/atom.pos.0001292.z")
+        self.assertArraysAlmostEqual(cor, numpy.array([0.622863, -0.250132])*angstrom, 1e-5)
 
     def test_to_xyz(self):
         self.from_xyz("thf01", "pos")
