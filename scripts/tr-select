@@ -107,8 +107,8 @@ The molecule object, m, has the following attributes:
   * m.cf
 
     The chemical formula of the molecule, which can be tested in a similar
-    way to a.nsymbols, e.g. 'm.composition=="C_2,O,H_6"' would result in all
-    ethanol molecules and their conformers.
+    way to a.nsymbols, e.g. 'm.cf=="C_2,O,H_6"' would result in all ethanol
+    molecules and their conformers.
 
   * m.cfl
 
@@ -133,7 +133,7 @@ Some example expressions to get you started:
 
     Returns all molecules with an organic alcohol group.
 
-  * %prog example.psf mol 'not m.composition=="O,H_2"'
+  * %prog example.psf mol 'not m.cf=="O,H_2"'
 
     Returns all molecules, except the water molecules
 
