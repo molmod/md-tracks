@@ -43,6 +43,8 @@ add_quiet_option(parser)
 add_cell_option(parser)
 (options, args) = parser.parse_args()
 
+if len(args) < 3:
+    parser.error("Expecting at least three arguments.")
 path_out = args[-1]
 prefixes_a, prefixes_b = " ".join(args[:-1]).split(" - ")
 prefixes_a = prefixes_a.split()
