@@ -129,6 +129,8 @@ elif len(args) >= 3:
     for name, path_in in inputs:
         g[name] = load_track(path_in)
     dump_track(path_out, eval(expression, g))
+else:
+    parser.error("Expecting at least one argument.")
 
 
 
