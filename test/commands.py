@@ -1149,11 +1149,13 @@ class CommandsTestCase(BaseTestCase):
         ])
 
     def test_calc(self):
+        # normal usage
         self.from_cp2k_ener("thf01")
         self.execute("tr-calc", ["k=tracks/kinetic_energy", "k/(3*13)*2/boltzmann", "tracks/tcheck"])
         k = load_track("tracks/kinetic_energy")
         t = k/(3*13)*2/boltzmann
         tcheck = load_track("tracks/tcheck")
+        # evaluate a constant expression
         self.assertArraysEqual(t, tcheck)
         result = float(self.execute("tr-calc", ["cos(atAr.mass)"])[0])
         self.assertAlmostEqual(result, numpy.cos(periodic["Ar"].mass), 5)
