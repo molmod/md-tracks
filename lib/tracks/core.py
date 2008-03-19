@@ -106,6 +106,8 @@ class Track(object):
         stop_bytes = min(sub.stop*dtype.itemsize, self._get_data_size())
         length = stop_bytes/dtype.itemsize - sub.start
         result = numpy.fromfile(f, dtype, length, '')[::sub.step]
+        if not result.flags["C_CONTIGUOUS"]:
+            result = result.copy()
         f.close()
         return result
 
