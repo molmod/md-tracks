@@ -445,6 +445,9 @@ for word in sys.argv[1:]:
         blocks.append([word])
     else:
         blocks[-1].append(word)
+if len(blocks) == 1:
+    global_parser.error("No plotting arguments given.")
+
 
 (global_options, global_args) = global_parser.parse_args(blocks[0])
 if global_options.plot_help:
