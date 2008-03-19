@@ -1373,3 +1373,6 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(output_dir, "diff_msd.png")
         ])
 
+    def test_qh_entropy(self):
+        self.from_xyz("ar108", "pos")
+        self.execute("tr-qh-entropy", [os.path.join(input_dir, "thf01", "init.xyz"), "300*K", "--unit=J/K/mol"])

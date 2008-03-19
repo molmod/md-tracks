@@ -1,0 +1,98 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from tracks.core import MultiTracksReader, Track, dump_track, MultiTracksWriter
+from tracks.parse import parse_slice, parse_unit
+from tracks.optparse import add_quiet_option, add_slice_option
+from tracks.log import log, usage_tail
+
+from molmod.data.periodic import periodic
+from molmod.io.xyz import XYZFile
+from molmod.constants import boltzmann
+
+import numpy
+from optparse import OptionParser
+
+
+usage = """%prog [options] ref.xyz temperature [pos_prefix]
+
+%prog approximates the vibrational entropy of the given trajectory, using the
+quasiharmonic approximation. (See JCP vol 115, num 14, page 628).
+
+The first argument (ref.xyz) is used to read the atom symbols, from which the
+atom masses are deduced. The second argument is the temperature at which the
+simulation took place. The optional last argument is the prefix for the
+track files that contain the atom position data. It defualts to tracks/atom.pos
+
+The entropy estimate is written on screen.
+""" + usage_tail
+
+parser = OptionParser(usage)
+add_quiet_option(parser)
+add_slice_option(parser)
+parser.add_option(
+    "-u", "--unit", default='au',
+    help="The output is printed in the given UNIT. [default=%default]",
+)
+(options, args) = parser.parse_args()
+
+if len(args) == 3:
+    numbers = XYZFile(args[0]).numbers
+    temperature = parse_unit(args[1])
+    atom_prefix = args[2]
+elif len(args) == 2:
+    numbers = XYZFile(args[0]).numbers
+    temperature = parse_unit(args[1])
+    atom_prefix = "tracks/atom.pos"
+else:
+    parser.error("Expecting two or three arguments.")
+
+sub = parse_slice(options.slice)
+masses = numpy.array([periodic[number].mass for number in numbers], float)
+unit = parse_unit(options.unit)
+
+paths_in = []
+for i in xrange(len(masses)):
+    for c in 'xyz':
+        paths_in.append("tracks/atom.pos.%07i.%s" % (i,c))
+mtr = MultiTracksReader(paths_in)
+
+cov = 0
+length = 0
+ref = None
+
+for block in mtr.yield_buffers():
+    block = numpy.array(block).transpose()
+    if ref is None:
+        ref = block[0]
+    block -= ref
+    length += len(block)
+    cov += numpy.dot(block.transpose(), block)
+
+cov /= length
+
+tmp = boltzmann*temperature*numpy.e**2*cov*masses.repeat(3)
+tmp.ravel()[::len(tmp)+1] += 1.0
+result = 0.5*boltzmann*numpy.log(numpy.linalg.det(tmp))
+
+print result/unit
+
+

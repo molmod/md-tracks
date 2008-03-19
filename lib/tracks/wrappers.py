@@ -79,9 +79,10 @@ names = [
     "tr-from-cpmd-ener", "tr-from-cpmd-traj", "tr-from-xyz", "tr-ic-bend",
     "tr-ic-dihed", "tr-ic-dist", "tr-ic-dtl", "tr-ic-oop", "tr-ic-psf",
     "tr-integrate", "tr-irfft", "tr-length", "tr-make-spectrum", "tr-mean-std",
-    "tr-norm", "tr-pca", "tr-plot", "tr-rdf", "tr-read", "tr-reduce", "tr-rfft",
-    "tr-select", "tr-select-rings", "tr-shortest-distance", "tr-slice",
-    "tr-split-com", "tr-to-xyz", "tr-wavenumber-axis", "tr-write",
+    "tr-norm", "tr-pca", "tr-plot", "tr-qh-entropy", "tr-rdf", "tr-read",
+    "tr-reduce", "tr-rfft", "tr-select", "tr-select-rings",
+    "tr-shortest-distance", "tr-slice", "tr-split-com", "tr-to-xyz",
+    "tr-wavenumber-axis", "tr-write",
 ]
 
 for name in names:
