@@ -22,7 +22,8 @@
 
 from tracks.convert import tracks_to_xyz
 from tracks.parse import parse_slice, yield_unit_cells
-from tracks.optparse import add_quiet_option, add_slice_option
+from tracks.optparse import add_quiet_option, add_slice_option, \
+    add_filter_atoms_option
 from tracks.util import AtomFilter
 from tracks.log import log, usage_tail
 
@@ -55,14 +56,10 @@ formats:
 parser = OptionParser(usage)
 add_slice_option(parser)
 add_quiet_option(parser)
+add_filter_atoms_option(parser)
 parser.add_option(
     "-u", "--unit", default="angstrom",
     help="The unit in which the data in the xyz file are written. [default=%default]",
-)
-parser.add_option(
-    "-a", "--filter-atoms",
-    help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
-         "comma separated list of of integers. Counting starts at zero.",
 )
 (options, args) = parser.parse_args()
 

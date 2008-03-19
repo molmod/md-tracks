@@ -60,3 +60,10 @@ def add_cos_option(parser):
         "--cos", action="store_true", default=False,
         help="Compute the cosine instead of the angle."
     )
+
+def add_filter_atoms_option(parser):
+    parser.add_option(
+        "-a", "--filter-atoms",
+        help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
+             "comma separated list of of integers. Counting starts at zero.",
+    )
