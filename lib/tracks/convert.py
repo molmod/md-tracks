@@ -61,7 +61,6 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
 
 def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     """Convert a cp2k energy file into separate tracks."""
-    import itertools
     names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "conserved_quantity"]
     filenames = list(os.path.join(destination, name) for name in names)
     dtypes = [int, float, float, float, float, float]
@@ -78,7 +77,6 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
 
 def cpmd_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     """Convert a cp2k energy file into separate tracks."""
-    import itertools
     names = ["step", "fict_kinectic_energy", "temperature", "potential_energy", "classical_energy", "hamiltonian_energy", "ms_displacement"]
     filenames = list(os.path.join(destination, name) for name in names)
     dtypes = [int, float, float, float, float, float, float]
@@ -93,7 +91,6 @@ def cpmd_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
 
 
 def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
-    import itertools
     names = ["cell.a.x", "cell.a.y", "cell.a.z", "cell.b.x", "cell.b.y", "cell.b.z", "cell.c.x", "cell.c.y", "cell.c.z", "cell.a", "cell.b", "cell.c", "cell.alpha", "cell.beta", "cell.gamma"]
     filenames = list(os.path.join(destination, name) for name in names)
     mtw = MultiTracksWriter(filenames, clear=clear)
@@ -154,8 +151,8 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
 
     f = file(destination, 'w')
     xyz_writer = XYZWriter(f, symbols, file_unit=file_unit)
-    mtr = MultiTracksReader(filenames)
-    for row in itertools.islice(mtr, sub.start, sub.stop, sub.step):
+    mtr = MultiTracksReader(filenames, sub=sub)
+    for row in mtr:
         coordinates = numpy.array(row).reshape((-1,3))
         if unit_cell_iter is not None:
             try:

@@ -27,7 +27,7 @@ from tracks.log import log, usage_tail
 
 from molmod.units import parse_unit
 
-import numpy, itertools
+import numpy
 from optparse import OptionParser
 
 
@@ -79,12 +79,12 @@ dump_track("%s.bins" % output_prefix, bins)
 log("WRITTEN %s" % filename)
 
 if options.bin_tracks:
-    mtr = MultiTracksReader(paths_in)
+    mtr = MultiTracksReader(paths_in, sub=sub)
     bin_filenames = ["%s.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
     mtw = MultiTracksWriter(bin_filenames)
     cumul_bin_filenames = ["%s.cumul.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
     cumul_mtw = MultiTracksWriter(cumul_bin_filenames)
-    for row in itertools.islice(mtr, sub.start, sub.stop, sub.step):
+    for row in mtr:
         counts = numpy.histogram(row, nbins, (xmin,xmax), False)[0]/float(len(paths_in))
         mtw.dump_row(counts)
         cumul_mtw.dump_row(counts.cumsum())

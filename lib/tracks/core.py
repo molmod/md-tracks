@@ -135,7 +135,7 @@ def track_size(filename):
 
 
 class MultiTracksReader(object):
-    def __init__(self, filenames, buffer_size=None, dot_interval=None):
+    def __init__(self, filenames, buffer_size=None, dot_interval=None, sub=slice(None)):
         if buffer_size is None:
             buffer_size = context.default_buffer_size
         if dot_interval is None:
@@ -145,13 +145,18 @@ class MultiTracksReader(object):
         self.buffer_length = buffer_size/sum(dtype.itemsize for dtype in self.dtypes)
         self.dot_interval = dot_interval
         self.row_counter = 0
+        self.sub = fix_slice(sub)
 
     def yield_buffers(self):
         buffer_counter = 0
         while True:
-            start = buffer_counter*self.buffer_length
+            start = buffer_counter*self.buffer_length*self.sub.step + self.sub.start
+            if start >= self.sub.stop:
+                break
+            stop = min(start + self.buffer_length*self.sub.step, self.sub.stop)
+
             log(" %i " % start, False)
-            buffers = [track.read(slice(start, start+self.buffer_length)) for track in self.tracks]
+            buffers = [track.read(slice(start, stop, self.sub.step)) for track in self.tracks]
             shortest = min(len(b) for b in buffers)
             longest = max(len(b) for b in buffers)
             if shortest == self.buffer_length:
@@ -159,7 +164,7 @@ class MultiTracksReader(object):
             else:
                 buffers = [b[:shortest] for b in buffers]
                 if longest != shortest:
-                    log( " Not all tracks are of equal length! ", False)
+                    log("Not all tracks are of equal length!", False)
                 yield buffers
                 break
             buffer_counter += 1

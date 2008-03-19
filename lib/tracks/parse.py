@@ -25,7 +25,7 @@ from tracks.util import fix_slice
 from molmod.units import parse_unit
 from molmod.unit_cell import UnitCell
 
-import sys, numpy, itertools
+import sys, numpy
 
 
 __all__ = [
@@ -148,13 +148,13 @@ def yield_unit_cells(unit_cell_str, sub=None):
             yield uc
     else:
         filenames = ["%s.%s" % (unit_cell_str, suffix) for suffix in ["a.x", "a.y", "a.z", "b.x", "b.y", "b.z", "c.x", "c.y", "c.z"]]
-        mtr = MultiTracksReader(filenames)
+        mtr = MultiTracksReader(filenames, sub=sub)
         uc = UnitCell(
             numpy.array([[1,0,0],[0,1,0],[0,0,1]], float),
             numpy.array([True, True, True]),
         )
         flat = uc.cell.ravel()
-        for row in itertools.islice(mtr.yield_rows(), sub.start, sub.stop, sub.step):
+        for row in mtr:
             flat[:] = row
             uc.update_reciproke()
             yield uc

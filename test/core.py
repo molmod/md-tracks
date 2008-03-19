@@ -159,6 +159,21 @@ class MultiTrackTestCase(BaseTestCase):
             self.assertArraysEqual(b, b_check)
             self.assertEqual(b.dtype, b_check.dtype)
 
+    def test_read_sliced(self):
+        buffers, names = self.get_buffers()
+        sub = slice(10,120,13)
 
+        for b, name in zip(buffers, names):
+            dump_track(name, b)
+        mtr = MultiTracksReader(names, buffer_size=5*1024, sub=sub)
+        buffers_check = list([] for index in xrange(len(buffers)))
+        for row in mtr:
+            for index, value in enumerate(row):
+                buffers_check[index].append(value)
+        buffers_check = [numpy.array(b, dtype) for b, dtype in zip(buffers_check, mtr.dtypes)]
+
+        for b, b_check in zip(buffers, buffers_check):
+            self.assertArraysEqual(b[sub], b_check)
+            self.assertEqual(b.dtype, b_check.dtype)
 
 
