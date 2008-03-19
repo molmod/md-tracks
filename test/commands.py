@@ -1361,6 +1361,15 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(output_dir, "reduce.png")
         ])
 
-
-
+    def test_diff(self):
+        self.from_xyz("water32", "pos")
+        self.from_cp2k_ener("water32")
+        self.execute("tr-diff", glob.glob("tracks/atom.pos.???????.?") + [
+            "tracks/atom.pos.msd", "--delta-origin=2"
+        ])
+        self.execute("tr-plot", [
+            "--xunit=ps", "--yunit=A**2", "--xlabel=Time", "--ylabel='Mean square displacement'",
+            ":line", "tracks/time", "tracks/atom.pos.msd",
+            os.path.join(output_dir, "diff_msd.png")
+        ])
 
