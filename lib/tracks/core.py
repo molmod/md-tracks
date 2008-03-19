@@ -23,7 +23,7 @@ from tracks.log import log
 from tracks.util import fix_slice
 from tracks import context
 
-import numpy, os, struct
+import numpy, os, struct, itertools
 
 
 __all__ = [
@@ -111,6 +111,17 @@ class Track(object):
         f.close()
         return result
 
+    def read_into(self, destination, sub=None):
+        sub = fix_slice(sub)
+        dtype, f = self._get_read_buffer(sub.start)
+        stop_bytes = min(sub.stop*dtype.itemsize, self._get_data_size())
+        length = stop_bytes/dtype.itemsize - sub.start
+        tmp = numpy.fromfile(f, dtype, length, '')[::sub.step]
+        length = (length-1)/sub.step+1
+        destination[:length] = tmp
+        f.close()
+        return length
+
     def append(self, data):
         if len(data.shape) != 1:
             raise Error("Only 1-dimensional arrays can be stored in tracks.")
@@ -143,6 +154,7 @@ class MultiTracksReader(object):
         self.tracks = [Track(filename) for filename in filenames]
         self.dtypes = [track._get_header_dtype() for track in self.tracks]
         self.buffer_length = buffer_size/sum(dtype.itemsize for dtype in self.dtypes)
+        self.buffers = [numpy.zeros(self.buffer_length, dtype) for dtype in self.dtypes]
         self.dot_interval = dot_interval
         self.row_counter = 0
         self.sub = fix_slice(sub)
@@ -156,25 +168,26 @@ class MultiTracksReader(object):
             stop = min(start + self.buffer_length*self.sub.step, self.sub.stop)
 
             log(" %i " % start, False)
-            buffers = [track.read(slice(start, stop, self.sub.step)) for track in self.tracks]
-            shortest = min(len(b) for b in buffers)
-            longest = max(len(b) for b in buffers)
-            if shortest == self.buffer_length:
-                yield buffers
+            first_size = None
+            for b, track in itertools.izip(self.buffers, self.tracks):
+                size = track.read_into(b, slice(start, stop, self.sub.step))
+                if first_size is None:
+                    first_size = size
+                elif first_size != size:
+                    raise Error("Not all tracks are of equal length!")
+            #buffers = [track.read(slice(start, stop, self.sub.step)) for track in self.tracks]
+            if size == self.buffer_length:
+                yield self.buffers
             else:
-                buffers = [b[:shortest] for b in buffers]
-                if longest != shortest:
-                    log("Not all tracks are of equal length!", False)
-                yield buffers
+                yield [b[:size] for b in self.buffers]
                 break
             buffer_counter += 1
-        end = buffer_counter*self.buffer_length + shortest
-        log(" %i " % end, False)
+        log(" %i " % stop, False)
         log.finalize()
 
     def yield_rows(self):
         for buffers in self.yield_buffers():
-            for row in zip(*buffers):
+            for row in itertools.izip(*buffers):
                 self.row_counter += 1
                 if self.row_counter % self.dot_interval == 0:
                     log(".", False)

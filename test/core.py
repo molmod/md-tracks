@@ -102,6 +102,16 @@ class TrackTestCase(BaseTestCase):
             self.assertEqual(len(rnd2), 0)
             self.assertEqual(rnd1.dtype, rnd2.dtype)
 
+    def test_read_into(self):
+        sub = slice(10,30,2)
+        for rnd1 in self.get_arrays():
+            track = Track("test", clear=True)
+            track.append(rnd1)
+            destination = numpy.zeros(20,rnd1.dtype)
+            track.read_into(destination, sub)
+            self.assertArrayConstant(destination[10:],0)
+            self.assertArraysEqual(destination[:10], rnd1[sub])
+
 
 class MultiTrackTestCase(BaseTestCase):
     def get_buffers(self):
