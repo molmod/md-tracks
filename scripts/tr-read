@@ -27,7 +27,7 @@ from tracks.log import log, usage_tail
 
 from molmod.units import parse_unit
 
-import numpy, itertools
+import numpy
 from optparse import OptionParser
 
 
@@ -69,8 +69,8 @@ else:
     parser.error("Expecting at least one argument.")
 
 sub = parse_slice(options.slice)
-mtr = MultiTracksReader(paths_in)
-for row in itertools.islice(mtr, sub.start, sub.stop, sub.step):
+mtr = MultiTracksReader(paths_in, sub=sub)
+for row in mtr:
     print "\t".join(str(value/unit) for value, unit in zip(row, units))
 
 
