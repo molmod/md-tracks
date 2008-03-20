@@ -118,12 +118,14 @@ else:
 def yield_deltas():
     if prefixes_b is None:
         filenames = sum([["%s.x" % prefix_a, "%s.y" % prefix_a, "%s.z" % prefix_a] for prefix_a in prefixes_a], [])
-        mtr = MultiTracksReader(filenames, sub=sub)
-        num_deltas = (len(prefixes_a)*(len(prefixes_a)-1))/2
+        num_a = len(prefixes_a)
+        dtype = numpy.dtype([("cor", float, (num_a, 3))])
+        mtr = MultiTracksReader(filenames, dtype, sub=sub)
+        num_deltas = (num_a*(num_a-1))/2
         deltas = numpy.zeros((num_deltas,3),float)
         for row in mtr:
             counter = 0
-            coordinates = numpy.array(row).reshape((-1,3))
+            coordinates = row["cor"]
             for i in xrange(len(coordinates)):
                 for j in xrange(i):
                     deltas[counter]=coordinates[i]-coordinates[j]
@@ -131,17 +133,19 @@ def yield_deltas():
             yield deltas.copy()
     else:
         filenames = sum([["%s.x" % prefix, "%s.y" % prefix, "%s.z" % prefix] for prefix in (prefixes_a + prefixes_b)], [])
-        numa = len(prefixes_a)
-        num = numa + len(prefixes_b)
-        mtr = MultiTracksReader(filenames, sub=sub)
-        num_deltas = len(prefixes_a)*len(prefixes_b)
+        num_a = len(prefixes_a)
+        num_b = len(prefixes_b)
+        dtype = numpy.dtype([("a", float, (num_a, 3)), ("b", float, (num_b, 3))])
+        mtr = MultiTracksReader(filenames, dtype, sub=sub)
+        num_deltas = num_a*num_b
         deltas = numpy.zeros((num_deltas,3),float)
         for row in mtr:
             counter = 0
-            coordinates = numpy.array(row).reshape((-1,3))
-            for i in xrange(numa):
-                for j in xrange(numa, num):
-                    deltas[counter]=coordinates[i]-coordinates[j]
+            coordinates_a = row["a"]
+            coordinates_b = row["b"]
+            for i in xrange(num_a):
+                for j in xrange(num_b):
+                    deltas[counter]=coordinates_a[i]-coordinates_b[j]
                     counter += 1
             yield deltas
 
@@ -160,16 +164,16 @@ def yield_distances():
         yield distances[distances < rmax], reference_counts
 
 if options.bin_tracks:
-    bin_filenames = ["%s.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
-    mtw = MultiTracksWriter(bin_filenames)
-    cumul_bin_filenames = ["%s.cumul.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
-    cumul_mtw = MultiTracksWriter(cumul_bin_filenames)
+    bin_filenames = (
+        ["%s.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)] +
+        ["%s.cumul.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
+    )
+    dtype = numpy.dtype([("bin", float, nbins),("cumul_bin", float, nbins)])
+    mtw = MultiTracksWriter(bin_filenames, dtype)
     for distances, reference_counts in yield_distances():
         counts = correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
-        mtw.dump_row(counts/reference_counts)
-        cumul_mtw.dump_row(counts.cumsum())
+        mtw.dump_row((counts/reference_counts, counts.cumsum()))
     mtw.finalize()
-    cumul_mtw.finalize()
 else:
     counts = 0.0
     row_count = 0

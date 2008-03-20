@@ -21,7 +21,7 @@
 
 from common import *
 
-from tracks.wrappers import tr_read
+from tracks.wrappers import tr_read, tr_rfft
 from tracks.core import dump_track
 from tracks.log import log
 
@@ -48,5 +48,10 @@ class WrapperTestCase(BaseTestCase):
             for filename in glob.glob(os.path.join(scripts_dir, "*")):
                 self.assert_((os.path.basename(filename) in names), "%s missing in names list" % filename)
 
+    def test_tr_rfft(self):
+        num = 20
+        for i in xrange(num):
+            dump_track("file.%07i" % i, numpy.random.normal(0,1,100))
+        tr_rfft(glob.glob("file.*"))
 
 

@@ -79,17 +79,19 @@ dump_track("%s.bins" % output_prefix, bins)
 log("WRITTEN %s" % filename)
 
 if options.bin_tracks:
-    mtr = MultiTracksReader(paths_in, sub=sub)
-    bin_filenames = ["%s.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
-    mtw = MultiTracksWriter(bin_filenames)
-    cumul_bin_filenames = ["%s.cumul.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
-    cumul_mtw = MultiTracksWriter(cumul_bin_filenames)
+    dtype = numpy.dtype([("input", float, len(paths_in))])
+    mtr = MultiTracksReader(paths_in, dtype, sub=sub)
+
+    bin_filenames = (
+        ["%s.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)] +
+        ["%s.cumul.bin.%07i" % (output_prefix, b_index) for b_index in xrange(nbins)]
+    )
+    dtype = numpy.dtype([("bins", float, nbins), ("cumulbins", float, nbins)])
+    mtw = MultiTracksWriter(bin_filenames, dtype)
     for row in mtr:
-        counts = numpy.histogram(row, nbins, (xmin,xmax), False)[0]/float(len(paths_in))
-        mtw.dump_row(counts)
-        cumul_mtw.dump_row(counts.cumsum())
+        counts = numpy.histogram(row["input"], nbins, (xmin,xmax), False)[0]/float(len(paths_in))
+        mtw.dump_row((counts,counts.cumsum()))
     mtw.finalize()
-    cumul_mtw.finalize()
 else:
     counts = 0.0
     total_count = 0

@@ -148,14 +148,14 @@ def yield_unit_cells(unit_cell_str, sub=None):
             yield uc
     else:
         filenames = ["%s.%s" % (unit_cell_str, suffix) for suffix in ["a.x", "a.y", "a.z", "b.x", "b.y", "b.z", "c.x", "c.y", "c.z"]]
-        mtr = MultiTracksReader(filenames, sub=sub)
+        dtype = numpy.dtype([("cell", float, (3,3))])
+        mtr = MultiTracksReader(filenames, dtype, sub=sub)
         uc = UnitCell(
             numpy.array([[1,0,0],[0,1,0],[0,0,1]], float),
             numpy.array([True, True, True]),
         )
-        flat = uc.cell.ravel()
         for row in mtr:
-            flat[:] = row
+            uc.cell[:] = row["cell"]
             uc.update_reciproke()
             yield uc
 

@@ -114,76 +114,108 @@ class TrackTestCase(BaseTestCase):
 
 
 class MultiTrackTestCase(BaseTestCase):
-    def get_buffers(self):
-        return [
-            numpy.random.normal(0,1,1000),
-            numpy.random.normal(0,1,1000),
-            numpy.random.randint(0,10,1000).astype(numpy.int32),
-        ], ["test1", "test2", "test3"]
+    def get_data(self):
+        dtype = numpy.dtype([("a", float, 2),("b", int, 1)])
+        data = numpy.zeros(1000, dtype)
+        data["a"] = numpy.random.normal(0,1,(1000,2))
+        data["b"] = numpy.random.randint(0,10,1000)
+        filenames = ["test1", "test2", "test3"]
+        return data, filenames
+
+    def dump_data(self, data, filenames):
+        # this is the manual way of writing the data to disk
+        counter = 0
+        for name in data.dtype.names:
+            sub_data = data[name]
+            sub_dtype = data.dtype.fields[name][0]
+            for flat_index in xrange(numpy.product(sub_dtype.shape,dtype=int)):
+                index = numpy.unravel_index(flat_index, sub_dtype.shape)
+                dump_track(filenames[counter], sub_data[(slice(None),)+index])
+                counter += 1
+
+    def read_data(self, dtype, size, filenames):
+        # this is the manual way of reading the data from disk
+        data = numpy.zeros(size, dtype)
+        counter = 0
+        for name in data.dtype.names:
+            sub_data = data[name]
+            sub_dtype = data.dtype.fields[name][0]
+            for flat_index in xrange(numpy.product(sub_dtype.shape,dtype=int)):
+                index = numpy.unravel_index(flat_index, sub_dtype.shape)
+                tmp = load_track(filenames[counter])
+                sub_data[(slice(None),)+index] = tmp
+                counter += 1
+        return data
+
+    def compare_data(self, data1, data2):
+        self.assertEqual(data1.dtype, data2.dtype)
+        for name in data1.dtype.names:
+            self.assertArraysEqual(data1[name], data2[name])
 
     def test_write(self):
-        buffers, names = self.get_buffers()
+        data, filenames = self.get_data()
 
-        mtw = MultiTracksWriter(names, [b.dtype for b in buffers], buffer_size=5*1024)
-        for row in zip(*buffers):
+        # write the data to disk, using the MultiTracksWriter
+        mtw = MultiTracksWriter(filenames, data.dtype, buffer_size=5*1024)
+        for row in data:
             mtw.dump_row(row)
         mtw.finalize()
-        buffers_check = [load_track(name) for name in names]
 
-        for b, b_check in zip(buffers, buffers_check):
-            self.assertArraysEqual(b, b_check)
-            self.assertEqual(b.dtype, b_check.dtype)
+        # load it back manually
+        data_check = self.read_data(data.dtype, len(data), filenames)
+
+        # compare the original data with the data read from disk
+        self.compare_data(data, data_check)
 
     def test_append(self):
-        buffers, names = self.get_buffers()
+        data, filenames = self.get_data()
 
-        mtw = MultiTracksWriter(names, [b.dtype for b in buffers], buffer_size=5*1024)
-        for row in zip(*buffers):
+        # write the data to disk, using the MultiTracksWriter
+        mtw = MultiTracksWriter(filenames, data.dtype, buffer_size=5*1024)
+        for row in data:
             mtw.dump_row(row)
         mtw.finalize()
-        mtw = MultiTracksWriter(names, [b.dtype for b in buffers], buffer_size=5*1024, clear=False)
-        for row in zip(*buffers):
+        mtw = MultiTracksWriter(filenames, data.dtype, buffer_size=5*1024, clear=False)
+        for row in data:
             mtw.dump_row(row)
         mtw.finalize()
 
-        buffers_check = [load_track(name) for name in names]
+        # load it back manually
+        data_check = self.read_data(data.dtype, len(data)*2, filenames)
 
-        for b, b_check in zip(buffers, buffers_check):
-            b = numpy.concatenate([b,b])
-            self.assertArraysEqual(b, b_check)
-            self.assertEqual(b.dtype, b_check.dtype)
+        # compare the original data with the data read from disk
+        self.compare_data(data, data_check[:len(data)])
+        self.compare_data(data, data_check[len(data):])
 
     def test_read(self):
-        buffers, names = self.get_buffers()
+        data, filenames = self.get_data()
 
-        for b, name in zip(buffers, names):
-            dump_track(name, b)
-        mtr = MultiTracksReader(names, buffer_size=5*1024)
-        buffers_check = list([] for index in xrange(len(buffers)))
-        for row in mtr:
-            for index, value in enumerate(row):
-                buffers_check[index].append(value)
-        buffers_check = [numpy.array(b, dtype) for b, dtype in zip(buffers_check, mtr.dtypes)]
+        # write the data to disk, manually
+        self.dump_data(data, filenames)
 
-        for b, b_check in zip(buffers, buffers_check):
-            self.assertArraysEqual(b, b_check)
-            self.assertEqual(b.dtype, b_check.dtype)
+        # load the data back with the multi-tracks reader
+        mtr = MultiTracksReader(filenames, data.dtype, buffer_size=5*1024)
+        data_check = numpy.zeros(len(data), data.dtype)
+        for index, row in enumerate(mtr):
+            data_check[index] = row
+
+        # compare the original data with the data read from disk
+        self.compare_data(data, data_check)
 
     def test_read_sliced(self):
-        buffers, names = self.get_buffers()
+        data, filenames = self.get_data()
         sub = slice(10,120,13)
 
-        for b, name in zip(buffers, names):
-            dump_track(name, b)
-        mtr = MultiTracksReader(names, buffer_size=5*1024, sub=sub)
-        buffers_check = list([] for index in xrange(len(buffers)))
-        for row in mtr:
-            for index, value in enumerate(row):
-                buffers_check[index].append(value)
-        buffers_check = [numpy.array(b, dtype) for b, dtype in zip(buffers_check, mtr.dtypes)]
+        # write the data to disk, manually
+        self.dump_data(data, filenames)
 
-        for b, b_check in zip(buffers, buffers_check):
-            self.assertArraysEqual(b[sub], b_check)
-            self.assertEqual(b.dtype, b_check.dtype)
+        # load the data back with the multi-tracks reader
+        mtr = MultiTracksReader(filenames, data.dtype, buffer_size=1024, sub=sub)
+        data_check = numpy.zeros((sub.stop-sub.start-1)/sub.step+1, data.dtype)
+        for index, row in enumerate(mtr):
+            data_check[index] = row
+
+        # compare the original data with the data read from disk
+        self.compare_data(data[sub], data_check)
 
 

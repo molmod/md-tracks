@@ -62,14 +62,15 @@ if len(args) >= 2:
 else:
     parser.error("Expecting at least two arguments.")
 
-mtr = MultiTracksReader(paths_in)
+dtype = numpy.dtype([("data", float, len(paths_in))])
+mtr = MultiTracksReader(paths_in, dtype)
 
 cov = 0
 means = 0
 length = 0
 
 for block in mtr.yield_buffers():
-    block = numpy.array(block).transpose()
+    block = block["data"]
     length += len(block)
     means += block.sum(axis=0)
     cov += numpy.dot(block.transpose(), block)
@@ -99,13 +100,13 @@ if options.dump_evals is not None:
     dump_track(options.dump_evals, evals)
 
 if options.dump_modes is not None:
-    mtr = MultiTracksReader(paths_in)
+    mtr = MultiTracksReader(paths_in, dtype)
     paths_out = ["%s.%07i" % (options.dump_modes, index) for index in xrange(len(paths_in))]
-    mtw = MultiTracksWriter(paths_out)
+    mtw = MultiTracksWriter(paths_out, dtype)
     for block in mtr.yield_buffers():
-        block = numpy.array(block)
-        modes = numpy.dot(evecs.transpose(), block)
-        mtw.dump_buffers(modes)
+        block = block["data"]
+        modes = numpy.dot(block, evecs.transpose())
+        mtw.dump_buffer({"data": modes})
 
 
 

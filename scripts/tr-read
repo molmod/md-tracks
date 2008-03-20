@@ -69,9 +69,10 @@ else:
     parser.error("Expecting at least one argument.")
 
 sub = parse_slice(options.slice)
-mtr = MultiTracksReader(paths_in, sub=sub)
+dtype = numpy.dtype([("data", float, (len(paths_in),))])
+mtr = MultiTracksReader(paths_in, dtype, sub=sub)
 for row in mtr:
-    print "\t".join(str(value/unit) for value, unit in zip(row, units))
+    print "\t".join(str(value/unit) for value, unit in zip(row["data"], units))
 
 
 

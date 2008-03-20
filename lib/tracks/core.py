@@ -145,16 +145,48 @@ def track_size(filename):
     return Track(filename).size()
 
 
-class MultiTracksReader(object):
-    def __init__(self, filenames, buffer_size=None, dot_interval=None, sub=slice(None)):
+class MultiTrackBase(object):
+    def init_buffer(self, buffer_size, dtype):
+        # allocate the buffer array
+        buffer_length = buffer_size/dtype.itemsize
+        self.buffer = numpy.zeros(buffer_length, dtype)
+
+    def init_tracks(self, filenames, dtype, clear=False):
+        # create the tracks dictonary. it maps buffer array segments to filenames
+        self.tracks = {}
+        counter = 0
+        for name in dtype.names:
+            l = []
+            self.tracks[name] = l
+            sub_dtype = dtype.fields[name][0]
+            for flat_index in xrange(numpy.product(sub_dtype.shape,dtype=int)):
+                track = Track(filenames[counter], clear=clear)
+                index = numpy.unravel_index(flat_index, sub_dtype.shape)
+                l.append((index, track))
+                counter += 1
+
+    def _yield_fields(self, buffer=None):
+        if buffer is None:
+            buffer = self.buffer
+        for name in self.buffer.dtype.names:
+            sub_tracks = self.tracks[name]
+            sub_buffer = buffer[name]
+            for index, track in sub_tracks:
+                column = sub_buffer[(slice(None),)+index]
+                yield track, column
+
+
+class MultiTracksReader(MultiTrackBase):
+    def __init__(self, filenames, dtype, buffer_size=None, dot_interval=None, sub=slice(None)):
         if buffer_size is None:
             buffer_size = context.default_buffer_size
         if dot_interval is None:
             dot_interval = context.default_dot_interval
-        self.tracks = [Track(filename) for filename in filenames]
-        self.dtypes = [track._get_header_dtype() for track in self.tracks]
-        self.buffer_length = buffer_size/sum(dtype.itemsize for dtype in self.dtypes)
-        self.buffers = [numpy.zeros(self.buffer_length, dtype) for dtype in self.dtypes]
+
+        self.init_buffer(buffer_size, dtype)
+        self.init_tracks(filenames, dtype)
+
+        # some residual parameters
         self.dot_interval = dot_interval
         self.row_counter = 0
         self.sub = fix_slice(sub)
@@ -162,32 +194,36 @@ class MultiTracksReader(object):
     def yield_buffers(self):
         buffer_counter = 0
         while True:
-            start = buffer_counter*self.buffer_length*self.sub.step + self.sub.start
+            # determin the part that will be read from disk
+            start = buffer_counter*len(self.buffer)*self.sub.step + self.sub.start
             if start >= self.sub.stop:
                 break
-            stop = min(start + self.buffer_length*self.sub.step, self.sub.stop)
+            stop = min(start + len(self.buffer)*self.sub.step, self.sub.stop)
 
+            # read the part slice(start, stop, step) from each track and store
+            # it in the buffer array
             log(" %i " % start, False)
             first_size = None
-            for b, track in itertools.izip(self.buffers, self.tracks):
-                size = track.read_into(b, slice(start, stop, self.sub.step))
+            for track, column in self._yield_fields():
+                size = track.read_into(column, slice(start, stop, self.sub.step))
                 if first_size is None:
                     first_size = size
                 elif first_size != size:
                     raise Error("Not all tracks are of equal length!")
-            #buffers = [track.read(slice(start, stop, self.sub.step)) for track in self.tracks]
-            if size == self.buffer_length:
-                yield self.buffers
+
+            # yield the relevant part of the buffer array
+            if size == len(self.buffer):
+                yield self.buffer[:]
             else:
-                yield [b[:size] for b in self.buffers]
+                yield self.buffer[:size]
                 break
             buffer_counter += 1
         log(" %i " % stop, False)
         log.finalize()
 
     def yield_rows(self):
-        for buffers in self.yield_buffers():
-            for row in itertools.izip(*buffers):
+        for buffer in self.yield_buffers():
+            for row in buffer:
                 self.row_counter += 1
                 if self.row_counter % self.dot_interval == 0:
                     log(".", False)
@@ -196,63 +232,55 @@ class MultiTracksReader(object):
     __iter__ = yield_rows
 
 
-class MultiTracksWriter(object):
-    def __init__(self, filenames, dtypes=None, buffer_size=None, dot_interval=None, clear=True):
+class MultiTracksWriter(MultiTrackBase):
+    def __init__(self, filenames, dtype, buffer_size=None, dot_interval=None, clear=True):
         if buffer_size is None:
             buffer_size = context.default_buffer_size
         if dot_interval is None:
             dot_interval = context.default_dot_interval
+
         # make sure the files can be created
         for filename in filenames:
             directory = os.path.dirname(filename)
             if len(directory) > 0 and not os.path.exists(directory):
                 os.makedirs(directory)
-        if dtypes is None:
-            self.dtypes = [numpy.dtype(float) for index in xrange(len(filenames))]
-        else:
-            if len(dtypes) != len(filenames):
-                raise Error("len(dtypes) != len(filenames)")
-            self.dtypes = dtypes
-        self.tracks = [Track(filename, clear=clear) for filename in filenames]
-        self.buffer_length = buffer_size/sum(dtype.itemsize for dtype in self.dtypes)
-        self.buffers = [numpy.zeros(self.buffer_length, dtype) for dtype in self.dtypes]
+
+        self.init_buffer(buffer_size, dtype)
+        self.init_tracks(filenames, dtype, clear)
+
+        # some residual parameters
         self.current_row = 0
         self.dot_interval = dot_interval
         self.row_counter = 0
         log(" 0 ", False)
 
-    def _flush_buffers(self):
+    def _flush_buffer(self):
         if self.current_row == 0:
             return
-        for b, t in zip(self.buffers, self.tracks):
-            t.append(b[:self.current_row])
+        for track, column in self._yield_fields():
+            track.append(column[:self.current_row])
         log(" %i " % self.row_counter, False)
         self.current_row = 0
 
     def dump_row(self, row):
-        if len(row) != len(self.buffers):
-            raise Error("The row must contain len(self.buffers)=%i values." % len(self.buffers))
-        for index, value in enumerate(row):
-            self.buffers[index][self.current_row] = value
+        #if row.dtype != self.buffer.dtype:
+        #    raise Error("The row must have the same dtype as the internal buffer.")
+        self.buffer[self.current_row] = row
         self.current_row += 1
         self.row_counter += 1
         if self.row_counter % self.dot_interval == 0:
             log(".", False)
-        if self.current_row == self.buffer_length:
-            self._flush_buffers()
+        if self.current_row == len(self.buffer):
+            self._flush_buffer()
 
-    def dump_buffers(self, buffers):
-        self._flush_buffers()
-        for b, t in zip(buffers, self.tracks):
-            t.append(b)
+    def dump_buffer(self, buffer):
+        #if buffer.dtype != self.buffer.dtype:
+        #    raise Error("The given buffer must have the same dtype as the internal buffer.")
+        self._flush_buffer()
+        for track, column in self._yield_fields(buffer):
+            track.append(column)
 
     def finalize(self):
-        self._flush_buffers()
+        self._flush_buffer()
         log.finalize()
-
-
-
-
-
-
 

@@ -73,14 +73,15 @@ paths_in = []
 for i in xrange(len(masses)):
     for c in 'xyz':
         paths_in.append("tracks/atom.pos.%07i.%s" % (i,c))
-mtr = MultiTracksReader(paths_in)
+dtype = numpy.dtype([("data", float, len(paths_in))])
+mtr = MultiTracksReader(paths_in, dtype)
 
 cov = 0
 length = 0
 ref = None
 
 for block in mtr.yield_buffers():
-    block = numpy.array(block).transpose()
+    block = block["data"]
     if ref is None:
         ref = block[0]
     block -= ref

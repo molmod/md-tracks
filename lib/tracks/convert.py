@@ -53,9 +53,11 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
         for cor in ["x", "y", "z"]:
             filenames.append(os.path.join(destination, "atom.%s.%07i.%s" % (middle_word, index, cor)))
 
-    mtw = MultiTracksWriter(filenames, clear=clear)
+    shape = (len(atom_indexes),3)
+    dtype = numpy.dtype([("cor", float, shape)])
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     for title, coordinates in xyz_reader:
-        mtw.dump_row(coordinates[atom_indexes].ravel())
+        mtw.dump_row((coordinates[atom_indexes],))
     mtw.finalize()
 
 
@@ -64,13 +66,13 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     names = ["step", "time", "kinetic_energy", "temperature", "potential_energy", "conserved_quantity"]
     filenames = list(os.path.join(destination, name) for name in names)
     dtypes = [int, float, float, float, float, float]
-    dtypes = [numpy.dtype(d) for d in dtypes]
-    mtw = MultiTracksWriter(filenames, dtypes, clear=clear)
+    dtype = numpy.dtype([  (name, t, 1) for name, t in zip(names, dtypes)  ])
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     f = file(filename)
     for line in itertools.islice(yield_real_lines(f), sub.start, sub.stop, sub.step):
         row = [float(word) for word in line.split()[:6]]
         row[1] = row[1]*fs
-        mtw.dump_row(row)
+        mtw.dump_row(tuple(row))
     f.close()
     mtw.finalize()
 
@@ -80,27 +82,28 @@ def cpmd_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     names = ["step", "fict_kinectic_energy", "temperature", "potential_energy", "classical_energy", "hamiltonian_energy", "ms_displacement"]
     filenames = list(os.path.join(destination, name) for name in names)
     dtypes = [int, float, float, float, float, float, float]
-    dtypes = [numpy.dtype(d) for d in dtypes]
-    mtw = MultiTracksWriter(filenames, dtypes, clear=clear)
+    dtype = numpy.dtype([  (name, t, 1) for name, t in zip(names, dtypes)  ])
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     f = file(filename)
     for line in itertools.islice(f, sub.start, sub.stop, sub.step):
-        row = [float(word) for word in line.split()[:7]]
+        row = tuple(float(word) for word in line.split()[:7])
         mtw.dump_row(row)
     f.close()
     mtw.finalize()
 
 
 def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
-    names = ["cell.a.x", "cell.a.y", "cell.a.z", "cell.b.x", "cell.b.y", "cell.b.z", "cell.c.x", "cell.c.y", "cell.c.z", "cell.a", "cell.b", "cell.c", "cell.alpha", "cell.beta", "cell.gamma"]
+    names = ["cell.a.x", "cell.b.x", "cell.c.x", "cell.a.y", "cell.b.y", "cell.c.y", "cell.a.z", "cell.b.z", "cell.c.z", "cell.a", "cell.b", "cell.c", "cell.alpha", "cell.beta", "cell.gamma"]
     filenames = list(os.path.join(destination, name) for name in names)
-    mtw = MultiTracksWriter(filenames, clear=clear)
+    dtype = numpy.dtype([("cell", float, (3,3)),("norms", float, 3),("angles", float, 3)])
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     cr = CellReader(filename)
     for cell in itertools.islice(cr, sub.start, sub.stop, sub.step):
         norms = numpy.sqrt((cell**2).sum(axis=0))
         alpha = numpy.arccos(numpy.clip(numpy.dot(cell[:,1],cell[:,2])/norms[1]/norms[2], -1,1))
         beta = numpy.arccos(numpy.clip(numpy.dot(cell[:,2],cell[:,0])/norms[2]/norms[0], -1,1))
         gamma = numpy.arccos(numpy.clip(numpy.dot(cell[:,0],cell[:,1])/norms[0]/norms[1], -1,1))
-        mtw.dump_row(numpy.concatenate([cell.transpose().ravel(), norms, [alpha, beta, gamma]]))
+        mtw.dump_row((cell, norms, (alpha, beta, gamma)))
     mtw.finalize()
 
 
@@ -118,20 +121,26 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
         for index in atom_indexes
     ), [])
     filenames = list(os.path.join(destination, name) for name in names)
-    mtw = MultiTracksWriter(filenames, clear=clear)
+
+    shape = (len(atom_indexes), 6)
+    dtype = numpy.dtype([("cor", float, shape)])
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
 
     f = file(filename)
     counter = 0
-    row = []
+    row = 0
+    frame = numpy.zeros(shape, float)
     for line in f:
-        words = line.split()[1:]
-        for word in words:
-            row.append(float(word))
+        if row < len(atom_indexes) or atom_indexes[row] == counter:
+            words = line.split()[1:]
+            for col, word in enumerate(words):
+                frame[row,col] = float(word)
+            row += 1
         counter += 1
         if counter == num_atoms:
-            mtw.dump_row(row)
-            row = []
+            mtw.dump_row((frame,))
             counter = 0
+            row = 0
     f.close()
     mtw.finalize()
 
@@ -151,9 +160,10 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
 
     f = file(destination, 'w')
     xyz_writer = XYZWriter(f, symbols, file_unit=file_unit)
-    mtr = MultiTracksReader(filenames, sub=sub)
+    dtype = numpy.dtype([("cor", float, (len(atom_indexes), 3))])
+    mtr = MultiTracksReader(filenames, dtype, sub=sub)
     for row in mtr:
-        coordinates = numpy.array(row).reshape((-1,3))
+        coordinates = row["cor"]
         if unit_cell_iter is not None:
             try:
                 uc = unit_cell_iter.next()
@@ -179,25 +189,26 @@ def atrj_to_tracks(filename, destination, sub=slice(None), atom_indexes=None, cl
         atom_indexes = list(atom_indexes)
 
     filenames = []
-    dtypes = []
+    fields = []
+
     for index in atom_indexes:
         for cor in ["x", "y", "z"]:
             filenames.append(os.path.join(destination, "atom.pos.%07i.%s" % (index, cor)))
-            dtypes.append(numpy.dtype(float))
+    fields.append( ("cor", float, (len(atom_indexes),3)) )
     filenames.append(os.path.join(destination, "time"))
-    dtypes.append(numpy.dtype(float))
+    fields.append( ("time", float, 1) )
     filenames.append(os.path.join(destination, "step"))
-    dtypes.append(numpy.dtype(int))
+    fields.append( ("step", int, 1) )
     filenames.append(os.path.join(destination, "total_energy"))
-    dtypes.append(numpy.dtype(float))
+    fields.append( ("tote", float, 1) )
 
-    mtw = MultiTracksWriter(filenames, clear=clear)
+    dtype = numpy.dtype(fields)
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     for frame in atrj_reader:
-        l = frame.coordinates[atom_indexes].ravel().tolist()
-        l.append(frame.time)
-        l.append(frame.step)
-        l.append(frame.total_energy)
-        mtw.dump_row(l)
+        mtw.dump_row((
+           frame.coordinates[atom_indexes],
+           frame.time, frame.step, frame.total_energy
+        ))
     mtw.finalize()
 
 
