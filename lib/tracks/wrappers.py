@@ -48,27 +48,16 @@ class Wrapper(object):
         if self.verbose:
             print command
         p = Popen(shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        output = []
-        error = []
-        while True:
-            for line in p.stdout:
-                if len(line) == 0: break
-                if self.verbose: sys.stdout.write(line)
-                output.append(line[:-1])
-            for line in p.stderr:
-                if len(line) == 0: break
-                if self.verbose: sys.stderr.write(line)
-                error.append(line[:-1])
-            retcode = p.poll()
-            if retcode is not None: break
-        if retcode != 0:
-            if not self.verbose:
-                print "Command output:"
-                print "\n".join(output)
-                print "Command error:"
-                print "\n".join(error)
-            raise WrapperError("An error occured while executing command (retcode=%i): \n%s" % (retcode, command))
-        return output
+        output, error = p.communicate()
+        retcode = p.returncode
+        if retcode != 0 or self.verbose:
+            print "Command output:"
+            print "\n".join(output)
+            print "Command error:"
+            print "\n".join(error)
+            if rectcode != 0:
+                raise WrapperError("An error occured while executing command (retcode=%i): \n%s" % (retcode, command))
+        return output.split("\n")[:-1]
 
 # when scripts are added, this list must be updated
 names = [
