@@ -130,7 +130,7 @@ def yield_deltas():
                 for j in xrange(i):
                     deltas[counter]=coordinates[i]-coordinates[j]
                     counter += 1
-            yield deltas.copy()
+            yield deltas
     else:
         filenames = sum([["%s.x" % prefix, "%s.y" % prefix, "%s.z" % prefix] for prefix in (prefixes_a + prefixes_b)], [])
         num_a = len(prefixes_a)
