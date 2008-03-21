@@ -29,13 +29,12 @@ import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] input block_size [output_prefix]
+usage = """%prog [options] input1 [input2 ...] block_size
 
 %prog subsamples the input by taking block averages. The block averages are
-written to ${output_prefix}.reduced. The standard deviation of the values within
-per block are written to ${output_prefix}.reduced.std. if the argument
-output_prefix is omitted, it defaults to input. This is tool is mainly usefull
-for plotting very long time series in a comprehensible fashion.
+written to ${input*}.red. The standard deviation of the values within a
+block are written to ${input*}.red.std. This is tool is mainly usefull for
+plotting very long time series in a comprehensible fashion.
 """ + usage_tail
 
 parser = OptionParser(usage)
@@ -45,28 +44,26 @@ add_quiet_option(parser)
 
 
 log.verbose = options.verbose
-if len(args) == 3 or len(args) == 2:
-    path_in = args[0]
-    block_size = int(args[1])
-    if len(args) == 3:
-        prefix_out = args[2]
-    else:
-        prefix_out = path_in
-    path_out = "%s.reduced" % prefix_out
-    path_std = "%s.reduced.std" % prefix_out
+if len(args) >= 2:
+    paths_in = args[:-1]
+    block_size = int(args[-1])
 else:
-    parser.error("Expecting two or three arguments.")
+    parser.error("Expecting two or more arguments.")
 
 sub = parse_slice(options.slice)
 
-inp = load_track(path_in)
-inp = inp[:(len(inp)/block_size)*block_size]
-inp = inp.reshape((-1,block_size))
-reduced = inp.mean(axis=1)
-reduced_std = inp.std(axis=1)
+for path_in in paths_in:
+    inp = load_track(path_in, sub)
+    inp = inp[:(len(inp)/block_size)*block_size]
+    inp = inp.reshape((-1,block_size))
+    reduced = inp.mean(axis=1)
+    reduced_std = inp.std(axis=1)
 
-dump_track(path_out, reduced)
-log("WRITTEN %s" % path_out)
-dump_track(path_std, reduced_std)
-log("WRITTEN %s" % path_std)
+    path_out = "%s.red" % path_in
+    dump_track(path_out, reduced)
+    log("WRITTEN %s" % path_out)
+
+    path_std = "%s.red.std" % path_in
+    dump_track(path_std, reduced_std)
+    log("WRITTEN %s" % path_std)
 

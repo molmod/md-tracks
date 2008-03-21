@@ -1355,11 +1355,10 @@ class CommandsTestCase(BaseTestCase):
         signal += numpy.sin(0.00015*time)
         dump_track("time", time)
         dump_track("signal", signal)
-        self.execute("tr-reduce", ["time", "1003"])
-        self.execute("tr-reduce", ["signal", "1003"])
+        self.execute("tr-reduce", ["time", "signal", "1003"])
         self.execute("tr-plot", [
             ":line", "time", "signal", "-c", "#DDDDDD",
-            ":line", "time.reduced", "signal.reduced", "signal.reduced.std",
+            ":line", "time.red", "signal.red", "signal.red.std",
             os.path.join(output_dir, "reduce.png")
         ])
 
