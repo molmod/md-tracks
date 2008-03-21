@@ -1,0 +1,89 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+
+from tracks.core import load_track, dump_track
+from tracks.optparse import add_quiet_option
+from tracks.log import log, usage_tail
+
+import numpy
+
+from optparse import OptionParser
+
+
+usage = """%prog input1 [input2 ...] output_prefix
+
+%prog computes the power spectrum of the given inputs. Two outputs are written:
+written:
+
+The amplitudes: ${output_prefix}.amplitudes
+The statistical error on the amplitudes: ${output_prefix}.amplitudes.err
+""" + usage_tail
+
+parser = OptionParser(usage)
+add_quiet_option(parser)
+parser.add_option(
+    "-b", "--blocks", default="1",
+    help="The input data is divided in BLOCKS and the final "
+    "power spectrum is the average over all the power spectra of the distinct "
+    "blocks. This reduces the noise in the amplitude vector, but it also "
+    "reduces the resolution on the frequency/wavenumber axis. "
+    "[default=%default]"
+)
+(options, args) = parser.parse_args()
+
+if len(args) >= 2:
+    paths_in = args[:-1]
+    output_prefix = args[-1]
+else:
+    parser.error("Expecting at least two arguments.")
+
+num_blocks = int(options.blocks)
+
+amp = 0
+amp_sq = 0
+count = 0
+input_length = None
+
+for path_in in paths_in:
+    log("PROCESSING %s" % path_in)
+    f = load_track(path_in)
+    if input_length is None:
+        input_length = len(f)
+        block_size = input_length/num_blocks
+    elif input_length != len(f):
+        raise Error("Not all inputs contain the same amount of data.")
+
+    for index in xrange(num_blocks):
+        f_block = f[index*block_size:(index+1)*block_size]
+        amp_block = abs(numpy.fft.rfft(f_block))**2
+        amp += amp_block
+        amp_sq += amp_block**2
+        count += 1
+
+amp /= count*block_size
+amp_sq /= count*block_size
+amp_err = numpy.sqrt((amp_sq - amp**2)/count) # error on the mean
+
+dump_track("%s.amplitudes" % output_prefix, amp)
+dump_track("%s.amplitudes.err" % output_prefix, amp_err)
+

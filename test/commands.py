@@ -1378,3 +1378,13 @@ class CommandsTestCase(BaseTestCase):
     def test_qh_entropy(self):
         self.from_xyz("ar108", "pos")
         self.execute("tr-qh-entropy", [os.path.join(input_dir, "thf01", "init.xyz"), "300*K", "--unit=J/K/mol"])
+
+    def test_spectrum(self):
+        self.from_cp2k_ener("water32")
+        self.from_xyz("water32", "vel")
+        self.execute("tr-spectrum", glob.glob("tracks/atom.vel.???????.?") + ["--blocks=3", "tracks/spectrum"])
+        self.execute("tr-wavenumber-axis", ["tracks/spectrum.amplitudes", "2000*fs", "tracks/spectrum.wavenumbers"])
+        self.execute("tr-plot", ["--xunit=1/cm", "--xlabel=Wavenumber", "--ylabel=Amplitude",
+            ":line", "tracks/spectrum.wavenumbers", "tracks/spectrum.amplitudes",
+            os.path.join(output_dir, "spectrum.png"),
+        ])
