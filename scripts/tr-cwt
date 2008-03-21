@@ -79,15 +79,6 @@ class Morlet(object):
     def __init__(self, sigma):
         self.sigma = sigma
 
-        omega_prev = 0
-        omega_max = sigma
-        print omega_max
-        while abs(omega_prev - omega_max) > 1e10:
-            omega_prev = omega_max
-            omega_max = numpy.sqrt(1+(omega_max**2-1)*numpy.exp(-self.sigma*omega_max)) + self.sigma
-            print omega_max
-        self.omega_max = omega_max
-
     def __call__(self, time_step, a):
         def mother(tau):
             c_sigma = (1+numpy.exp(-self.sigma**2)-2*numpy.exp(-0.75*sigma**2))**(-0.5)
@@ -102,7 +93,7 @@ class Morlet(object):
         return a**(-0.5)*mother(time/a)
 
     def freq_to_scale(self, freq):
-        return self.omega_max/(2*numpy.pi*freq)
+        return self.sigma/(2*numpy.pi*freq)
 
 
 morlet = Morlet(sigma)
