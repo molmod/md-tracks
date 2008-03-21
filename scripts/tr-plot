@@ -54,7 +54,7 @@ global_parser.add_option(
     default=False, action="store_true",
 )
 global_parser.add_option(
-    "-t", "--title", default="Quick and dirty plot",
+    "-t", "--title", default="",
     help="The plot title. [default=%default]",
 )
 global_parser.add_option(
@@ -445,8 +445,6 @@ for word in sys.argv[1:]:
         blocks.append([word])
     else:
         blocks[-1].append(word)
-if len(blocks) == 1:
-    global_parser.error("No plotting arguments given.")
 
 
 (global_options, global_args) = global_parser.parse_args(blocks[0])
@@ -463,6 +461,8 @@ if global_options.plot_help:
     sys.exit(0)
 if len(global_args) > 0:
     global_parser.error("Expecting no global arguments. Got %s" % global_args)
+if len(blocks) == 1:
+    global_parser.error("No plotting arguments given.")
 
 image = blocks[-1][-1]
 del blocks[-1][-1]
