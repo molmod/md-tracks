@@ -367,7 +367,7 @@ class VLineDescriptor(StraightHLineDescriptor):
 PlotDescriptor.kinds["vline"] = VLineDescriptor
 
 
-contour_usage = """Data arguments: X Y Z_prefix"""
+contour_usage = """Data arguments: X Y Z1 [Z2 ..]"""
 class ContourDescriptor(PlotDescriptor):
     parser = OptionParser(contour_usage)
     parser.add_option(
@@ -398,18 +398,18 @@ class ContourDescriptor(PlotDescriptor):
 
     def __init__(self, args):
         PlotDescriptor.__init__(self, args)
-        if len(self.args)!=3:
-            self.parser.error("Excpecting three data arguments. Got %i" % len(self.args))
+        if len(self.args) < 3:
+            self.parser.error("Excpecting at least three data arguments. Got %i" % len(self.args))
         self.sub = parse_slice(self.options.slice)
         self.x = load_track(self.args[0], self.sub)
         self.y = load_track(self.args[1])
-        self.transform_prefix = self.args[2]
+        self.paths_z = self.args[2:]
         self.options.label = None
 
     def plot(self, xunit, yunit):
         z = numpy.zeros((len(self.y), len(self.x)), float)
-        for index in xrange(len(self.y)):
-            z[index] = load_track("%s.%07i" % (self.transform_prefix, index), self.sub)
+        for index, path_z in enumerate(self.paths_z):
+            z[index] = load_track(path_z, self.sub)
         if self.options.zlog:
             z = numpy.log(abs(z))
         if self.options.zmin is None:
