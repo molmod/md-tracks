@@ -76,7 +76,7 @@ if len(args) == 3:
     prefix, middle_word, path_psf = args
     directory = os.path.dirname(prefix)
 else:
-    parser.error("Expecting at least five arguments.")
+    parser.error("Expecting three arguments.")
 
 
 psf = PSFFile(path_psf)
