@@ -1388,3 +1388,21 @@ class CommandsTestCase(BaseTestCase):
             ":line", "tracks/spectrum.wavenumbers", "tracks/spectrum.amplitudes",
             os.path.join(output_dir, "spectrum.png"),
         ])
+
+    def test_slice(self):
+        self.from_cp2k_ener("water32")
+        os.mkdir("sliced")
+        self.execute("tr-slice", glob.glob("tracks/*") + ["10::10", "sliced"])
+        for filename in glob.glob("tracks/*"):
+            self.assertArraysEqual(
+                load_track(filename, slice(10,None,10)),
+                load_track(filename.replace("tracks", "sliced"))
+            )
+        os.mkdir("sliced_bis")
+        self.execute("tr-slice", ["tracks/time", "10::10", "sliced_bis/time"])
+        self.assertArraysEqual(
+            load_track("tracks/time", slice(10,None,10)),
+            load_track("sliced_bis/time")
+        )
+
+

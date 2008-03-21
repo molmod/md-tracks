@@ -24,13 +24,15 @@ from tracks.core import load_track, dump_track
 from tracks.parse import parse_slice
 from tracks.log import usage_tail
 
-import numpy
+import numpy, os
 from optparse import OptionParser
 
 
-usage = """%prog [options] input slice output
+usage = """%prog [options] input1 [input2 ...] slice destination
 
-%prog slices the track ${input} and writes the result to ${output}.
+%prog slices the tracks ${input1}, ${input2}, ... and writes the result to the
+directory ${destination}. If only one input is given, ${destination} may also
+be a file.
 
 The ${slice} argument has the following format: 'start:stop:step' where start,
 stop and step must be integers or can be omitted. The slice interpretation is
@@ -41,12 +43,22 @@ parser = OptionParser(usage)
 (options, args) = parser.parse_args()
 
 
-if len(args) == 3:
-    path_in, sub, path_out = args
+if len(args) >= 3:
+    paths_in = args[:-2]
+    sub, destination = args[-2:]
 else:
-    parser.error("Expecting three arguments.")
+    parser.error("Expecting at least three arguments.")
+
 
 sub = parse_slice(sub)
-dump_track(path_out, load_track(path_in, sub))
+if os.path.isdir(destination):
+    for path_in in paths_in:
+        path_out = os.path.join(destination, os.path.basename(path_in))
+        dump_track(path_out, load_track(path_in, sub))
+else:
+    if len(paths_in) == 1:
+        dump_track(destination, load_track(paths_in[0], sub))
+    else:
+        parser.error("The destination can only be a file when one input is given.")
 
 
