@@ -90,7 +90,7 @@ for path_in in paths_in:
 
 amp /= count*block_size
 amp_sq /= count*block_size
-amp_err = numpy.sqrt((amp_sq - amp**2)/count) # error on the mean
+amp_err = numpy.sqrt((amp_sq - amp**2))/count # error on the mean
 
 dump_track("%s.amplitudes" % output_prefix, amp)
 log("WRITTEN %s.amplitudes" % output_prefix)
