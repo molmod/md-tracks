@@ -31,7 +31,7 @@ from molmod.units import cm, fs
 import numpy
 from optparse import OptionParser
 
-usage = """%prog sigma time_axis signal1 [signal2 ...] output_prefix
+usage = """%prog sigma signal1 [signal2 ...] time_axis output_prefix
 
 %prog computes the sums of the moduli squared of the continuous wavelet
 transforms of the given signal, using the Morlet wavelet with parameter sigma.
@@ -62,9 +62,9 @@ parser.add_option(
 sub = parse_slice(options.slice)
 if len(args) >= 4:
     sigma = float(args[0])
-    time = load_track(args[1])
+    paths_in = args[1:-2]
+    time = load_track(args[-2])
     time_step = time[1] - time[0]
-    paths_in = args[2:-1]
     output_prefix = args[-1]
 else:
     parser.error("Expecting at least four arguments.")

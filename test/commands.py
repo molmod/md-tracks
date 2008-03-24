@@ -1324,7 +1324,7 @@ class CommandsTestCase(BaseTestCase):
         dump_track("time", time)
         dump_track("signal", signal)
         dump_track("wavenum_mod", freq_mod/lightspeed)
-        self.execute("tr-cwt", ["--kmax=2500/cm", "--kstep=20/cm", "20", "time", "signal", "cwt"])
+        self.execute("tr-cwt", ["--kmax=2500/cm", "--kstep=20/cm", "20", "signal", "time", "cwt"])
         self.execute("tr-plot", ["--xunit=fs",
             ":line", "time", "cwt.mother.real",
             ":line", "time", "cwt.mother.imag",
