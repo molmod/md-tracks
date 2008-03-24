@@ -22,19 +22,24 @@
 
 
 from tracks.core import load_track, dump_track
+from tracks.parse import parse_x_step
 from tracks.optparse import add_quiet_option
 from tracks.log import log, usage_tail
+
+from molmod.constants import lightspeed
 
 import numpy
 
 from optparse import OptionParser
 
 
-usage = """%prog input1 [input2 ...] output_prefix
+usage = """%prog input1 [input2 ...] {time_axis|time_step} output_prefix
 
-%prog computes the power spectrum of the given inputs. Two outputs are written:
+%prog computes the power spectrum of the given inputs. Four outputs are written:
 written:
 
+The frequency axis: ${output_prefix}.frequencies
+The wavenumber axis: ${output_prefix}.wavenumbers
 The amplitudes: ${output_prefix}.amplitudes
 The statistical error on the amplitudes: ${output_prefix}.amplitudes.err
 """ + usage_tail
@@ -51,13 +56,16 @@ parser.add_option(
 )
 (options, args) = parser.parse_args()
 
-if len(args) >= 2:
-    paths_in = args[:-1]
+if len(args) >= 3:
+    paths_in = args[:-2]
+    time_step = parse_x_step(args[-2])
     output_prefix = args[-1]
 else:
-    parser.error("Expecting at least two arguments.")
+    parser.error("Expecting at least three arguments.")
 
 num_blocks = int(options.blocks)
+
+# the amplitudes
 
 amp = 0
 amp_sq = 0
@@ -85,5 +93,15 @@ amp_sq /= count*block_size
 amp_err = numpy.sqrt((amp_sq - amp**2)/count) # error on the mean
 
 dump_track("%s.amplitudes" % output_prefix, amp)
+log("WRITTEN %s.amplitudes" % output_prefix)
 dump_track("%s.amplitudes.err" % output_prefix, amp_err)
+log("WRITTEN %s.amplitudes.err" % output_prefix)
+
+# the frequency and wavenumber axis
+
+duration = time_step*block_size
+dump_track("%s.wavenumbers" % output_prefix, 1/duration/lightspeed*numpy.arange(block_size))
+log("WRITTEN %s.wavenumbers" % output_prefix)
+dump_track("%s.frequencies" % output_prefix, 1/duration*numpy.arange(block_size))
+log("WRITTEN %s.frequencies" % output_prefix)
 

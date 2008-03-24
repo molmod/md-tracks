@@ -1383,8 +1383,7 @@ class CommandsTestCase(BaseTestCase):
     def test_spectrum(self):
         self.from_cp2k_ener("water32")
         self.from_xyz("water32", "vel")
-        self.execute("tr-spectrum", glob.glob("tracks/atom.vel.???????.?") + ["--blocks=3", "tracks/spectrum"])
-        self.execute("tr-wavenumber-axis", ["tracks/spectrum.amplitudes", "2000*fs", "tracks/spectrum.wavenumbers"])
+        self.execute("tr-spectrum", glob.glob("tracks/atom.vel.???????.?") + ["tracks/time", "--blocks=3", "tracks/spectrum"])
         self.execute("tr-plot", ["--xunit=1/cm", "--xlabel=Wavenumber", "--ylabel=Amplitude",
             ":line", "tracks/spectrum.wavenumbers", "tracks/spectrum.amplitudes",
             os.path.join(output_dir, "spectrum.png"),
