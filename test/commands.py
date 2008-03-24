@@ -1339,6 +1339,7 @@ class CommandsTestCase(BaseTestCase):
             ":line", "time", "wavenum_mod", "--color=k",
             ":line", "cwt.left_margin", "cwt.wavenumbers", "--color=k", "-d", "--",
             ":line", "cwt.right_margin", "cwt.wavenumbers", "--color=k", "-d", "--",
+            ":hline", "1000/cm", "2000/cm", "--min=0.2", "--max=0.4",
             os.path.join(output_dir, "cwt_spectrogram.png")
         ])
 

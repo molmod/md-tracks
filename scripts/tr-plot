@@ -315,7 +315,7 @@ class BarDescriptor(PlotDescriptor):
 PlotDescriptor.kinds["bar"] = BarDescriptor
 
 
-straigt_line_usage = """The data argument is a single value for the position of the line.
+straigt_line_usage = """The data argument is a series of values for the position of the lines.
 
 The unit must be included, e.g. 3*A.
 """
@@ -333,14 +333,22 @@ class StraightHLineDescriptor(PlotDescriptor):
         "-d", dest="linestyle",
         help="Specify the line style: '-', '--', ':', ... (see matplotlib.sf.net)",
     )
+    parser.add_option(
+        "--min", default="0",
+        help="Specify the fractional position in the axes where the line starts.",
+    )
+    parser.add_option(
+        "--max", default="1",
+        help="Specify the fractional position in the axes where the line ends.",
+    )
     kind = None
 
     def __init__(self, args):
         PlotDescriptor.__init__(self, args)
-        if len(self.args) != 1:
-            self.parser.error("Expecting one argument in %s specification" % self.kind)
+        if len(self.args) == 0:
+            self.parser.error("Expecting at least one argument in the %s specification" % self.kind)
         else:
-            self.value = parse_unit(self.args[0])
+            self.values = [parse_unit(arg) for arg in self.args]
 
 
 class HLineDescriptor(StraightHLineDescriptor):
@@ -350,7 +358,10 @@ class HLineDescriptor(StraightHLineDescriptor):
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
         if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
-        self.patch = pylab.axhline(self.value/yunit, linewidth=1, **kwargs)
+        xmin = float(self.options.min)
+        xmax = float(self.options.max)
+        for value in self.values:
+           self.patch = pylab.axhline(value/yunit, xmin=xmin, xmax=xmax, linewidth=1, **kwargs)
 
 PlotDescriptor.kinds["hline"] = HLineDescriptor
 
@@ -362,7 +373,10 @@ class VLineDescriptor(StraightHLineDescriptor):
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
         if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
-        self.patch = pylab.axvline(self.value/xunit, linewidth=1, **kwargs)
+        ymin = float(self.options.min)
+        ymax = float(self.options.max)
+        for value in self.values:
+            self.patch = pylab.axvline(value/xunit, ymin=ymin, ymax=ymax, linewidth=1, **kwargs)
 
 PlotDescriptor.kinds["vline"] = VLineDescriptor
 
