@@ -62,16 +62,15 @@ class Wrapper(object):
 # when scripts are added, this list must be updated
 names = [
     "tr-ac", "tr-ac-error", "tr-angular-momentum", "tr-blav", "tr-calc",
-    "tr-corr", "tr-cwt", "tr-derive", "tr-df", "tr-diff",
-    "tr-fit-peaks", "tr-fluct", "tr-format-indexes", "tr-freq-axis",
-    "tr-from-atrj", "tr-from-cp2k-cell", "tr-from-cp2k-ener",
-    "tr-from-cpmd-ener", "tr-from-cpmd-traj", "tr-from-xyz", "tr-ic-bend",
-    "tr-ic-dihed", "tr-ic-dist", "tr-ic-dtl", "tr-ic-oop", "tr-ic-psf",
-    "tr-integrate", "tr-irfft", "tr-length", "tr-make-spectrum", "tr-mean-std",
-    "tr-norm", "tr-pca", "tr-plot", "tr-qh-entropy", "tr-rdf", "tr-read",
-    "tr-reduce", "tr-rfft", "tr-select", "tr-select-rings",
-    "tr-shortest-distance", "tr-slice", "tr-spectrum", "tr-split-com",
-    "tr-to-xyz", "tr-wavenumber-axis", "tr-write",
+    "tr-corr", "tr-cwt", "tr-derive", "tr-diff", "tr-fit-peaks", "tr-fluct",
+    "tr-format-indexes", "tr-freq-axis",  "tr-from-atrj", "tr-from-cp2k-cell",
+    "tr-from-cp2k-ener", "tr-from-cpmd-ener", "tr-from-cpmd-traj",
+    "tr-from-xyz", "tr-hist", "tr-ic-bend",  "tr-ic-dihed", "tr-ic-dist",
+    "tr-ic-dtl", "tr-ic-oop", "tr-ic-psf", "tr-integrate", "tr-irfft",
+    "tr-length", "tr-make-spectrum", "tr-mean-std", "tr-norm", "tr-pca",
+    "tr-plot", "tr-qh-entropy", "tr-rdf", "tr-read", "tr-reduce", "tr-rfft",
+    "tr-select", "tr-select-rings", "tr-shortest-distance", "tr-slice",
+    "tr-spectrum", "tr-split-com", "tr-to-xyz", "tr-wavenumber-axis", "tr-write",
 ]
 
 for name in names:

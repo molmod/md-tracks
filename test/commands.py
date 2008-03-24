@@ -1097,12 +1097,12 @@ class CommandsTestCase(BaseTestCase):
         self.from_cp2k_ener("thf01")
         self.execute("tr-fluct", ["tracks/temperature", "tracks/temperature", "tracks/test"])
 
-    def test_df(self):
+    def test_hist(self):
         self.from_xyz("thf01", "pos")
         self.from_cp2k_ener("thf01")
         self.execute("tr-ic-psf", ['bond', 'tracks/atom.pos', '1,2,3,4', '5,6,7,8,9,10,11,12', os.path.join(input_dir, "thf01/init.psf")])
-        # ordinary df, no error bars
-        self.execute("tr-df", glob.glob("tracks/atom.bond.pos.???????.???????") + ["1.0*A", "1.2*A", "20", "tracks/atom.bond.pos.df"])
+        # ordinary hist, no error bars
+        self.execute("tr-hist", glob.glob("tracks/atom.bond.pos.???????.???????") + ["1.0*A", "1.2*A", "20", "tracks/atom.bond.pos.df"])
         df_hist = load_track("tracks/atom.bond.pos.df.hist")
         self.assertAlmostEqual(df_hist.sum(), 1.0, 2)
         self.execute("tr-plot", [
@@ -1110,7 +1110,7 @@ class CommandsTestCase(BaseTestCase):
             ":bar", "tracks/atom.bond.pos.df.bins", "tracks/atom.bond.pos.df.hist",
             os.path.join(output_dir, "df_noerror.png"),
         ])
-        # cumulative df, no error bars
+        # cumulative hist, no error bars
         cdf_hist = load_track("tracks/atom.bond.pos.df.cumul.hist")
         self.assertAlmostEqual(cdf_hist[-1], 1.0, 2)
         self.execute("tr-plot", [
@@ -1118,8 +1118,8 @@ class CommandsTestCase(BaseTestCase):
             ":bar", "tracks/atom.bond.pos.df.bins", "tracks/atom.bond.pos.df.cumul.hist",
             os.path.join(output_dir, "df_cumul_noerror.png"),
         ])
-        # ordinary df, with error bars
-        self.execute("tr-df", glob.glob("tracks/atom.bond.pos.???????.???????") + ["--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.bond.pos.df"])
+        # ordinary hist, with error bars
+        self.execute("tr-hist", glob.glob("tracks/atom.bond.pos.???????.???????") + ["--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.bond.pos.df"])
         lines = []
         for bin_filename in sorted(glob.glob("tracks/atom.bond.pos.df.bin.???????")):
             output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
@@ -1133,7 +1133,7 @@ class CommandsTestCase(BaseTestCase):
             ":bar", "tracks/atom.bond.pos.df.bins", "tracks/atom.bond.pos.df.hist", "tracks/atom.bond.pos.df.hist.error",
             os.path.join(output_dir, "df_error.png"),
         ])
-        # cumulative df, with error bars
+        # cumulative hist, with error bars
         lines = []
         for bin_filename in sorted(glob.glob("tracks/atom.bond.pos.df.cumul.bin.???????")):
             output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
