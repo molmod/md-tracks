@@ -58,6 +58,8 @@ for path_in in paths_in:
     inp = inp.reshape((-1,block_size))
     reduced = inp.mean(axis=1)
     reduced_std = inp.std(axis=1)
+    reduced_min = inp.min(axis=1)
+    reduced_max = inp.max(axis=-1)
 
     path_out = "%s.red" % path_in
     dump_track(path_out, reduced)
@@ -65,5 +67,13 @@ for path_in in paths_in:
 
     path_std = "%s.red.std" % path_in
     dump_track(path_std, reduced_std)
+    log("WRITTEN %s" % path_std)
+
+    path_std = "%s.red.min" % path_in
+    dump_track(path_std, reduced_min)
+    log("WRITTEN %s" % path_std)
+
+    path_std = "%s.red.max" % path_in
+    dump_track(path_std, reduced_max)
     log("WRITTEN %s" % path_std)
 

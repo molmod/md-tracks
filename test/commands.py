@@ -1306,7 +1306,9 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-reduce", ["time", "signal", "1003"])
         self.execute("tr-plot", [
             ":line", "time", "signal", "-c", "#DDDDDD",
-            ":line", "time.red", "signal.red", "signal.red.std",
+            ":line", "time.red", "signal.red", "signal.red.std", "-c", "#00AA00",
+            ":line", "time.red", "signal.red.min", "-c", "#00AA00", "-a", "0.5", "-w", "0.5", "-d", "--",
+            ":line", "time.red", "signal.red.max", "-c", "#00AA00", "-a", "0.5", "-w", "0.5", "-d", "--",
             os.path.join(output_dir, "reduce.png")
         ])
 
