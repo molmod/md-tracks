@@ -112,6 +112,39 @@ global_parser.add_option(
 )
 
 
+# preB) Generic parse options
+
+def add_color_option(parser):
+    parser.add_option(
+        "-c", "--color",
+        help="Specifiy the color for this line",
+    )
+
+def add_label_option(parser):
+    parser.add_option(
+        "-l", "--label",
+        help="Specifiy a label for this line",
+    )
+
+def add_line_style_option(parser):
+    parser.add_option(
+        "-d", dest="linestyle", default="-",
+        help="Specify the line style: '-', '--', ':', ... (see matplotlib.sf.net)",
+    )
+
+def add_line_width_option(parser):
+    parser.add_option(
+        "-w", dest="linewidth", default="1",
+        help="Specify the line width in points",
+    )
+
+def add_alpha_option(parser):
+    parser.add_option(
+        "-a", dest="alpha", default="1",
+        help="Specify the opacity (alpha channel). 0 is transparent, 1 is opaque.",
+    )
+
+
 # B) Define the plot descriptors
 
 class Error(Exception):
@@ -181,30 +214,26 @@ plotting.
 """
 class LineDescriptor(PlotDescriptor):
     parser = OptionParser(line_usage)
-    parser.add_option(
-        "-c", "--color",
-        help="Specifiy the color for this line",
-    )
-    parser.add_option(
-        "-l", "--label",
-        help="Specifiy a label for this line",
-    )
+    add_color_option(parser)
+    add_line_style_option(parser)
+    add_line_width_option(parser)
+    add_alpha_option(parser)
+    add_label_option(parser)
     add_slice_option(parser)
-    parser.add_option(
-        "-d", dest="linestyle",
-        help="Specify the line style: '-', '--', ':', ... (see matplotlib.sf.net)",
-    )
 
     def plot(self, xunit, yunit):
         self.init_line_data(xunit, yunit)
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
         if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
-        self.patch = pylab.plot(self.x, self.y, linewidth=1, **kwargs)[0]
-        kwargs["color"] = self.patch.get_color()
+        kwargs["linewidth"] = float(self.options.linewidth)
+        kwargs["alpha"] = float(self.options.alpha)
+        self.patch = pylab.plot(self.x, self.y, **kwargs)[0]
         if self.error is not None:
-            pylab.plot(self.x, self.y+self.error, alpha=0.5, label="_nolegend_", **kwargs)
-            pylab.plot(self.x, self.y-self.error, alpha=0.5, label="_nolegend_", **kwargs)
+            kwargs["color"] = self.patch.get_color()
+            kwargs["alpha"] = 0.5*kwargs["alpha"]
+            pylab.plot(self.x, self.y+self.error, label="_nolegend_", **kwargs)
+            pylab.plot(self.x, self.y-self.error, label="_nolegend_", **kwargs)
 
 PlotDescriptor.kinds["line"] = LineDescriptor
 
@@ -217,18 +246,13 @@ plotting.
 """
 class ScatterDescriptor(PlotDescriptor):
     parser = OptionParser(scatter_usage)
-    parser.add_option(
-        "-c", "--color",
-        help="Specifiy the marker color for this scatter",
-    )
+    add_color_option(parser)
     parser.add_option(
         "-e", "--edge-color",
         help="Specifiy the marker edge color for this scatter",
     )
-    parser.add_option(
-        "-l", "--label",
-        help="Specifiy a label for this scatter",
-    )
+    add_alpha_option(parser)
+    add_label_option(parser)
     add_slice_option(parser)
     parser.add_option(
         "-m", dest="marker",
@@ -260,20 +284,17 @@ class ScatterDescriptor(PlotDescriptor):
         if self.options.color is not None: kwargs["color"] = self.options.color
         if self.options.edge_color is not None: kwargs["markeredgecolor"] = self.options.edge_color
         if self.options.marker is not None: kwargs["marker"] = self.options.marker
+        kwargs["alpha"] = float(self.options.alpha)
         self.patch = pylab.plot(self.x, self.y, linestyle='None', **kwargs)[0]
 PlotDescriptor.kinds["scatter"] = ScatterDescriptor
 
 
 class BarDescriptor(PlotDescriptor):
     parser = OptionParser(line_usage)
-    parser.add_option(
-        "-c", "--color",
-        help="Specifiy the color for this line",
-    )
-    parser.add_option(
-        "-l", "--label",
-        help="Specifiy a label for this line",
-    )
+    add_color_option(parser)
+    add_line_width_option(parser)
+    add_alpha_option(parser)
+    add_label_option(parser)
     add_slice_option(parser)
 
     def plot(self, xunit, yunit):
@@ -297,9 +318,13 @@ class BarDescriptor(PlotDescriptor):
             points_y.append(self.y[index])
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
-        self.patch = pylab.plot(points_x, points_y, linewidth=1, **kwargs)[0]
+        kwargs["linewidth"] = float(self.options.linewidth)
+        kwargs["alpha"] = float(self.options.alpha)
+        self.patch = pylab.plot(points_x, points_y, **kwargs)[0]
         self.options.color = self.patch.get_color()
         if self.error is not None:
+            alpha = kwargs["alpha"]*0.5
+            linewidth = kwargs["linewidth"]
             from matplotlib.patches import Polygon
             fraction = 0.5
             left[1:] = self.x[1:] - 0.5*fraction*delta
@@ -307,9 +332,9 @@ class BarDescriptor(PlotDescriptor):
             right[:-1] = self.x[:-1] + 0.5*fraction*delta
             right[-1] = self.x[-1] + 0.5*fraction*delta[-1]
             for l, r, x, y, e in zip(left, right, self.x, self.y, self.error):
-                pylab.gca().add_patch(Polygon([(l, y+e),(r,y+e)], ec=self.options.color, alpha=0.5, linewidth=1, fill=False))
-                pylab.gca().add_patch(Polygon([(l, y-e),(r,y-e)], ec=self.options.color, alpha=0.5, linewidth=1, fill=False))
-                pylab.gca().add_patch(Polygon([(x, y-e),(x,y+e)], ec=self.options.color, alpha=0.5, linewidth=1, fill=False))
+                pylab.gca().add_patch(Polygon([(l, y+e),(r,y+e)], ec=self.options.color, alpha=alpha, linewidth=linewidth, fill=False))
+                pylab.gca().add_patch(Polygon([(l, y-e),(r,y-e)], ec=self.options.color, alpha=alpha, linewidth=linewidth, fill=False))
+                pylab.gca().add_patch(Polygon([(x, y-e),(x,y+e)], ec=self.options.color, alpha=alpha, linewidth=linewidth, fill=False))
         pylab.gca().autoscale_view()
 
 PlotDescriptor.kinds["bar"] = BarDescriptor
@@ -321,18 +346,11 @@ The unit must be included, e.g. 3*A.
 """
 class StraightHLineDescriptor(PlotDescriptor):
     parser = OptionParser(straigt_line_usage)
-    parser.add_option(
-        "-c", "--color", default='k',
-        help="Specifiy the color for this line [default=%default]",
-    )
-    parser.add_option(
-        "-l", "--label",
-        help="Specifiy a label for this line",
-    )
-    parser.add_option(
-        "-d", dest="linestyle",
-        help="Specify the line style: '-', '--', ':', ... (see matplotlib.sf.net)",
-    )
+    add_color_option(parser)
+    add_line_style_option(parser)
+    add_line_width_option(parser)
+    add_alpha_option(parser)
+    add_label_option(parser)
     parser.add_option(
         "--min", default="0",
         help="Specify the fractional position in the axes where the line starts.",
@@ -358,10 +376,12 @@ class HLineDescriptor(StraightHLineDescriptor):
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
         if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
-        xmin = float(self.options.min)
-        xmax = float(self.options.max)
+        kwargs["linewidth"] = float(self.options.linewidth)
+        kwargs["alpha"] = float(self.options.alpha)
+        kwargs["xmin"] = float(self.options.min)
+        kwargs["xmax"] = float(self.options.max)
         for value in self.values:
-           self.patch = pylab.axhline(value/yunit, xmin=xmin, xmax=xmax, linewidth=1, **kwargs)
+           self.patch = pylab.axhline(value/yunit, **kwargs)
 
 PlotDescriptor.kinds["hline"] = HLineDescriptor
 
@@ -373,10 +393,12 @@ class VLineDescriptor(StraightHLineDescriptor):
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
         if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
-        ymin = float(self.options.min)
-        ymax = float(self.options.max)
+        kwargs["linewidth"] = float(self.options.linewidth)
+        kwargs["alpha"] = float(self.options.alpha)
+        kwargs["ymin"] = float(self.options.min)
+        kwargs["ymax"] = float(self.options.max)
         for value in self.values:
-            self.patch = pylab.axvline(value/xunit, ymin=ymin, ymax=ymax, linewidth=1, **kwargs)
+            self.patch = pylab.axvline(value/xunit, **kwargs)
 
 PlotDescriptor.kinds["vline"] = VLineDescriptor
 
