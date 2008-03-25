@@ -518,122 +518,67 @@ class CommandsTestCase(BaseTestCase):
         # test on the whole thing
         self.from_xyz("thf01", "vel", ["-s:1000:", "-u1"]) # irrft always results in an even number of datapoints
         self.from_cp2k_ener("thf01")
-        self.execute("tr-rfft", glob.glob("tracks/atom.vel.*.?"))
-        self.execute("tr-irfft", glob.glob("tracks/atom.vel.*.rfft"))
-        self.assertEqual(len(glob.glob("tracks/atom.vel.*.?")), len(glob.glob("tracks/*.rfft")))
-        self.assertEqual(len(glob.glob("tracks/atom.vel.*.?")), len(glob.glob("tracks/*.rfft.irfft")))
-        for filename in glob.glob("tracks/atom.vel.*.?"):
+        self.execute("tr-rfft", glob.glob("tracks/atom.vel.???????.?") + ["tracks/time", "tracks/spectrum"])
+        self.execute("tr-irfft", glob.glob("tracks/atom.vel.???????.?.rfft"))
+        self.assertEqual(len(glob.glob("tracks/atom.vel.???????.?")), len(glob.glob("tracks/*.rfft")))
+        self.assertEqual(len(glob.glob("tracks/atom.vel.???????.?")), len(glob.glob("tracks/*.rfft.irfft")))
+        for filename in glob.glob("tracks/atom.vel.???????.?"):
             other_filename = "%s.rfft.irfft" % filename
             tmp1 = load_track(filename)
             tmp2 = load_track(other_filename)
             self.assertEqual(tmp1.shape, tmp2.shape)
             self.assertArraysAlmostEqual(tmp1, tmp2, 1e-7)
+        # A test plot
+        tmp = 0
+        for filename in glob.glob("tracks/atom.vel.???????.?.rfft"):
+            tmp += abs(load_track(filename))**2
+        dump_track("tracks/y", tmp)
+        self.execute("tr-plot", [
+            "--xunit=1/cm", "--xlim=0,3500/cm",
+            ":line", "tracks/spectrum.wavenumbers", "tracks/y",
+            os.path.join(output_dir, "rfft_irfft_test.png")
+        ])
         # test with a slice
-        self.execute("tr-rfft", ["--slice=100:203:2",] + glob.glob("tracks/atom.vel.*.?"))
+        self.execute("tr-rfft", ["--slice=100:203:2",] + glob.glob("tracks/atom.vel.???????.?") + ["tracks/time", "tracks/spectrum"])
         self.execute("tr-irfft", glob.glob("tracks/atom.vel.*.rfft"))
-        self.assertEqual(len(glob.glob("tracks/atom.vel.*.?")), len(glob.glob("tracks/*.rfft")))
-        self.assertEqual(len(glob.glob("tracks/atom.vel.*.?")), len(glob.glob("tracks/*.rfft.irfft")))
+        self.assertEqual(len(glob.glob("tracks/atom.vel.???????.?")), len(glob.glob("tracks/*.rfft")))
+        self.assertEqual(len(glob.glob("tracks/atom.vel.???????.?")), len(glob.glob("tracks/*.rfft.irfft")))
         for filename in glob.glob("tracks/atom.vel.*.?"):
             other_filename = "%s.rfft.irfft" % filename
             tmp1 = load_track(filename, slice(100,203,2))
             tmp2 = load_track(other_filename)
             self.assertEqual(tmp1.shape, tmp2.shape)
             self.assertArraysAlmostEqual(tmp1, tmp2, 1e-7)
-
-    def test_make_spectrum(self):
-        self.from_xyz("thf01", "vel", ["-u1"])
-        self.from_cp2k_ener("thf01")
-        self.execute("tr-rfft", glob.glob("tracks/atom.vel.*") + ["-whamming", "-d 5"])
-        self.execute("tr-make-spectrum", glob.glob("tracks/atom.vel.*.rfft") + ["tracks/spectrum"])
-        self.assertEqual(len(load_track("tracks/spectrum")), 101)
-        self.execute("tr-wavenumber-axis", ["tracks/spectrum", "1000*fs", "tracks/wavenumbers"])
-        self.execute("tr-freq-axis", ["tracks/spectrum", "1000*fs", "tracks/freqs"])
-        wavenumbers = load_track("tracks/wavenumbers")
-        freqs = load_track("tracks/freqs")
-        self.assertEqual(wavenumbers[0], 0.0)
-        self.assertEqual(freqs[0], 0.0)
-        self.assertArrayAlmostConstant(freqs[1:]/wavenumbers[1:], lightspeed, 1e-7)
+        # A test plot
+        tmp = 0
+        for filename in glob.glob("tracks/atom.vel.???????.?.rfft"):
+            tmp += abs(load_track(filename))**2
+        dump_track("tracks/y", tmp)
         self.execute("tr-plot", [
-            "--xlabel=Wavenumber", "--ylabel=Amplitude", "--xunit=1/cm",
-            ":line", "-s1::", "tracks/wavenumbers", "tracks/spectrum",
-            os.path.join(output_dir, "make_spectrum_wavenumbers.png")]
-        )
-        self.execute("tr-plot", [
-            "--xlabel=Frequency", "--ylabel=Amplitude", "--xunit=1/fs",
-            ":line", "-s1::", "tracks/freqs", "tracks/spectrum",
-            os.path.join(output_dir, "make_spectrum_freqs.png")]
-        )
-        self.execute("tr-plot", [
-            "--xlabel=Time", "--ylabel=Amplitude", "--xunit=fs", "--xinv",
-            ":line", "-s1::", "tracks/freqs", "tracks/spectrum",
-            os.path.join(output_dir, "make_spectrum_freqs_inv.png")]
-        )
+            "--xunit=1/cm", "--xlim=0,3500/cm",
+            ":line", "tracks/spectrum.wavenumbers", "tracks/y",
+            os.path.join(output_dir, "rfft_irfft_test_slice.png")
+        ])
 
     def test_fit_peaks(self):
         self.from_xyz("thf01", "vel", ["-u1"])
         self.from_cp2k_ener("thf01")
-        self.execute("tr-rfft", glob.glob("tracks/atom.vel.*") + ["-whamming", "-d 5"])
-        self.execute("tr-make-spectrum", glob.glob("tracks/atom.vel.*.rfft") + ["tracks/spectrum"])
-        self.execute("tr-wavenumber-axis", ["tracks/spectrum", "1000*fs", "tracks/wavenumbers"])
+        self.execute("tr-spectrum", glob.glob("tracks/atom.vel.*") + ["tracks/time", "tracks/spectrum"])
         output = self.execute("tr-fit-peaks", [
-            "tracks/wavenumbers", "tracks/spectrum", "1900", "2200",
-            "0.0001:2050.0:50.0:0.01", "--dump-model=tracks/model", #"--no-fit",
+            "tracks/spectrum.wavenumbers", "tracks/spectrum.amplitudes", "1900", "2200",
+            "0.0001:2050.0:50.0:0.01", "--dump-model=tracks/spectrum.model", #"--no-fit",
         ])
         f = file(os.path.join(output_dir, "fit_peaks.out"), "w")
         f.writelines(output)
         f.close()
         self.execute("tr-plot", [
             "--xlabel=Wavenumber", "--ylabel=Amplitude", "--xunit=1/cm",
-            ":line", "-s3::", "tracks/wavenumbers", "tracks/spectrum",
-            ":line", "-s3::", "tracks/wavenumbers", "tracks/model",
+            ":line", "-s3::", "tracks/spectrum.wavenumbers", "tracks/spectrum.amplitudes",
+            ":line", "-s3::", "tracks/spectrum.wavenumbers", "tracks/spectrum.model",
             ":vline", "1900/cm",
             ":vline", "2200/cm",
             os.path.join(output_dir, "fit_peaks_spectrum.png"),
         ])
-
-    def test_freq_axis(self):
-        self.from_cp2k_ener("thf01")
-        time = load_track("tracks/time")
-        self.execute("tr-rfft", ["tracks/temperature"])
-        self.execute("tr-make-spectrum", ["tracks/temperature.rfft", "tracks/spectrum"])
-        spectrum = load_track("tracks/spectrum")
-        self.execute("tr-freq-axis", ["tracks/spectrum", "tracks/time", "tracks/freqs"])
-        freqs = load_track("tracks/freqs")
-        self.assertEqual(len(freqs), len(spectrum))
-        self.assertEqual(freqs[0], 0)
-        self.assertEqual(freqs[1], 1/time[-1])
-        self.assertEqual(freqs[-1], 1/(2*(time[1]-time[0])))
-        self.execute("tr-freq-axis", ["tracks/spectrum", "5000*fs", "tracks/freqs"])
-        freqs_check = load_track("tracks/freqs")
-        self.assertArraysEqual(freqs, freqs_check)
-        self.execute("tr-freq-axis", ["501", "tracks/time", "tracks/freqs"])
-        freqs_check = load_track("tracks/freqs")
-        self.assertArraysEqual(freqs, freqs_check)
-        self.execute("tr-freq-axis", ["501", "5000*fs", "tracks/freqs"])
-        freqs_check = load_track("tracks/freqs")
-        self.assertArraysEqual(freqs, freqs_check)
-
-    def test_wavenumber_axis(self):
-        self.from_cp2k_ener("thf01")
-        time = load_track("tracks/time")
-        self.execute("tr-rfft", ["tracks/temperature"])
-        self.execute("tr-make-spectrum", ["tracks/temperature.rfft", "tracks/spectrum"])
-        spectrum = load_track("tracks/spectrum")
-        self.execute("tr-wavenumber-axis", ["tracks/spectrum", "tracks/time", "tracks/wavenumbers"])
-        wavenumbers = load_track("tracks/wavenumbers")
-        self.assertEqual(len(wavenumbers), len(spectrum))
-        self.assertEqual(wavenumbers[0], 0)
-        self.assertEqual(wavenumbers[1], 1/time[-1]/lightspeed)
-        self.assertEqual(wavenumbers[-1], 1/(2*(time[1]-time[0]))/lightspeed)
-        self.execute("tr-wavenumber-axis", ["tracks/spectrum", "5000*fs", "tracks/wavenumbers"])
-        wavenumbers_check = load_track("tracks/wavenumbers")
-        self.assertArraysEqual(wavenumbers, wavenumbers_check)
-        self.execute("tr-wavenumber-axis", ["501", "tracks/time", "tracks/wavenumbers"])
-        wavenumbers_check = load_track("tracks/wavenumbers")
-        self.assertArraysEqual(wavenumbers, wavenumbers_check)
-        self.execute("tr-wavenumber-axis", ["501", "5000*fs", "tracks/wavenumbers"])
-        wavenumbers_check = load_track("tracks/wavenumbers")
-        self.assertArraysEqual(wavenumbers, wavenumbers_check)
 
     def check_deriv(self, pos, vel, time, relerr):
         self.execute("tr-derive", [pos, time])

@@ -97,11 +97,17 @@ log("WRITTEN %s.amplitudes" % output_prefix)
 dump_track("%s.amplitudes.err" % output_prefix, amp_err)
 log("WRITTEN %s.amplitudes.err" % output_prefix)
 
+# print the overall statistical error:
+
+selection = amp > amp.max()/10
+print "Average relative statistical error: %.2f" % ((amp_err[selection]/amp[selection]).mean()*100)
+
 # the frequency and wavenumber axis
 
 duration = time_step*block_size
-dump_track("%s.wavenumbers" % output_prefix, 1/duration/lightspeed*numpy.arange(block_size))
+transform_size = len(amp)
+dump_track("%s.wavenumbers" % output_prefix, 1/duration/lightspeed*numpy.arange(transform_size))
 log("WRITTEN %s.wavenumbers" % output_prefix)
-dump_track("%s.frequencies" % output_prefix, 1/duration*numpy.arange(block_size))
+dump_track("%s.frequencies" % output_prefix, 1/duration*numpy.arange(transform_size))
 log("WRITTEN %s.frequencies" % output_prefix)
 

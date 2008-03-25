@@ -21,69 +21,61 @@
 
 
 from tracks.core import load_track, dump_track
-from tracks.parse import parse_slice
+from tracks.parse import parse_slice, parse_x_step
 from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.log import log, usage_tail
+
+from molmod.constants import lightspeed
 
 import numpy
 from optparse import OptionParser
 
 
-usage = """%prog [options] input1 [input2 ...]
+usage = """%prog [options] input1 [input2 ...] {time_axis|time_step} output_prefix
 
-%prog performs a forward real Fourier transform on the tracks given by
-${input1}, ${input2}, ... and stores each transform in ${input*}.rfft
+%prog performs a forward real Fourier transform on the tracks ${input1},
+${input2}, ... and stores each transform in ${input*}.rfft. When all inputs have
+the same size, %prog also computes a frequency and wavenumber axes which can be
+used for plotting and filter manipulations. These axes are written to:
+${output_prefix}.freqencies and ${output_prefix}.wavenumbers.
 """ + usage_tail
 
 parser = OptionParser(usage)
-parser.add_option(
-    "-w", "--window", default="rectangular",
-    help="Define a window to handle leakage. WINDOW can be one of the "
-         "following: rectangular, hamming, hanning, blackman. [default="
-         "%default]",
-)
-parser.add_option(
-    "-d", "--divide", default=1,
-    help="Divide the tracks in DIVIDE subtracks of equal length and take the "
-         "average of the transforms of each subtrack. [default=%default]",
-)
 add_slice_option(parser)
 add_quiet_option(parser)
 (options, args) = parser.parse_args()
 
 
 log.verbose = options.verbose
-if len(args) >= 1:
-    paths_in = args
+if len(args) >= 2:
+    paths_in = args[:-2]
+    time_step = parse_x_step(args[-2])
+    output_prefix = args[-1]
 else:
     parser.error("Expecting at least one argument.")
 
-windows = {
-    "hamming": (numpy.hamming, 1.855),
-    "hanning": (numpy.hanning, 2.0),
-    "blackman": (numpy.blackman, 2.4875),
-    "rectangular": ((lambda x: numpy.ones(x, float)), 1.0),
-}
-
-if options.window not in windows:
-    parser.error("Unknown window: '%s'" % options.window)
-
-divide = int(options.divide)
-if divide <= 0:
-    parser.error("The option divide must be strictly positive.")
-
-window, correction = windows[options.window]
 sub = parse_slice(options.slice)
+time_step *= sub.step
 
+data_size = None
 for path_in in paths_in:
     path_out = "%s.rfft" % path_in
     f = load_track(path_in, sub)
-    size = len(f)/divide
-    result = 0.0
-    for index in xrange(divide):
-        result += numpy.fft.rfft(f[index*size:(index+1)*size]*window(size))*correction
-    result /= divide
+    # keep track of the data size
+    if data_size is None:
+        data_size = len(f)
+    elif data_size > 0 and len(f) != data_size:
+        data_size = -1
+    # do the fourier transform
+    result = numpy.fft.rfft(f)
     dump_track(path_out, result)
     log("TRANSFORMED %s -> %s" % (path_in, path_out))
 
+if data_size is not None and data_size > 0:
+    duration = time_step*data_size
+    transform_size = data_size/2+1
+    dump_track("%s.wavenumbers" % output_prefix, 1/duration/lightspeed*numpy.arange(transform_size))
+    log("WRITTEN %s.wavenumbers" % output_prefix)
+    dump_track("%s.frequencies" % output_prefix, 1/duration*numpy.arange(transform_size))
+    log("WRITTEN %s.frequencies" % output_prefix)
 
