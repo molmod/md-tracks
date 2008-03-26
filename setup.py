@@ -23,10 +23,8 @@ if __name__ == "__main__":
     from distutils.core import setup
     from glob import glob
 
-    version = '0.001'
-
     setup(name='Tracks',
-        version=version,
+        version='0.002',
         description='Tracks provides tools for analyzing large trajectory files.',
         author='Toon Verstraelen',
         author_email='Toon.Verstraelen@UGent.be',
