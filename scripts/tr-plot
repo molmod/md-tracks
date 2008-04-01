@@ -532,8 +532,14 @@ class InvScalarFormatter(ScalarFormatter):
 
 pylab.clf()
 pylab.title(global_options.title)
-pylab.xlabel("%s [%s]" % (global_options.xlabel, global_options.xunit))
-pylab.ylabel("%s [%s]" % (global_options.ylabel, global_options.yunit))
+if global_options.xunit == "1":
+    pylab.xlabel(global_options.xlabel)
+else:
+    pylab.xlabel("%s [%s]" % (global_options.xlabel, global_options.xunit))
+if global_options.yunit == "1":
+    pylab.ylabel(global_options.ylabel)
+else:
+    pylab.ylabel("%s [%s]" % (global_options.ylabel, global_options.yunit))
 
 patches = []
 labels = []
