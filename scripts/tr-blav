@@ -82,6 +82,7 @@ else:
 
 min_blocks = int(options.min_blocks)
 sub = parse_slice(options.slice)
+time_step *= sub.step
 f = load_track(path_in, sub)
 
 x = [] # block sizes
