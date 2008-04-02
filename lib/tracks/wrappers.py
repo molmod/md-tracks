@@ -52,10 +52,10 @@ class Wrapper(object):
         retcode = p.returncode
         if retcode != 0 or self.verbose:
             print "Command output:"
-            print "\n".join(output)
+            print output
             print "Command error:"
-            print "\n".join(error)
-            if rectcode != 0:
+            print error
+            if retcode != 0:
                 raise WrapperError("An error occured while executing command (retcode=%i): \n%s" % (retcode, command))
         return output.split("\n")[:-1]
 
