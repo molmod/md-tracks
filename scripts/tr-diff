@@ -31,7 +31,7 @@ from optparse import OptionParser
 
 usage = """%prog [options] input1 [input2 ...] output
 
-%prog comutes the (isotropic) square displacement of the given inputs, as a
+%prog computes the (isotropic) square displacement of the given inputs, as a
 function of delta t. The output can be used to derive the diffusion coefficient.
 """ + usage_tail
 
