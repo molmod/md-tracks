@@ -108,11 +108,12 @@ dump_track("%s.bins" % output_prefix, bins)
 log("WRITTEN %s" % filename)
 
 # the number of particles:
-N = len(prefixes_a)
 if prefixes_b is None:
+    N = len(prefixes_a)
     correction = float(N)/(0.5*N*(N-1))
 else:
-    correction = 1/float(len(prefixes_b))
+    N = len(prefixes_b)
+    correction = 1/float(len(prefixes_a))
 
 
 def yield_deltas():
