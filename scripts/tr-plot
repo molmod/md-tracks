@@ -42,15 +42,16 @@ the following structure:
 
  :kind [options] data
 
-where ${kind} is 'line' or 'bar'. A plot specification must start with a colon,
-i.e. ':'. The available options and the number of data arguments depend on the
-kind of plot.
+where ${kind} is 'line', 'bar', 'vline', 'hline' or 'contour'. A plot
+specification must start with a colon, i.e. ':'. The available options and the
+number of data arguments depend on the kind of plot. Use --plot-help for more
+details.
 """ + usage_tail
 
 global_parser = OptionParser(global_usage)
 global_parser.add_option(
     "--plot-help",
-    help="Print more information on the plot specifications.",
+    help="Print more information about the plot specifications.",
     default=False, action="store_true",
 )
 global_parser.add_option(
