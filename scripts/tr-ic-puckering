@@ -1,0 +1,134 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import dump_track
+from tracks.parse import parse_slice
+from tracks.optparse import add_quiet_option, add_slice_option, add_cell_option
+from tracks.log import log, usage_tail
+import tracks.vector as vector
+
+import numpy
+from optparse import OptionParser
+
+
+usage = """%prog [options] N pos_prefix1 ... pos_prefixN [vel_prefix1 ... vel_prefixN] pos_outprefix [vel_outprefix]
+
+%prog computes the puckering coordinates for the N-membered ring structure
+defined by the atoms ${pos_prefix*}, which are supposed to be in consecutive
+order with respect to the ring topology. Tracks with the given prefixes must
+exist, and their filenames must look like: ${prefix*}.c where c is x, y or z.
+The puckering coordinates are computed defined by Cremer and Pople in
+"A General Definition of Ring Puckering Coordinates", JACS 1975 (vol 97, page
+1354-1358). Note that the minimum ring size is four.
+
+The puckering coordinates are written to multiple files. Each file coresponds to
+one coordinate: ${pos_outprefix}.amplitude.${index} and
+${pos_outprefix}.phase.${index}, where index is in integer padded with zeros up
+to seven characters. The lowest index is always 2, while the highest index
+depends on the ring size N. for odd ring sizes, the maximum index is (N-1)/2.
+For even rings, the maximum is N/2-1. if the ring size is even, there is no phase
+for the largest index.
+
+If the arguments ${vel_prefix*} are also given, the time derivative of the
+puckering coordinates are computed too, based on the chain rule. Tracks with
+the given prefixes must exist, and their filenames must look like:
+${vel_prefix*}.c where c is x, y or z. The outputs are written to
+${vel_outprefix}.amplitude.${index} and ${vel_outprefix}.phase.${index}
+""" + usage_tail
+
+parser = OptionParser(usage)
+add_slice_option(parser)
+add_quiet_option(parser)
+add_cell_option(parser)
+(options, args) = parser.parse_args()
+
+
+log.verbose = options.verbose
+if len(args) >= 6:
+    try:
+        ring_size = int(args[0])
+    except ValueError:
+        parser.error("The first argument must be an integer, i.e. the number of atoms in the ring.")
+    if len(args) == 1 + (ring_size + 1):
+        pos_prefixes = args[1:-1]
+        pos_output_prefix = args[-1]
+        vel_prefixes = None
+        vel_output_prefix = None
+    elif len(args) == 1 + 2*(ring_size + 1):
+        pos_prefixes = args[1:ring_size+1]
+        pos_output_prefix = args[ring_size+1]
+        vel_prefixes = args[ring_size+2:-1]
+        vel_output_prefix = args[-1]
+    else:
+        parser.error("Expecting 1+N+1=%i or 1+2*(N+1)=%i arguments." % (1 + (ring_size + 1), 1 + 2*(ring_size + 1)))
+else:
+    parser.error("Expecting at least six arguments.")
+
+sub = parse_slice(options.slice)
+
+if options.unit_cell_str is None:
+    track_cell = None
+else:
+    track_cell = cell.TrackCell.from_cell_str(options.unit_cell_str, sub)
+
+if vel_prefixes is None:
+    atoms_pos = [vector.TrackVector.from_prefix(pos_prefix, sub) for pos_prefix in pos_prefixes]
+
+    # use the center as new origin
+    center_pos = vector.linear_comb(atoms_pos)
+    for atom_pos in atoms_pos:
+        atom_pos -= center_pos
+
+    # define the new coordinate axis, R3_pos is orthogonal to the plane
+    angles = 2*numpy.pi*numpy.arange(ring_size, dtype=float)/ring_size
+    R1_pos = vector.linear_comb(atoms_pos, coeffs=numpy.sin(angles))
+    R2_pos = vector.linear_comb(atoms_pos, coeffs=numpy.cos(angles))
+    #R1_pos /= R1_pos.norm()
+    #R2_pos /= R2_pos.norm()
+    R3_pos = vector.cross(R1_pos, R2_pos)
+    R3_pos /= R3_pos.norm()
+
+    # compute the out of plane coordinate of each atom
+    oops = [vector.dot(R3_pos, atom_pos) for atom_pos in atoms_pos]
+
+    # compute the xms = [qm*cos(phim) for m=2..(N-1)/2] and yms
+    norm_coeff = numpy.sqrt(2.0/ring_size)
+    for m in xrange(2,(ring_size-1)/2+1):
+        xm = norm_coeff*sum(oop*numpy.cos(m*angle) for oop, angle in zip(oops, angles))
+        dump_track("%s.x.%07i" % (pos_output_prefix, m), xm)
+        log("WRITTEN: %s.x.%07i" % (pos_output_prefix, m))
+        ym = norm_coeff*sum(oop*numpy.sin(m*angle) for oop, angle in zip(oops, angles))
+        dump_track("%s.y.%07i" % (pos_output_prefix, m), ym)
+        log("WRITTEN: %s.y.%07i" % (pos_output_prefix, m))
+        qm = numpy.sqrt(xm*xm+ym*ym)
+        dump_track("%s.amplitude.%07i" % (pos_output_prefix, m), qm)
+        log("WRITTEN: %s.amplitude.%07i" % (pos_output_prefix, m))
+        phim = numpy.arctan2(ym, xm)
+        dump_track("%s.phase.%07i" % (pos_output_prefix, m), phim)
+        log("WRITTEN: %s.phase.%07i" % (pos_output_prefix, m))
+    if ring_size % 2 == 0:
+        qm = norm_coeff*sum(oop*numpy.cos(ring_size/2*angle) for oop, angle in zip(oops, angles))
+        dump_track("%s.amplitude.%07i" % (pos_output_prefix, ring_size/2), qm)
+        log("WRITTEN: %s.amplitude.%07i" % (pos_output_prefix, ring_size/2))
+
+else:
+    parser.error("Time derivatives are not implemented yet.")

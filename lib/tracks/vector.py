@@ -28,6 +28,7 @@ __all__ = [
     "TrackVector",
     "dot", "cross", "triple",
     "bend", "dihed", "dist",
+    "linear_comb",
 ]
 
 
@@ -43,7 +44,7 @@ class TrackVector(object):
         return TrackVector([c1 - c2 for c1, c2 in zip(self.data, other.data)])
 
     def __add__(self, other):
-        return TrackVector([c1 - c2 for c1, c2 in zip(self.data, other.data)])
+        return TrackVector([c1 + c2 for c1, c2 in zip(self.data, other.data)])
 
     def __mul__(self, other):
         if isinstance(other, TrackVector):
@@ -276,5 +277,22 @@ def dtl(p1, p2, p3, v1=None, v2=None, v3=None, track_cell=None):
         return p_dtl, v_dtl
 
 
+def linear_comb(ps, vs=None, coeffs=None):
+    if coeffs is None:
+        coeffs = numpy.ones(len(ps), float)/len(ps)
+    p_result = TrackVector([
+        sum(p.data[0]*c for p, c in zip(ps, coeffs)),
+        sum(p.data[1]*c for p, c in zip(ps, coeffs)),
+        sum(p.data[2]*c for p, c in zip(ps, coeffs)),
+    ])
+    if vs is None:
+        return p_result
+    else:
+        v_result = TrackVector([
+            sum(v.data[0]*c for v, c in zip(vs, coeffs)),
+            sum(v.data[1]*c for v, c in zip(vs, coeffs)),
+            sum(v.data[2]*c for v, c in zip(vs, coeffs)),
+        ])
+        return p_result, v_result
 
 

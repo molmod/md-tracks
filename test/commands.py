@@ -1353,4 +1353,43 @@ class CommandsTestCase(BaseTestCase):
             load_track("sliced_bis/time")
         )
 
+    def test_ic_puckering1(self):
+        self.from_cp2k_ener("thf01")
+        self.from_xyz("thf01", "pos")
+        self.execute("tr-ic-puckering", ["5", "tracks/atom.pos.0000000",
+            "tracks/atom.pos.0000001", "tracks/atom.pos.0000004",
+            "tracks/atom.pos.0000003", "tracks/atom.pos.0000002", "tracks/puck"
+        ])
+        self.execute("tr-plot", ["--xunit=ps", "--xlabel=Time", "--yunit=A", "--ylabel=Puckering amplitude", "--no-legend",
+            ":line", "tracks/time", "tracks/puck.amplitude.0000002",
+            os.path.join(output_dir, "ic_puckering1_thf_amp.png"),
+        ])
+        self.execute("tr-plot", ["--xunit=ps", "--xlabel=Time", "--yunit=deg", "--ylabel=Puckering phase", "--no-legend",
+            ":line", "tracks/time", "tracks/puck.phase.0000002",
+            os.path.join(output_dir, "ic_puckering1_thf_phase.png"),
+        ])
+        self.execute("tr-plot", ["--xunit=A", "--xlabel=puck_x", "--yunit=A", "--ylabel=puck_y", "--no-legend",
+            ":line", "tracks/puck.x.0000002", "tracks/puck.y.0000002",
+            os.path.join(output_dir, "ic_puckering1_thf_xy.png"),
+        ])
 
+    def test_ic_puckering2(self):
+        self.from_xyz("org01", "pos")
+        self.execute("tr-ic-puckering", ["6",
+            "tracks/atom.pos.0000000", "tracks/atom.pos.0000016",
+            "tracks/atom.pos.0000003", "tracks/atom.pos.0000002",
+            "tracks/atom.pos.0000017", "tracks/atom.pos.0000001", "tracks/puck"
+        ])
+        self.execute("tr-plot", ["--xunit=1", "--xlabel=Step", "--yunit=A", "--ylabel=Puckering amplitude", "--no-legend",
+            ":line", "tracks/puck.amplitude.0000002",
+            ":line", "tracks/puck.amplitude.0000003",
+            os.path.join(output_dir, "ic_puckering2_thf_amp.png"),
+        ])
+        self.execute("tr-plot", ["--xunit=1", "--xlabel=Step", "--yunit=deg", "--ylabel=Puckering phase", "--no-legend",
+            ":line", "tracks/puck.phase.0000002",
+            os.path.join(output_dir, "ic_puckering2_thf_phase.png"),
+        ])
+        self.execute("tr-plot", ["--xunit=A", "--xlabel=puck_x", "--yunit=A", "--ylabel=puck_y", "--no-legend",
+            ":line", "tracks/puck.x.0000002", "tracks/puck.y.0000002",
+            os.path.join(output_dir, "ic_puckering2_thf_xy.png"),
+        ])
