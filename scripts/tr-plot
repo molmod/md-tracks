@@ -196,7 +196,9 @@ class PlotDescriptor(object):
         else:
             self.parser.error("A line description should at most contain three tracks. Got:\n%s" % " ".join(self.args))
         if self.x is None:
-            self.x = numpy.arange(sub.start, sub.stop, sub.step, dtype=float)
+            stop = min(sub.stop, sub.start + len(self.y)*sub.step)
+            print sub.start, stop, sub.step
+            self.x = numpy.arange(sub.start, stop, sub.step, dtype=float)
         elif len(self.x) > len(self.y): # allow the x-axis to contain more data
             self.x = self.x[:len(self.y)]
         self.x = self.x/xunit
