@@ -296,3 +296,71 @@ def linear_comb(ps, vs=None, coeffs=None):
         return p_result, v_result
 
 
+def puckering(ps, vs=None):
+    ring_size = len(ps)
+    # use the center as new origin
+    p_center = linear_comb(ps)
+    for p in ps:
+        p -= p_center
+
+    # define the new coordinate axes, R3_pos is orthogonal to the plane
+    angles = 2*numpy.pi*numpy.arange(ring_size, dtype=float)/ring_size
+    p_R1 = linear_comb(ps, coeffs=numpy.sin(angles))
+    p_R2 = linear_comb(ps, coeffs=numpy.cos(angles))
+    p_R3 = cross(p_R1, p_R2)
+    p_R3_norm = p_R3.norm()
+    p_n = p_R3/p_R3.norm()
+
+    # compute the out of plane coordinate of each atom
+    p_oops = [dot(p_n, p) for p in ps]
+
+    # compute the xms = [qm*cos(phim) for m=2..(N-1)/2] and yms
+    norm_coeff = numpy.sqrt(2.0/ring_size)
+    p_results = {}
+    for m in xrange(2,(ring_size-1)/2+1):
+        p_xm = norm_coeff*sum(p_oop*numpy.cos(m*angle) for p_oop, angle in zip(p_oops, angles))
+        p_ym = norm_coeff*sum(p_oop*numpy.sin(m*angle) for p_oop, angle in zip(p_oops, angles))
+        p_results[("x", m)] = p_xm
+        p_results[("y", m)] = p_ym
+        p_results[("amplitude", m)] = numpy.sqrt(p_xm*p_xm+p_ym*p_ym)
+        p_results[("phase", m)] = numpy.arctan2(p_ym, p_xm)
+    if ring_size % 2 == 0:
+        p_results[("amplitude", ring_size/2)] = norm_coeff*sum(p_oop*numpy.cos(ring_size/2*angle) for p_oop, angle in zip(p_oops, angles))
+
+    if vs is None:
+        return p_results
+    else:
+        v_center = linear_comb(vs)
+        # use the center as new origin
+        for v in vs:
+            v -= v_center
+
+        # define the time derivatives of the new coordinate axes.
+        v_R1 = linear_comb(vs, coeffs=numpy.sin(angles))
+        v_R2 = linear_comb(vs, coeffs=numpy.cos(angles))
+        v_R3 = cross(v_R1, p_R2) + cross(p_R1, v_R2)
+        v_R3_norm = dot(p_n, v_R3)
+        v_n = (v_R3 - p_n*v_R3_norm)/p_R3_norm
+
+        # compute the time direvative of the out of plane coordinate of each atom
+        v_oops = [dot(p_n, v) + dot(v_n, p) for p, v in zip(ps, vs)]
+
+        # compute the time derivatives of the actual puckering coordinates
+        v_results = {}
+        for m in xrange(2,(ring_size-1)/2+1):
+            v_xm = norm_coeff*sum(v_oop*numpy.cos(m*angle) for v_oop, angle in zip(v_oops, angles))
+            v_ym = norm_coeff*sum(v_oop*numpy.sin(m*angle) for v_oop, angle in zip(v_oops, angles))
+            v_results[("x", m)] = v_xm
+            v_results[("y", m)] = v_ym
+
+            p_amp = p_results[("amplitude", m)]
+            p_xm = p_results[("x", m)]
+            p_ym = p_results[("y", m)]
+            v_results[("amplitude", m)] = (p_xm*v_xm+p_ym*v_ym)/p_amp
+            v_results[("phase", m)] = (p_xm*v_ym-p_ym*v_xm)/p_amp**2
+        if ring_size % 2 == 0:
+            v_results[("amplitude", ring_size/2)] = norm_coeff*sum(v_oop*numpy.cos(ring_size/2*angle) for v_oop, angle in zip(v_oops, angles))
+        return p_results, v_results
+
+
+

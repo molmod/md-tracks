@@ -1356,20 +1356,34 @@ class CommandsTestCase(BaseTestCase):
     def test_ic_puckering1(self):
         self.from_cp2k_ener("thf01")
         self.from_xyz("thf01", "pos")
-        self.execute("tr-ic-puckering", ["5", "tracks/atom.pos.0000000",
+        self.from_xyz("thf01", "vel")
+        self.execute("tr-ic-puckering", ["5",
+            "tracks/atom.pos.0000000",
             "tracks/atom.pos.0000001", "tracks/atom.pos.0000004",
-            "tracks/atom.pos.0000003", "tracks/atom.pos.0000002", "tracks/puck"
+            "tracks/atom.pos.0000003", "tracks/atom.pos.0000002",
+            "tracks/atom.vel.0000000",
+            "tracks/atom.vel.0000001", "tracks/atom.vel.0000004",
+            "tracks/atom.vel.0000003", "tracks/atom.vel.0000002",
+            "tracks/puck.pos", "tracks/puck.vel",
         ])
         self.execute("tr-plot", ["--xunit=ps", "--xlabel=Time", "--yunit=A", "--ylabel=Puckering amplitude", "--no-legend",
-            ":line", "tracks/time", "tracks/puck.amplitude.0000002",
-            os.path.join(output_dir, "ic_puckering1_thf_amp.png"),
+            ":line", "tracks/time", "tracks/puck.pos.amplitude.0000002",
+            os.path.join(output_dir, "ic_puckering1_thf_pos_amp.png"),
         ])
         self.execute("tr-plot", ["--xunit=ps", "--xlabel=Time", "--yunit=deg", "--ylabel=Puckering phase", "--no-legend",
-            ":line", "tracks/time", "tracks/puck.phase.0000002",
-            os.path.join(output_dir, "ic_puckering1_thf_phase.png"),
+            ":line", "tracks/time", "tracks/puck.pos.phase.0000002",
+            os.path.join(output_dir, "ic_puckering1_thf_pos_phase.png"),
+        ])
+        self.execute("tr-plot", ["--xunit=ps", "--xlabel=Time", "--yunit=A/fs", "--ylabel=Puckering amplitude (dt)", "--no-legend",
+            ":line", "tracks/time", "tracks/puck.vel.amplitude.0000002",
+            os.path.join(output_dir, "ic_puckering1_thf_vel_amp.png"),
+        ])
+        self.execute("tr-plot", ["--xunit=ps", "--xlabel=Time", "--yunit=deg/fs", "--ylabel=Puckering phase (dt)", "--no-legend",
+            ":line", "tracks/time", "tracks/puck.vel.phase.0000002",
+            os.path.join(output_dir, "ic_puckering1_vel_pos_phase.png"),
         ])
         self.execute("tr-plot", ["--xunit=A", "--xlabel=puck_x", "--yunit=A", "--ylabel=puck_y", "--no-legend",
-            ":line", "tracks/puck.x.0000002", "tracks/puck.y.0000002",
+            ":line", "tracks/puck.pos.x.0000002", "tracks/puck.pos.y.0000002",
             os.path.join(output_dir, "ic_puckering1_thf_xy.png"),
         ])
 
