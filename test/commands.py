@@ -604,7 +604,7 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(dists[1], 4.41805, 4)
         self.assertAlmostEqual(dists[-1], 4.35014, 4)
         # pos and vel
-        self.execute("tr-ic-dist", [
+        self.execute("tr-ic-dist", ["--project",
             "tracks/atom.pos.0000001", "tracks/atom.pos.0000002",
             "tracks/atom.vel.0000001", "tracks/atom.vel.0000002",
             "tracks/test_pos", "tracks/test_vel",
@@ -614,6 +614,15 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(dists[1], 4.28458, 4)
         self.assertAlmostEqual(dists[-1], 4.26709, 4)
         self.check_deriv("tracks/test_pos", "tracks/test_vel", "tracks/time", 1e-1)
+        proj_norm_sq = 0.0
+        orig_norm_sq = 0.0
+        for c in 'xyz':
+            for i in 1,2:
+                proj = load_track("tracks/atom.vel.%07i.proj.test_vel.%s" % (i, c))
+                orig = load_track("tracks/atom.vel.%07i.%s" % (i, c))
+                proj_norm_sq += abs(proj)**2
+                orig_norm_sq += abs(orig)**2
+        self.assert_((proj_norm_sq <= orig_norm_sq).all())
 
     def test_ic_bend(self):
         self.from_xyz("thf01", "pos")

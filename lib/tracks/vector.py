@@ -19,7 +19,7 @@
 # --
 
 
-from tracks.core import load_track
+from tracks.core import load_track, dump_track
 
 import numpy
 
@@ -39,6 +39,9 @@ class TrackVector(object):
 
     def __init__(self, data):
         self.data = data
+
+    def __neg__(self):
+        return TrackVector([-c for c in self.data])
 
     def __sub__(self, other):
         return TrackVector([c1 - c2 for c1, c2 in zip(self.data, other.data)])
@@ -75,6 +78,11 @@ class TrackVector(object):
     def norm(self):
         return numpy.sqrt(sum(c*c for c in self.data))
 
+    def dump_to_tracks(self, prefix):
+        dump_track("%s.x" % prefix, self.data[0])
+        dump_track("%s.y" % prefix, self.data[1])
+        dump_track("%s.z" % prefix, self.data[2])
+
 
 def dot(tv1, tv2):
     return sum(c1 * c2 for c1, c2 in zip(tv1.data, tv2.data))
@@ -96,17 +104,22 @@ def triple(tv1, tv2, tv3):
     )
 
 
-def dist(p1, p2, v1=None, v2=None, track_cell=None):
+def dist(p1, p2, v1=None, v2=None, track_cell=None, project=False):
     """Compute the distance between two atoms at each time step."""
     p_delta = p1 - p2
     if track_cell is not None:
         p_delta = track_cell.shortest_vector(p_delta)
-    pd = (p_delta).norm()
+    pd = p_delta.norm()
     if v1 is None:
         return pd
     else:
-        vd = dot(v1-v2, p1-p2)/pd
-        return pd, vd
+        vd = dot(v1-v2, p_delta)/pd
+        if not project:
+            return pd, vd
+        else:
+            proj1 = p_delta*(vd/pd/2)
+            proj2 = -proj1
+            return pd, vd, proj1, proj2
 
 
 def bend(p1, p2, p3, v1=None, v2=None, v3=None, return_cos=False, track_cell=None):

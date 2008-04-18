@@ -22,11 +22,12 @@
 
 from tracks.core import dump_track
 from tracks.parse import parse_slice
-from tracks.optparse import add_quiet_option, add_slice_option, add_cell_option
+from tracks.optparse import add_quiet_option, add_slice_option, \
+    add_cell_option, add_ic_project_option
 from tracks.log import log, usage_tail
 import tracks.vector as vector
 
-import numpy
+import numpy, os
 from optparse import OptionParser
 
 
@@ -47,6 +48,7 @@ parser = OptionParser(usage)
 add_slice_option(parser)
 add_quiet_option(parser)
 add_cell_option(parser)
+add_ic_project_option(parser, "the distance")
 (options, args) = parser.parse_args()
 
 log.verbose = options.verbose
@@ -75,17 +77,30 @@ if vel_output_path is None:
     ))
     log("WRITTEN: %s" % pos_output_path)
 else:
-    dist_pos, dist_vel = vector.dist(
+    result = vector.dist(
         vector.TrackVector.from_prefix(pos_prefix1, sub),
         vector.TrackVector.from_prefix(pos_prefix2, sub),
         vector.TrackVector.from_prefix(vel_prefix1, sub),
         vector.TrackVector.from_prefix(vel_prefix2, sub),
-        track_cell=track_cell,
+        track_cell=track_cell, project=options.project
     )
+
+    if options.project:
+        dist_pos, dist_vel, proj_atom1, proj_atom2 = result
+    else:
+        dist_pos, dist_vel = result
+
     dump_track(pos_output_path, dist_pos)
     log("WRITTEN: %s" % pos_output_path)
     dump_track(vel_output_path, dist_vel)
     log("WRITTEN: %s" % vel_output_path)
+    if options.project:
+        prefix = "%s.proj.%s" % (vel_prefix1, os.path.basename(vel_output_path))
+        proj_atom1.dump_to_tracks(prefix)
+        log("WRITTEN: ${prefix}.x, ${prefix}.y and ${prefix}.z, where prefix=%s" % prefix)
+        prefix = "%s.proj.%s" % (vel_prefix2, os.path.basename(vel_output_path))
+        proj_atom2.dump_to_tracks(prefix)
+        log("WRITTEN: ${prefix}.x, ${prefix}.y and ${prefix}.z, where prefix=%s" % prefix)
 
 
 

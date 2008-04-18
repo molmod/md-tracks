@@ -67,3 +67,10 @@ def add_filter_atoms_option(parser):
         help="Only consider the atoms listed in FILTER_ATOMS. FILTER_ATOMS is a "
              "comma separated list of of integers. Counting starts at zero.",
     )
+
+def add_ic_project_option(parser, name):
+    parser.add_option(
+        "-p", "--project", action="store_true", default=False,
+        help="Project the cartesian velocity vector on the tangents of the internal"
+             "coordinate. (in this case %s)" % name,
+    )
