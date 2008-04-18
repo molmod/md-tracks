@@ -151,6 +151,20 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
         atom_indexes = range(len(symbols))
     else:
         atom_indexes = list(atom_indexes)
+        if groups is not None:
+            # reduce the groups to the selected atoms and use the index of the
+            # reduced set.
+            reverse_indexes = dict((atom_index, counter) for counter, atom_index in enumerate(atom_indexes))
+            new_groups = []
+            for group in groups:
+                new_group = []
+                for atom_index in group:
+                    new_index = reverse_indexes.get(atom_index)
+                    if new_index is not None:
+                        new_group.append(new_index)
+                if len(new_group) > 0:
+                    new_groups.append(new_group)
+            groups = new_groups
     symbols = [symbols[index] for index in atom_indexes]
 
     filenames = []
