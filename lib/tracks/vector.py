@@ -28,7 +28,7 @@ __all__ = [
     "TrackVector",
     "dot", "cross", "triple",
     "bend", "dihed", "dist",
-    "linear_comb",
+    "linear_comb", "puckering",
 ]
 
 
@@ -309,7 +309,7 @@ def linear_comb(ps, vs=None, coeffs=None):
         return p_result, v_result
 
 
-def puckering(ps, vs=None):
+def puckering(ps, vs=None, project=False):
     ring_size = len(ps)
     # use the center as new origin
     p_center = linear_comb(ps)
@@ -340,40 +340,89 @@ def puckering(ps, vs=None):
     if ring_size % 2 == 0:
         p_results[("amplitude", ring_size/2)] = norm_coeff*sum(p_oop*numpy.cos(ring_size/2*angle) for p_oop, angle in zip(p_oops, angles))
 
-    if vs is None:
-        return p_results
-    else:
-        v_center = linear_comb(vs)
+    def derivative(ds):
+        d_center = linear_comb(ds)
         # use the center as new origin
-        for v in vs:
-            v -= v_center
+        for d in ds:
+            d -= d_center
 
         # define the time derivatives of the new coordinate axes.
-        v_R1 = linear_comb(vs, coeffs=numpy.sin(angles))
-        v_R2 = linear_comb(vs, coeffs=numpy.cos(angles))
-        v_R3 = cross(v_R1, p_R2) + cross(p_R1, v_R2)
-        v_R3_norm = dot(p_n, v_R3)
-        v_n = (v_R3 - p_n*v_R3_norm)/p_R3_norm
+        d_R1 = linear_comb(ds, coeffs=numpy.sin(angles))
+        d_R2 = linear_comb(ds, coeffs=numpy.cos(angles))
+        d_R3 = cross(d_R1, p_R2) + cross(p_R1, d_R2)
+        d_R3_norm = dot(p_n, d_R3)
+        d_n = (d_R3 - p_n*d_R3_norm)/p_R3_norm
 
         # compute the time direvative of the out of plane coordinate of each atom
-        v_oops = [dot(p_n, v) + dot(v_n, p) for p, v in zip(ps, vs)]
+        d_oops = [dot(p_n, d) + dot(d_n, p) for p, d in zip(ps, ds)]
 
         # compute the time derivatives of the actual puckering coordinates
-        v_results = {}
+        d_results = {}
         for m in xrange(2,(ring_size-1)/2+1):
-            v_xm = norm_coeff*sum(v_oop*numpy.cos(m*angle) for v_oop, angle in zip(v_oops, angles))
-            v_ym = norm_coeff*sum(v_oop*numpy.sin(m*angle) for v_oop, angle in zip(v_oops, angles))
-            v_results[("x", m)] = v_xm
-            v_results[("y", m)] = v_ym
+            d_xm = norm_coeff*sum(d_oop*numpy.cos(m*angle) for d_oop, angle in zip(d_oops, angles))
+            d_ym = norm_coeff*sum(d_oop*numpy.sin(m*angle) for d_oop, angle in zip(d_oops, angles))
+            d_results[("x", m)] = d_xm
+            d_results[("y", m)] = d_ym
 
             p_amp = p_results[("amplitude", m)]
             p_xm = p_results[("x", m)]
             p_ym = p_results[("y", m)]
-            v_results[("amplitude", m)] = (p_xm*v_xm+p_ym*v_ym)/p_amp
-            v_results[("phase", m)] = (p_xm*v_ym-p_ym*v_xm)/p_amp**2
+            d_results[("amplitude", m)] = (p_xm*d_xm+p_ym*d_ym)/p_amp
+            d_results[("phase", m)] = (p_xm*d_ym-p_ym*d_xm)/p_amp**2
         if ring_size % 2 == 0:
-            v_results[("amplitude", ring_size/2)] = norm_coeff*sum(v_oop*numpy.cos(ring_size/2*angle) for v_oop, angle in zip(v_oops, angles))
-        return p_results, v_results
+            d_results[("amplitude", ring_size/2)] = norm_coeff*sum(d_oop*numpy.cos(ring_size/2*angle) for d_oop, angle in zip(d_oops, angles))
+        return d_results
+
+
+    if vs is None:
+        return p_results
+    elif project is False:
+        return p_results, derivative(vs)
+    else:
+        # A) construct the gradient of the puckering coordinates
+        gradient = []
+        for i in xrange(len(ps)):
+            grad_comp = []
+            for j in xrange(3):
+                ds = [TrackVector([
+                    numpy.zeros(len(ps[0].data[0]), float),
+                    numpy.zeros(len(ps[0].data[0]), float),
+                    numpy.zeros(len(ps[0].data[0]), float)
+                ]) for k in range(len(ps))]
+                ds[i].data[j][:] = 1
+                grad_comp.append(derivative(ds))
+            gradient.append(grad_comp)
+
+        # B) Compute the norms of the gradients
+        labels = gradient[0][0].keys()
+        norms_sq = {}
+        for label in labels:
+            norm_sq = 0.0
+            test_x = 0.0
+            test_y = 0.0
+            test_z = 0.0
+            for i in xrange(len(ps)):
+                for j in xrange(3):
+                    norm_sq += gradient[i][j][label]**2
+                test_x += gradient[i][0][label]
+                test_y += gradient[i][1][label]
+                test_z += gradient[i][2][label]
+            norms_sq[label] = norm_sq
+
+        # C) project the cartesian coordinates of the velocity on the gradients
+        v_results = derivative(vs)
+        for label in labels:
+            for i in xrange(len(ps)):
+                for j in xrange(3):
+                    gradient[i][j][label] *= v_results[label]/norms_sq[label]
+
+        return p_results, v_results, gradient
+
+
+
+
+
+
 
 
 

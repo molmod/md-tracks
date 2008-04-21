@@ -585,7 +585,7 @@ class CommandsTestCase(BaseTestCase):
         v = load_track(vel)
         v_check = load_track("%s.deriv" % pos)
         v_half = 0.5*(v[1:]+v[:-1])
-        self.assertArraysAlmostEqual(v_check, v_half, relerr, mean=True)
+        self.assertArraysAlmostEqual(v_check, v_half, relerr, do_mean=True)
 
     def test_ic_dist(self):
         self.from_xyz("thf01", "pos")
@@ -1373,7 +1373,7 @@ class CommandsTestCase(BaseTestCase):
             "tracks/atom.vel.0000000",
             "tracks/atom.vel.0000001", "tracks/atom.vel.0000004",
             "tracks/atom.vel.0000003", "tracks/atom.vel.0000002",
-            "tracks/puck.pos", "tracks/puck.vel",
+            "tracks/puck.pos", "tracks/puck.vel", "--project"
         ])
         self.execute("tr-plot", ["--xunit=ps", "--xlabel=Time", "--yunit=A", "--ylabel=Puckering amplitude", "--no-legend",
             ":line", "tracks/time", "tracks/puck.pos.amplitude.0000002",
@@ -1395,6 +1395,22 @@ class CommandsTestCase(BaseTestCase):
             ":line", "tracks/puck.pos.x.0000002", "tracks/puck.pos.y.0000002",
             os.path.join(output_dir, "ic_puckering1_thf_xy.png"),
         ])
+        # Test the derivatives
+        self.check_deriv("tracks/puck.pos.x.0000002", "tracks/puck.vel.x.0000002", "tracks/time", 1)
+        self.check_deriv("tracks/puck.pos.y.0000002", "tracks/puck.vel.y.0000002", "tracks/time", 1)
+        self.check_deriv("tracks/puck.pos.amplitude.0000002", "tracks/puck.vel.amplitude.0000002", "tracks/time", 1)
+        self.check_deriv("tracks/puck.pos.phase.0000002", "tracks/puck.vel.phase.0000002", "tracks/time", 1)
+        # Test the project stuff
+        for label in ["puck.vel.x.0000002", "puck.vel.y.0000002", "puck.vel.amplitude.0000002", "puck.vel.phase.0000002"]:
+            proj_norm_sq = 0.0
+            orig_norm_sq = 0.0
+            for c in 'xyz':
+                for i in 0,1,2,3,4:
+                    proj = load_track("tracks/atom.vel.%07i.%s.proj.%s" % (i, c, label))
+                    orig = load_track("tracks/atom.vel.%07i.%s" % (i, c))
+                    proj_norm_sq += abs(proj)**2
+                    orig_norm_sq += abs(orig)**2
+            self.assert_((proj_norm_sq <= orig_norm_sq).all())
 
     def test_ic_puckering2(self):
         self.from_xyz("org01", "pos")
@@ -1416,3 +1432,65 @@ class CommandsTestCase(BaseTestCase):
             ":line", "tracks/puck.x.0000002", "tracks/puck.y.0000002",
             os.path.join(output_dir, "ic_puckering2_thf_xy.png"),
         ])
+
+    def test_ic_puckering3(self):
+        # a few artificial tricks to test the derivatives and projections
+        # generated with tr-ic-puckering, using finite differences.
+        os.system("tail -n 15 %s > single-pos.xyz" % os.path.join(input_dir, "thf01", "md-pos-1.xyz"))
+        os.system("tail -n 15 %s > single-vel.xyz" % os.path.join(input_dir, "thf01", "md-vel-1.xyz"))
+        single_pos = XYZFile("single-pos.xyz").get_molecule()
+        single_vel = XYZFile("single-pos.xyz", file_unit=1).get_molecule()
+        os.mkdir("tracks")
+
+        epsilon = 1e-7
+        counter = 0
+        counter_max = len(single_pos.numbers)*3
+        for i in xrange(len(single_pos.numbers)):
+            for j, c in enumerate('xyz'):
+                tmp = numpy.zeros(counter_max+1, float)
+                tmp[:] = single_pos.coordinates[i,j]
+                tmp[counter+1] += epsilon
+                dump_track("tracks/atom.pos.%07i.%s" % (i, c), tmp)
+                tmp[:] = single_vel.coordinates[i,j]
+                dump_track("tracks/atom.vel.%07i.%s" % (i, c), tmp)
+                counter += 1
+
+        # run the command
+        self.execute("tr-ic-puckering", ["5",
+            "tracks/atom.pos.0000000",
+            "tracks/atom.pos.0000001", "tracks/atom.pos.0000004",
+            "tracks/atom.pos.0000003", "tracks/atom.pos.0000002",
+            "tracks/atom.vel.0000000",
+            "tracks/atom.vel.0000001", "tracks/atom.vel.0000004",
+            "tracks/atom.vel.0000003", "tracks/atom.vel.0000002",
+            "tracks/puck.pos", "tracks/puck.vel", "--project"
+        ])
+
+        # do the tests
+        for label in ["x.0000002", "y.0000002", "amplitude.0000002", "phase.0000002"]:
+            # load the values
+            values = load_track("tracks/puck.pos.%s" % label)
+            # construct the numerical gradient
+            grad = numpy.array([(values[i+1]-values[0])/epsilon for i in xrange(counter_max)])
+            # normalize the gradient
+            egrad = grad/numpy.linalg.norm(grad)
+            # test that the sum of the gradient components is zero
+            self.assertAlmostEqual(egrad[0::3].sum(), 0.0)
+            self.assertAlmostEqual(egrad[1::3].sum(), 0.0)
+            self.assertAlmostEqual(egrad[2::3].sum(), 0.0)
+            # compute the time derivative
+            cart_vel = single_vel.coordinates.ravel()
+            q_vel = numpy.dot(cart_vel, grad)
+            # test the time derivative
+            self.assertAlmostEqual(q_vel, load_track("tracks/puck.vel.%s" % label)[0])
+            # compute the projected velocity
+            cart_proj = (numpy.dot(cart_vel, egrad)*egrad)[0:3*5]
+            # load the projected velocity
+            cart_proj_file = numpy.array([load_track(filename)[0] for filename in sorted(glob.glob("tracks/atom.vel.???????.?.proj.puck.vel.%s" % label))])
+            # test that the components sum to zero
+            self.assertAlmostEqual(cart_proj_file[0::3].sum(), 0.0)
+            self.assertAlmostEqual(cart_proj_file[1::3].sum(), 0.0)
+            self.assertAlmostEqual(cart_proj_file[2::3].sum(), 0.0)
+            # compare both projections
+            self.assertArraysAlmostEqual(cart_proj, cart_proj_file, 1e-5, do_abs=True)
+

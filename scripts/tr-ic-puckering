@@ -22,11 +22,12 @@
 
 from tracks.core import dump_track
 from tracks.parse import parse_slice
-from tracks.optparse import add_quiet_option, add_slice_option, add_cell_option
+from tracks.optparse import add_quiet_option, add_slice_option, \
+    add_cell_option, add_ic_project_option
 from tracks.log import log, usage_tail
 import tracks.vector as vector
 
-import numpy
+import numpy, os
 from optparse import OptionParser
 
 
@@ -59,6 +60,7 @@ parser = OptionParser(usage)
 add_slice_option(parser)
 add_quiet_option(parser)
 add_cell_option(parser)
+add_ic_project_option(parser, "the puckering coordinates")
 (options, args) = parser.parse_args()
 
 
@@ -99,16 +101,31 @@ if vel_prefixes is None:
         dump_track("%s.%s.%07i" % (pos_output_prefix, label, index), array)
         log("WRITTEN: %s.%s.%07i" % (pos_output_prefix, label, index))
 else:
-    results_pos, results_vel = vector.puckering([
+    result = vector.puckering([
         vector.TrackVector.from_prefix(pos_prefix, sub)
         for pos_prefix in pos_prefixes
     ], [
         vector.TrackVector.from_prefix(vel_prefix, sub)
         for vel_prefix in vel_prefixes
-    ])
+    ], project=options.project)
+
+    if options.project:
+        results_pos, results_vel, projections = result
+    else:
+        results_pos, results_vel = result
+
     for (label, index), array in results_pos.iteritems():
         dump_track("%s.%s.%07i" % (pos_output_prefix, label, index), array)
         log("WRITTEN: %s.%s.%07i" % (pos_output_prefix, label, index))
     for (label, index), array in results_vel.iteritems():
         dump_track("%s.%s.%07i" % (vel_output_prefix, label, index), array)
         log("WRITTEN: %s.%s.%07i" % (vel_output_prefix, label, index))
+
+    if options.project:
+        for i, vel_prefix in enumerate(vel_prefixes):
+            for j, c in enumerate('xyz'):
+                for (label, index), array in projections[i][j].iteritems():
+                    filename = "%s.%s.proj.%s.%s.%07i" % (vel_prefix, c, os.path.basename(vel_output_prefix), label, index)
+                    dump_track(filename, array)
+                    log("WRITTEN: %s" % filename)
+

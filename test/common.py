@@ -42,7 +42,7 @@ if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
 
-import unittest, shutil
+import unittest, shutil, numpy
 
 
 __all__ = [
@@ -69,16 +69,43 @@ class BaseTestCase(unittest.TestCase):
     def assertArrayConstant(self, arr, const):
         self.assert_((arr==const).all(), "Some/All array values do not match the constant.")
 
-    def assertArraysAlmostEqual(self, a, b, relerr_threshold, mean=False):
-        self.assertEqual(a.shape, b.shape, "The array shapes do not match.")
-        if mean:
-            error = abs(a-b).mean()
-            oom = 0.5*(abs(a).mean()+abs(b).mean())
+    def assertArraysAlmostEqual(self, a, b, err_threshold=1e-5, do_abs=False, do_mean=False, verbose=False):
+        def log(s):
+            if verbose: print s
+        if a.shape != b.shape:
+            self.fail("Array shapes do not match: %s!=%s" % (a.shape, b.shape))
+        if do_abs:
+            if do_mean:
+                abserr = abs(a-b).mean()
+            else:
+                abserr = abs(a-b).max()
+            log("both")
+            log(numpy.hstack([a,b]))
+            log("difference")
+            log(a-b)
+            log("abserr: %s" % abserr)
+            if abserr > err_threshold:
+                self.fail("The absolute error is too large: %.3e > %.3e" % (abserr, err_threshold))
         else:
-            error = abs(a-b).max()
-            oom = 0.5*(abs(a).max()+abs(b).max())
-        relerr = error/oom
-        self.assert_(relerr <= relerr_threshold, "The relative error is larger than given threshold: %5.3e > %5.3e" % (relerr, relerr_threshold))
+            if do_mean:
+                relerr = abs(a-b).mean()*2/(abs(a).mean()+abs(b).mean())
+            else:
+                relerr = abs(a-b).max()*2/(abs(a).max()+abs(b).max())
+            log("both")
+            log(numpy.hstack([a,b]))
+            #log(a)
+            #log(b)
+            log("difference")
+            log(a-b)
+            log("relerr: %s" % relerr)
+            if relerr > err_threshold:
+                self.fail("The relative error is too large: %.3e > %.3e" % (relerr, err_threshold))
+            if numpy.isnan(relerr):
+                self.fail("The relative error is nan.")
+        if numpy.isnan(a).any():
+            self.fail("The first argument contains nan's.")
+        if numpy.isnan(b).any():
+            self.fail("The second argument contains nan's.")
 
     def assertArrayAlmostConstant(self, arr, const, relerr_threshold):
         error = abs(arr-const).max()
