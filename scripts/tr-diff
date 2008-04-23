@@ -56,6 +56,7 @@ delta_origin = int(options.delta_origin)
 
 max_steps = None
 for path_in in paths_in:
+    print "PROCESSING", path_in
     inp = load_track(path_in, sub)
     if max_steps is None:
         max_steps = len(inp)-1
