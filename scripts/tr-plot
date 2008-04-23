@@ -42,7 +42,7 @@ the following structure:
 
  :kind [options] data
 
-where ${kind} is 'line', 'bar', 'vline', 'hline' or 'contour'. A plot
+where ${kind} is 'line', 'bar', 'vline', 'hline', 'scatter' or 'contour'. A plot
 specification must start with a colon, i.e. ':'. The available options and the
 number of data arguments depend on the kind of plot. Use --plot-help for more
 details.
