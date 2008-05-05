@@ -85,7 +85,7 @@ add_cell_option(parser)
 add_cos_option(parser)
 parser.add_option(
     "-o", "--output-prefix",
-    help="Use this prefix for the output files, if not given the prefix of the"
+    help="Use this prefix for the output files, if not given the prefix of the "
          "Cartesian coordinate tracks is used.",
 )
 (options, args) = parser.parse_args()
