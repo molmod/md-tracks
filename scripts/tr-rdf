@@ -74,6 +74,11 @@ parser.add_option(
     "--bin-tracks", action="store_true", default=False,
     help="Create a separate track for each bin, to be processed with tr-blav."
 )
+parser.add_option(
+    "-p", "--plain", dest="normalize", action="store_false", default=True,
+    help="Make plain distribution, i.e. do not divide the histogram by the "
+         "ideal gas probability.",
+)
 (options, args) = parser.parse_args()
 
 
@@ -172,18 +177,28 @@ if options.bin_tracks:
     dtype = numpy.dtype([("bin", float, nbins),("cumul_bin", float, nbins)])
     mtw = MultiTracksWriter(bin_filenames, dtype)
     for distances, reference_counts in yield_distances():
-        counts = correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
-        mtw.dump_row((counts/reference_counts, counts.cumsum()))
+        if options.normalize:
+            counts = correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
+            mtw.dump_row((counts/reference_counts, counts.cumsum()))
+        else:
+            counts = numpy.histogram(distances, nbins, (0,rmax), False)[0]
+            mtw.dump_row((counts, counts.cumsum()))
     mtw.finalize()
 else:
     counts = 0.0
     row_count = 0
     for distances, reference_counts in yield_distances():
-        counts += correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
+        if options.normalize:
+            counts += correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
+        else:
+            counts += numpy.histogram(distances, nbins, (0,rmax), False)[0]
         row_count += 1
 
     filename = "%s.hist" % output_prefix
-    dump_track(filename, counts/row_count/reference_counts)
+    if options.normalize:
+        dump_track(filename, counts/row_count/reference_counts)
+    else:
+        dump_track(filename, counts/row_count)
     log("WRITTEN %s" % filename)
 
     filename = "%s.cumul.hist" % output_prefix
