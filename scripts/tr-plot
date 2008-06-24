@@ -104,6 +104,16 @@ global_parser.add_option(
          "automatically. [default=%default]",
 )
 global_parser.add_option(
+    "--xref", default="0",
+    help="The reference value for the x-axis. All plots will be shifted so "
+    "that the given value corresponds to zero. [default=%default]",
+)
+global_parser.add_option(
+    "--yref", default="0",
+    help="The reference value for the x-axis. All plots will be shifted so "
+    "that the given value corresponds to zero. [default=%default]",
+)
+global_parser.add_option(
     "--xticks", default="10",
     help="The maximum number of ticks on the x-axis. This option is only "
          "applicable when the x-axis has a linear scale. [default=%default]",
@@ -177,7 +187,7 @@ class PlotDescriptor(object):
     def __init__(self, args):
         self.options, self.args = self.parser.parse_args(args[1:])
 
-    def init_line_data(self, xunit, yunit):
+    def init_line_data(self, xunit, yunit, xref, yref):
         sub = parse_slice(self.options.slice)
         if len(self.args) == 1:
             self.y = load_track(self.args[0], sub)
@@ -211,8 +221,8 @@ class PlotDescriptor(object):
             self.x = numpy.arange(sub.start, stop, sub.step, dtype=float)
         elif len(self.x) > len(self.y): # allow the x-axis to contain more data
             self.x = self.x[:len(self.y)]
-        self.x = self.x/xunit
-        self.y = self.y/yunit
+        self.x = (self.x-xref)/xunit
+        self.y = (self.y-yref)/yunit
         if self.error is not None: self.error = self.error/yunit
         if self.options.label is None:
             self.options.label = label
@@ -234,8 +244,8 @@ class LineDescriptor(PlotDescriptor):
     add_label_option(parser)
     add_slice_option(parser)
 
-    def plot(self, xunit, yunit):
-        self.init_line_data(xunit, yunit)
+    def plot(self, xunit, yunit, xref, yref):
+        self.init_line_data(xunit, yunit, xref, yref)
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
         if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
@@ -290,8 +300,8 @@ class ScatterDescriptor(PlotDescriptor):
         if self.options.label is None:
             self.options.label = label
 
-    def plot(self, xunit, yunit):
-        self.init_scatter_data(xunit, yunit)
+    def plot(self, xunit, yunit, xref, yref):
+        self.init_scatter_data(xunit, yunit, xref, yref)
         kwargs = {}
         kwargs['marker'] = 'o'
         if self.options.color is not None: kwargs["color"] = self.options.color
@@ -310,8 +320,8 @@ class BarDescriptor(PlotDescriptor):
     add_label_option(parser)
     add_slice_option(parser)
 
-    def plot(self, xunit, yunit):
-        self.init_line_data(xunit, yunit)
+    def plot(self, xunit, yunit, xref, yref):
+        self.init_line_data(xunit, yunit, xref, yref)
         fraction = 1.0
         delta = self.x[1:] - self.x[:-1]
         left = numpy.zeros(len(self.x), float)
@@ -385,7 +395,7 @@ class StraightHLineDescriptor(PlotDescriptor):
 class HLineDescriptor(StraightHLineDescriptor):
     kind = "hline"
 
-    def plot(self, xunit, yunit):
+    def plot(self, xunit, yunit, xref, yref):
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
         if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
@@ -394,7 +404,7 @@ class HLineDescriptor(StraightHLineDescriptor):
         kwargs["xmin"] = float(self.options.min)
         kwargs["xmax"] = float(self.options.max)
         for value in self.values:
-           self.patch = pylab.axhline(value/yunit, **kwargs)
+           self.patch = pylab.axhline((value-yref)/yunit, **kwargs)
 
 PlotDescriptor.kinds["hline"] = HLineDescriptor
 
@@ -402,7 +412,7 @@ PlotDescriptor.kinds["hline"] = HLineDescriptor
 class VLineDescriptor(StraightHLineDescriptor):
     kind = "vline"
 
-    def plot(self, xunit, yunit):
+    def plot(self, xunit, yunit, xref, yref):
         kwargs = {}
         if self.options.color is not None: kwargs["color"] = self.options.color
         if self.options.linestyle is not None: kwargs["linestyle"] = self.options.linestyle
@@ -411,7 +421,7 @@ class VLineDescriptor(StraightHLineDescriptor):
         kwargs["ymin"] = float(self.options.min)
         kwargs["ymax"] = float(self.options.max)
         for value in self.values:
-            self.patch = pylab.axvline(value/xunit, **kwargs)
+            self.patch = pylab.axvline((value-xref)/xunit, **kwargs)
 
 PlotDescriptor.kinds["vline"] = VLineDescriptor
 
@@ -455,7 +465,7 @@ class ContourDescriptor(PlotDescriptor):
         self.paths_z = self.args[2:]
         self.options.label = None
 
-    def plot(self, xunit, yunit):
+    def plot(self, xunit, yunit, xref, yref):
         z = numpy.zeros((len(self.y), len(self.x)), float)
         for index, path_z in enumerate(self.paths_z):
             z[index] = load_track(path_z, self.sub)
@@ -477,11 +487,13 @@ class ContourDescriptor(PlotDescriptor):
 
         num_levels = int(self.options.num_levels)
         levels = numpy.arange(0,num_levels,1,float)/(num_levels-1)*(self.options.zmax-self.options.zmin)+self.options.zmin
+        x = (self.x-xref)/xunit
+        y = (self.y-yref)/yunit
         if self.options.filled:
-            pylab.contour(self.x/xunit,self.y/yunit,z,levels, linewidth=0.5) # avoid white lines between the filled regions
-            pylab.contourf(self.x/xunit,self.y/yunit,z,levels)
+            pylab.contour(x,y,z,levels, linewidth=0.5) # avoid white lines between the filled regions
+            pylab.contourf(x,y,z,levels)
         else:
-            pylab.contour(self.x/xunit,self.y/yunit,z,levels)
+            pylab.contour(x,y,z,levels)
         pylab.colorbar()
 
 PlotDescriptor.kinds["contour"] = ContourDescriptor
@@ -521,6 +533,8 @@ xunit = parse_unit(global_options.xunit)
 if global_options.xinv: xunit = 1/xunit
 yunit = parse_unit(global_options.yunit)
 if global_options.yinv: yunit = 1/yunit
+xref = parse_unit(global_options.xref)
+yref = parse_unit(global_options.yref)
 
 def parse_lim(s, unit):
     if s.count(",") != 1:
@@ -561,7 +575,7 @@ if global_options.grid:
     pylab.gca().set_axisbelow(True)
 for line_block in blocks[1:]:
     dd = PlotDescriptor(line_block)
-    dd.plot(xunit, yunit)
+    dd.plot(xunit, yunit, xref, yref)
     if dd.options.label is not None:
         patches.append(dd.patch)
         labels.append(dd.options.label)
