@@ -50,11 +50,6 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(input_dir, case, "md-1.ener"),
         ] + extra_args, verbose=verbose)
 
-    def from_cp2k_cell(self, case, extra_args=[], verbose=False):
-        self.execute("tr-from-cp2k-cell", [
-            os.path.join(input_dir, case, "md-1.cell"),
-        ] + extra_args, verbose=verbose)
-
     def from_cpmd_traj(self, filename, extra_args=[], verbose=False):
         self.execute("tr-from-cpmd-traj", [
             os.path.join(input_dir, filename),
@@ -229,11 +224,23 @@ class CommandsTestCase(BaseTestCase):
 
     def test_from_cp2k_cell(self):
         # Load the energy file
-        self.from_cp2k_cell("ar108")
+        self.execute("tr-from-cp2k-cell", [os.path.join(input_dir, "thf64/md-1.cell")])
         tmp = load_track("tracks/cell.a.x")
-        self.assertEqual(tmp[0]/angstrom, 17.1580000000)
-        self.assertEqual(tmp[1]/angstrom, 17.1561767182)
-        self.assertEqual(tmp[-1]/angstrom, 17.4999478121)
+        self.assertEqual(tmp[0]/angstrom, 20.5000000000)
+        self.assertEqual(tmp[1]/angstrom, 20.4977671159)
+        self.assertEqual(tmp[-1]/angstrom, 20.4328712109)
+        tmp = load_track("tracks/cell.a")
+        self.assertEqual(tmp[0]/angstrom, 20.5000000000)
+        self.assertEqual(tmp[1]/angstrom, 20.4977671159)
+        self.assertEqual(tmp[-1]/angstrom, 20.4328712109)
+        tmp = load_track("tracks/time")
+        self.assertEqual(tmp[0]/fs, 0.000)
+        self.assertEqual(tmp[1]/fs, 5.000)
+        self.assertEqual(tmp[-1]/fs, 95.000)
+        tmp = load_track("tracks/volume")
+        self.assertEqual(tmp[0]/angstrom**3, 8615.1250000000)
+        self.assertEqual(tmp[1]/angstrom**3, 8612.3101980259)
+        self.assertEqual(tmp[-1]/angstrom**3, 8530.7692124516)
 
     def test_from_cpmd_traj(self):
         self.execute("tr-from-cpmd-traj", [os.path.join(input_dir, "cpmd_h2/TRAJECTORY")])
@@ -363,12 +370,6 @@ class CommandsTestCase(BaseTestCase):
             "9.865*A,", "tracks/atom.pos", os.path.join(output_dir, "water32.ref.pos.xyz"),
         ])
         self.from_xyz("ar108", "pos")
-        self.from_cp2k_cell("ar108")
-        # unit_cell_version without ref.psf, but with a cell in tracks
-        self.execute("tr-to-xyz", [
-            os.path.join(input_dir, "ar108/init.xyz"),
-            "tracks/cell", "tracks/atom.pos", os.path.join(output_dir, "argon.noref.pos.xyz"),
-        ])
 
     def test_read_write_slice_length(self):
         self.from_cp2k_ener("water32")
@@ -1208,51 +1209,6 @@ class CommandsTestCase(BaseTestCase):
             ":bar", "tracks/rdf_O_H.bins", "tracks/rdf_O_H.cumul.hist",
             ":hline", "1",
             os.path.join(output_dir, "rdf_cumul_water32_noerror")
-        ])
-
-    def test_rdf_ar108(self):
-        self.from_xyz("ar108", "pos")
-        self.from_cp2k_ener("ar108")
-        self.from_cp2k_cell("ar108")
-
-        atoms_Ar = self.execute("tr-select", [os.path.join(input_dir, "ar108/init.psf"), "at", "a.number==18"])[0]
-        prefixes_Ar = self.execute("tr-format-indexes", ["prefix=tracks/atom.pos", atoms_Ar])[0].split()
-        # without error bars
-        self.execute("tr-rdf", prefixes_Ar + ["-s::10", "tracks/cell", "20*A", "80", "tracks/rdf"])
-        self.execute("tr-plot", [
-            "--xunit=A", "--yunit=1", "--ylim=0,", "--xlabel=Iteratomic distance", "--ylabel=g(r)", "--title=Radial distribution functions",
-            ":bar", "tracks/rdf.bins", "tracks/rdf.hist",
-            os.path.join(output_dir, "rdf_ar108_noerror")
-        ])
-        self.execute("tr-plot", [
-            "--ylim=0,20", "--xunit=A", "--yunit=1", "--xlabel=Iteratomic distance", "--ylabel=f(r)", "--title=Cumulative radial distribution functions",
-            ":bar", "tracks/rdf.bins", "tracks/rdf.cumul.hist",
-            os.path.join(output_dir, "rdf_cumul_ar108_noerror")
-        ])
-        # with error bars
-        self.execute("tr-rdf", prefixes_Ar + ["-s::2", "--bin-tracks", "tracks/cell", "20*A", "80", "tracks/rdf"])
-        lines = []
-        for bin_filename in sorted(glob.glob("tracks/rdf.bin.???????")):
-            output = self.execute("tr-blav", [
-                bin_filename, "tracks/time", "-b10",
-                #"--plot-error=%s" % os.path.join(output_dir, "rdf_ar108_blav_%s.png" % os.path.basename(bin_filename)),
-            ])
-            lines.append(output[0])
-        self.execute("tr-write", ["tracks/rdf.hist", "tracks/rdf.hist.error"], stdin=lines)
-        self.execute("tr-plot", [
-            "--xunit=A", "--yunit=1", "--ylim=0,", "--xlabel=Iteratomic distance", "--ylabel=g(r)", "--title=Radial distribution functions",
-            ":bar", "tracks/rdf.bins", "tracks/rdf.hist", "tracks/rdf.hist.error",
-            os.path.join(output_dir, "rdf_ar108_error")
-        ])
-        lines = []
-        for bin_filename in sorted(glob.glob("tracks/rdf.cumul.bin.???????")):
-            output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
-            lines.append(output[0])
-        self.execute("tr-write", ["tracks/rdf.cumul.hist", "tracks/rdf.cumul.hist.error"], stdin=lines)
-        self.execute("tr-plot", [
-            "--ylim=0,20", "--xunit=A", "--yunit=1", "--xlabel=Iteratomic distance", "--ylabel=f(r)", "--title=Cumulative radial distribution functions",
-            ":bar", "tracks/rdf.bins", "tracks/rdf.cumul.hist", "tracks/rdf.cumul.hist.error",
-            os.path.join(output_dir, "rdf_cumul_ar108_error")
         ])
 
     def test_angular_momentum(self):

@@ -94,17 +94,25 @@ def cpmd_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
 
 
 def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
-    names = ["cell.a.x", "cell.b.x", "cell.c.x", "cell.a.y", "cell.b.y", "cell.c.y", "cell.a.z", "cell.b.z", "cell.c.z", "cell.a", "cell.b", "cell.c", "cell.alpha", "cell.beta", "cell.gamma"]
+    names = ["step", "time", "cell.a.x", "cell.a.y", "cell.a.z", "cell.b.x", "cell.b.y", "cell.b.z", "cell.c.x", "cell.c.y", "cell.c.z", "volume", "cell.a", "cell.b", "cell.c", "cell.alpha", "cell.beta", "cell.gamma"]
     filenames = list(os.path.join(destination, name) for name in names)
-    dtype = numpy.dtype([("cell", float, (3,3)),("norms", float, 3),("angles", float, 3)])
+    dtype = numpy.dtype([("step", int),("time", float),("cell", float, (3,3)),("volume", float),("norms", float, 3),("angles", float, 3)])
     mtw = MultiTracksWriter(filenames, dtype, clear=clear)
-    cr = CellReader(filename)
-    for cell in itertools.islice(cr, sub.start, sub.stop, sub.step):
+    f = file(filename)
+    for line in itertools.islice(yield_real_lines(f), sub.start, sub.stop, sub.step):
+        values = [float(word) for word in line.split()[:12]]
+        row = [int(values[0]),values[1]*fs]
+        cell = numpy.array(values[2:11]).reshape(3,3).transpose()*A
+        row.append(cell)
+        row.append(values[11] * A**3)
         norms = numpy.sqrt((cell**2).sum(axis=0))
+        row.append(norms)
         alpha = numpy.arccos(numpy.clip(numpy.dot(cell[:,1],cell[:,2])/norms[1]/norms[2], -1,1))
         beta = numpy.arccos(numpy.clip(numpy.dot(cell[:,2],cell[:,0])/norms[2]/norms[0], -1,1))
         gamma = numpy.arccos(numpy.clip(numpy.dot(cell[:,0],cell[:,1])/norms[0]/norms[1], -1,1))
-        mtw.dump_row((cell, norms, (alpha, beta, gamma)))
+        row.append(numpy.array([alpha,beta,gamma]))
+        mtw.dump_row(tuple(row))
+    f.close()
     mtw.finalize()
 
 
