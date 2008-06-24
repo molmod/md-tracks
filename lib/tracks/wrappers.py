@@ -65,6 +65,7 @@ names = [
     "tr-corr", "tr-cwt", "tr-derive", "tr-diff", "tr-fit-peaks", "tr-fluct",
     "tr-format-indexes", "tr-from-atrj", "tr-from-cp2k-cell",
     "tr-from-cp2k-ener", "tr-from-cpmd-ener", "tr-from-cpmd-traj",
+    "tr-from-dlpoly-hist", "tr-from-dlpoly-output",
     "tr-from-xyz", "tr-hist", "tr-ic-bend",  "tr-ic-dihed", "tr-ic-dist",
     "tr-ic-dtl", "tr-ic-oop", "tr-ic-psf", "tr-ic-puckering", "tr-integrate",
     "tr-irfft", "tr-length", "tr-mean-std", "tr-norm", "tr-pca",

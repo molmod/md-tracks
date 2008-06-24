@@ -315,6 +315,25 @@ class CommandsTestCase(BaseTestCase):
         cor = load_track("tracks/atom.pos.0001292.z")
         self.assertArraysAlmostEqual(cor, numpy.array([0.622863, -0.250132])*angstrom, 1e-5)
 
+    def test_from_dlpoly_hist(self):
+        self.execute("tr-from-dlpoly-hist", [os.path.join(input_dir, "dlpoly_uo", "HISTORY")])
+        time = load_track("tracks/time")
+        self.assertAlmostEqual(time[0], 4*ps)
+        self.assertAlmostEqual(time[1], 4.05*ps)
+        # test will be extended once we know for sure that our assumptions for
+        # the units in the dl_poly file are correct.
+
+    def test_from_dlpoly_output(self):
+        self.execute("tr-from-dlpoly-output", [os.path.join(input_dir, "dlpoly_uo", "OUTPUT")])
+        step = load_track("tracks/step")
+        self.assertAlmostEqual(step[0], 4000)
+        self.assertAlmostEqual(step[1], 4050)
+        time = load_track("tracks/time")
+        self.assertAlmostEqual(time[0], 4*ps)
+        self.assertAlmostEqual(time[1], 4.05*ps)
+        # test will be extended once we know for sure that our assumptions for
+        # the units in the dl_poly file are correct.
+
     def test_to_xyz(self):
         self.from_xyz("thf01", "pos")
         # all-atoms version

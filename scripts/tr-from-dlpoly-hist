@@ -1,0 +1,107 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.convert import dlpoly_history_to_tracks
+from tracks.parse import parse_slice
+from tracks.optparse import add_quiet_option, add_slice_option, add_append_option
+from tracks.log import log, usage_tail
+
+from molmod.units import parse_unit
+
+from optparse import OptionParser
+
+
+usage = """%prog filename [output_directory]
+
+%prog transforms the given dl_poly history file into tracks
+
+The following files will be generated in the output directory (which defaults
+to 'tracks'):
+
+  step
+  time
+  cell.{a|b|c}.{x|y|z}    (components of the cell vectors)
+  cell.{a|b|c}            (lengths of the cell vectors)
+  cell.{alpha|beta|gamma} (angles between the cell vectors)
+  atom.pos.${i}.{x|y|z}
+  atom.vel.${i}.{x|y|z}   (if available in history file)
+  atom.frc.${i}.{x|y|z}   (if available in history file)
+
+where ${i} is the atom index. Counting starts at zero. The values in the
+tracks are always converted to atomic units.
+""" + usage_tail
+
+parser = OptionParser(usage)
+add_slice_option(parser)
+add_quiet_option(parser)
+add_append_option(parser)
+parser.add_option(
+    "-p", "--pos-unit", default='A',
+    help="The unit used in the history file for positions and lengths. "
+    "[default=%default]",
+)
+parser.add_option(
+    "-v", "--vel-unit", default='A/ps',
+    help="The unit used in the history file for velocities. "
+    "[default=%default]",
+)
+parser.add_option(
+    "-f", "--frc-unit", default='amu*A/ps**2',
+    help="The unit used in the history file for forces. "
+    "[default=%default]",
+)
+parser.add_option(
+    "-t", "--time-unit", default='ps',
+    help="The unit used in the history file for the simulation time. "
+    "[default=%default]",
+)
+parser.add_option(
+    "-m", "--mass-unit", default='amu',
+    help="The unit used in the history file for masses. "
+    "[default=%default]",
+)
+(options, args) = parser.parse_args()
+
+
+log.verbose = options.verbose
+if len(args) == 1:
+    filename = args[0]
+    output_dir = "tracks"
+elif len(args) == 2:
+    filename, output_dir = args
+else:
+    parser.error("Expecting one or two arguments.")
+
+sub = parse_slice(options.slice)
+pos_unit = parse_unit(options.pos_unit)
+vel_unit = parse_unit(options.vel_unit)
+frc_unit = parse_unit(options.frc_unit)
+time_unit = parse_unit(options.time_unit)
+mass_unit = parse_unit(options.mass_unit)
+dlpoly_history_to_tracks(
+    filename, output_dir, sub=sub, clear=options.clear,
+    pos_unit=pos_unit, vel_unit=vel_unit, frc_unit=frc_unit,
+    time_unit=time_unit, mass_unit=mass_unit
+)
+
+
+

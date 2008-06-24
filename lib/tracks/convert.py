@@ -23,13 +23,14 @@ from tracks.core import MultiTracksReader, MultiTracksWriter
 from molmod.io.xyz import XYZReader, XYZWriter
 from molmod.io.cp2k import CellReader
 from molmod.io.atrj import ATRJReader
-from molmod.units import angstrom, fs
+from molmod.units import angstrom, fs, A, deg, amu, ps
 
 import os, numpy, itertools
 
 
 __all__ = [
-    "xyz_to_tracks", "cp2k_ener_to_tracks", "cpmd_traj_to_tracks", "tracks_to_xyz",
+    "xyz_to_tracks", "cp2k_ener_to_tracks", "cpmd_traj_to_tracks",
+    "tracks_to_xyz", "dlpoly_history_to_tracks", "dlpoly_output_to_tracks"
 ]
 
 
@@ -194,7 +195,6 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
 
 
 def atrj_to_tracks(filename, destination, sub=slice(None), atom_indexes=None, clear=True):
-    """Convert an xyz file into separate tracks."""
     atrj_reader = ATRJReader(filename, sub)
 
     if atom_indexes is None:
@@ -225,4 +225,94 @@ def atrj_to_tracks(filename, destination, sub=slice(None), atom_indexes=None, cl
         ))
     mtw.finalize()
 
+
+def dlpoly_history_to_tracks(
+    filename, destination, sub=slice(None), atom_indexes=None, clear=True,
+    pos_unit=A, vel_unit=A/ps, frc_unit=amu*A/ps**2, time_unit=ps,
+    mass_unit=amu
+):
+    import molmod.io.dlpoly as dlpoly
+    hist_reader = dlpoly.HistoryReader(filename, sub, pos_unit, vel_unit, frc_unit, time_unit, mass_unit)
+
+    if atom_indexes is None:
+        atom_indexes = range(hist_reader.num_atoms)
+    else:
+        atom_indexes = list(atom_indexes)
+
+    filenames = []
+    fields = []
+
+    filenames.append(os.path.join(destination, "step"))
+    fields.append( ("step", int, 1) )
+    filenames.append(os.path.join(destination, "time"))
+    fields.append( ("time", float, 1) )
+    for vec in "abc":
+        for cor in "xyz":
+            filenames.append(os.path.join(destination, "cell.%s.%s" % (vec, cor)))
+    fields.append( ("cell", float, (3,3)) )
+    for vec in "abc":
+        filenames.append(os.path.join(destination, "cell.%s" % (vec)))
+    fields.append( ("norms", float, 3) )
+    for angle in "alpha", "beta", "gamma":
+        filenames.append(os.path.join(destination, "cell.%s" % (angle)))
+    fields.append( ("angles", float, 3) )
+    for index in atom_indexes:
+        for cor in "xyz":
+            filenames.append(os.path.join(destination, "atom.pos.%07i.%s" % (index, cor)))
+    fields.append( ("pos", float, (len(atom_indexes),3)) )
+    if hist_reader.keytrj > 0:
+        for index in atom_indexes:
+            for cor in "xyz":
+                filenames.append(os.path.join(destination, "atom.vel.%07i.%s" % (index, cor)))
+        fields.append( ("vel", float, (len(atom_indexes),3)) )
+    if hist_reader.keytrj > 1:
+        for index in atom_indexes:
+            for cor in "xyz":
+                filenames.append(os.path.join(destination, "atom.frc.%07i.%s" % (index, cor)))
+        fields.append( ("frc", float, (len(atom_indexes),3)) )
+
+    dtype = numpy.dtype(fields)
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
+    for frame in hist_reader:
+        cell = frame["cell"]
+        norms = numpy.sqrt((cell**2).sum(axis=0))
+        frame["norms"] = norms
+        alpha = numpy.arccos(numpy.clip(numpy.dot(cell[:,1],cell[:,2])/norms[1]/norms[2], -1,1))
+        beta = numpy.arccos(numpy.clip(numpy.dot(cell[:,2],cell[:,0])/norms[2]/norms[0], -1,1))
+        gamma = numpy.arccos(numpy.clip(numpy.dot(cell[:,0],cell[:,1])/norms[0]/norms[1], -1,1))
+        frame["angles"] = [alpha, beta, gamma]
+        frame["pos"] = frame["pos"][atom_indexes]
+        if hist_reader.keytrj > 0:
+            frame["vel"] = frame["vel"][atom_indexes]
+        if hist_reader.keytrj > 0:
+            frame["frc"] = frame["frc"][atom_indexes]
+        mtw.dump_row(tuple(frame[name] for name, type, shape in fields))
+    mtw.finalize()
+
+
+def dlpoly_output_to_tracks(
+    filename, destination, sub=slice(None), clear=True, skip_equi_period=True,
+    pos_unit=A, time_unit=ps, angle_unit=deg, e_unit=amu/(A/ps)**2
+):
+    import molmod.io.dlpoly as dlpoly
+    output_reader = dlpoly.OutputReader(filename, sub, skip_equi_period, pos_unit, time_unit, angle_unit, e_unit)
+
+    filenames = [
+        "step", "conserved_quantity", "temperature", "potential_energy",
+        "vanderwaals_energy", "coulomb_energy", "bond_energy", "bending_energy",
+        "torsion_energy", "tethering_energy", "time", "enthalpy",
+        "rotational_temperature", "virial", "vanderwaals_virial",
+        "coulomb_virial", "bond_viral", "bending_virial", "constraint_virial",
+        "tethering_virial", "cputime", "volume", "shell_temperature",
+        "shell_energy", "shell_virial", "cell.alpha", "cell.beta", "cell.gamma",
+        "pmf_virial", "pressure",
+    ]
+    filenames = [os.path.join(destination, filename) for filename in filenames]
+    fields = [("step", int)] + [("foo%i" % i, float) for i in xrange(29)]
+
+    dtype = numpy.dtype(fields)
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
+    for row in output_reader:
+        mtw.dump_row(tuple(row))
+    mtw.finalize()
 
