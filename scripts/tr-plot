@@ -285,7 +285,7 @@ class ScatterDescriptor(PlotDescriptor):
              "quoting.",
     )
 
-    def init_scatter_data(self, xunit, yunit):
+    def init_scatter_data(self, xunit, yunit, xref, yref):
         sub = parse_slice(self.options.slice)
         if len(self.args) == 2:
             self.x = load_track(self.args[0], sub)
@@ -295,8 +295,8 @@ class ScatterDescriptor(PlotDescriptor):
             self.parser.error("A scatter description must contain two tracks. Got:\n%s" % " ".join(self.args))
         if len(self.x) > len(self.y): # allow the x-axis to contain more data
             self.x = self.x[:len(self.y)]
-        self.x = self.x/xunit
-        self.y = self.y/yunit
+        self.x = (self.x-xref)/xunit
+        self.y = (self.y-yref)/yunit
         if self.options.label is None:
             self.options.label = label
 
