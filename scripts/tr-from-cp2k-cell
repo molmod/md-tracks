@@ -32,8 +32,16 @@ usage = """%prog filename [output_directory]
 
 %prog transforms the given cp2k cell file into separate tracks.
 
-Each track is associated with a column of the file:
-cell.a.x, cell.a.y, cell.a.z, cell.b.x, cell.b.z, cell.c.x, cell.c.y, cell.c.z, cell.a, cell.b, cell.c, cell.alpha, cell.beta, cell.gamma
+The following tracks are written to the output directory:
+
+    step, time,
+    cell.a.x, cell.a.y, cell.a.z,
+    cell.b.x, cell.b.y, cell.b.z,
+    cell.c.x, cell.c.y, cell.c.z,
+    volume,
+    cell.a, cell.b, cell.c,             (the lengths of the cell vectors)
+    cell.alpha, cell.beta, cell.gamma,  (the angles between the cell vectors)
+
 The tracks are stored in atomic units.
 """ + usage_tail
 
