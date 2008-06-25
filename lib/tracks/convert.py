@@ -23,14 +23,16 @@ from tracks.core import MultiTracksReader, MultiTracksWriter
 from molmod.io.xyz import XYZReader, XYZWriter
 from molmod.io.cp2k import CellReader
 from molmod.io.atrj import ATRJReader
-from molmod.units import angstrom, fs, A, deg, amu, ps
+from molmod.units import angstrom, fs, A, deg, amu, ps, bar
 
 import os, numpy, itertools
 
 
 __all__ = [
-    "xyz_to_tracks", "cp2k_ener_to_tracks", "cpmd_traj_to_tracks",
-    "tracks_to_xyz", "dlpoly_history_to_tracks", "dlpoly_output_to_tracks"
+    "xyz_to_tracks", "cp2k_ener_to_tracks", "cpmd_ener_to_tracks",
+    "cp2k_cell_to_tracks", "cp2k_stress_to_tracks", "cpmd_traj_to_tracks",
+    "tracks_to_xyz", "atrj_to_tracks", "dlpoly_history_to_tracks",
+    "dlpoly_output_to_tracks",
 ]
 
 
@@ -111,6 +113,23 @@ def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
         beta = numpy.arccos(numpy.clip(numpy.dot(cell[:,2],cell[:,0])/norms[2]/norms[0], -1,1))
         gamma = numpy.arccos(numpy.clip(numpy.dot(cell[:,0],cell[:,1])/norms[0]/norms[1], -1,1))
         row.append(numpy.array([alpha,beta,gamma]))
+        mtw.dump_row(tuple(row))
+    f.close()
+    mtw.finalize()
+
+
+def cp2k_stress_to_tracks(filename, destination, sub=slice(None), clear=True):
+    names = ["step", "time", "stress.xx", "stress.xy", "stress.xz", "stress.yx", "stress.yy", "stress.yz", "stress.zx", "stress.zy", "stress.zz", "pressure"]
+    filenames = list(os.path.join(destination, name) for name in names)
+    dtype = numpy.dtype([("step", int),("time", float),("stress", float, (3,3)),("pressure", float)])
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
+    f = file(filename)
+    for line in itertools.islice(yield_real_lines(f), sub.start, sub.stop, sub.step):
+        values = [float(word) for word in line.split()[:11]]
+        row = [int(values[0]),values[1]*fs]
+        cell = numpy.array(values[2:11]).reshape(3,3).transpose()*bar
+        row.append(cell)
+        row.append((cell[0,0]+cell[1,1]+cell[2,2])/3)
         mtw.dump_row(tuple(row))
     f.close()
     mtw.finalize()

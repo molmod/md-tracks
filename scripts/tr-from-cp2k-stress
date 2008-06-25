@@ -1,0 +1,69 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.convert import cp2k_stress_to_tracks
+from tracks.parse import parse_slice
+from tracks.optparse import add_quiet_option, add_slice_option, add_append_option
+from tracks.log import log, usage_tail
+
+from optparse import OptionParser
+
+
+usage = """%prog filename [output_directory]
+
+%prog transforms the given cp2k stress file into separate tracks.
+
+The following tracks are written to the output directory:
+
+    step, time,
+    stress.xx, stress.xy, stress.xz,
+    stress.yx, stress.yy, stress.yz,
+    stress.zx, stress.zy, stress.zz,
+    pressure
+
+The last file contains the pressure (also called hydrostatic or volumetric
+stress) which is the average of the diagonal elements of the stress tensor.
+
+The tracks are stored in atomic units.
+""" + usage_tail
+
+parser = OptionParser(usage)
+add_slice_option(parser)
+add_quiet_option(parser)
+add_append_option(parser)
+(options, args) = parser.parse_args()
+
+
+log.verbose = options.verbose
+if len(args) == 1:
+    filename = args[0]
+    output_dir = "tracks"
+elif len(args) == 2:
+    filename, output_dir = args
+else:
+    parser.error("Expecting one or two arguments.")
+
+sub = parse_slice(options.slice)
+cp2k_stress_to_tracks(filename, output_dir, sub=sub, clear=options.clear)
+
+
+

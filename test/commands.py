@@ -28,7 +28,7 @@ import tracks.cell as cell
 
 from molmod.io.psf import PSFFile
 from molmod.io.xyz import XYZReader, XYZFile
-from molmod.units import angstrom, fs, ps, kcalmol
+from molmod.units import angstrom, fs, ps, kcalmol, bar
 from molmod.constants import lightspeed, boltzmann
 from molmod.data.periodic import periodic
 
@@ -226,21 +226,41 @@ class CommandsTestCase(BaseTestCase):
         # Load the energy file
         self.execute("tr-from-cp2k-cell", [os.path.join(input_dir, "thf64/md-1.cell")])
         tmp = load_track("tracks/cell.a.x")
-        self.assertEqual(tmp[0]/angstrom, 20.5000000000)
-        self.assertEqual(tmp[1]/angstrom, 20.4977671159)
-        self.assertEqual(tmp[-1]/angstrom, 20.4328712109)
+        self.assertAlmostEqual(tmp[0]/angstrom, 20.5000000000)
+        self.assertAlmostEqual(tmp[1]/angstrom, 20.4977671159)
+        self.assertAlmostEqual(tmp[-1]/angstrom, 20.4328712109)
         tmp = load_track("tracks/cell.a")
-        self.assertEqual(tmp[0]/angstrom, 20.5000000000)
-        self.assertEqual(tmp[1]/angstrom, 20.4977671159)
-        self.assertEqual(tmp[-1]/angstrom, 20.4328712109)
+        self.assertAlmostEqual(tmp[0]/angstrom, 20.5000000000)
+        self.assertAlmostEqual(tmp[1]/angstrom, 20.4977671159)
+        self.assertAlmostEqual(tmp[-1]/angstrom, 20.4328712109)
         tmp = load_track("tracks/time")
-        self.assertEqual(tmp[0]/fs, 0.000)
-        self.assertEqual(tmp[1]/fs, 5.000)
-        self.assertEqual(tmp[-1]/fs, 95.000)
+        self.assertAlmostEqual(tmp[0]/fs, 0.000)
+        self.assertAlmostEqual(tmp[1]/fs, 5.000)
+        self.assertAlmostEqual(tmp[-1]/fs, 95.000)
         tmp = load_track("tracks/volume")
-        self.assertEqual(tmp[0]/angstrom**3, 8615.1250000000)
-        self.assertEqual(tmp[1]/angstrom**3, 8612.3101980259)
-        self.assertEqual(tmp[-1]/angstrom**3, 8530.7692124516)
+        self.assertAlmostEqual(tmp[0]/angstrom**3, 8615.1250000000)
+        self.assertAlmostEqual(tmp[1]/angstrom**3, 8612.3101980259)
+        self.assertAlmostEqual(tmp[-1]/angstrom**3, 8530.7692124516)
+
+    def test_from_cp2k_stress(self):
+        # Load the energy file
+        self.execute("tr-from-cp2k-stress", [os.path.join(input_dir, "thf64/md-1.stress")])
+        tmp = load_track("tracks/stress.xx")
+        self.assertAlmostEqual(tmp[0]/bar, 982.6527136414)
+        self.assertAlmostEqual(tmp[1]/bar, 1520.9982884185)
+        self.assertAlmostEqual(tmp[-1]/bar, 3352.0001110665)
+        tmp = load_track("tracks/stress.zy")
+        self.assertAlmostEqual(tmp[0]/bar, -4721.3431812354)
+        self.assertAlmostEqual(tmp[1]/bar, -19.6129483571)
+        self.assertAlmostEqual(tmp[-1]/bar, 6209.6972369552)
+        tmp = load_track("tracks/time")
+        self.assertAlmostEqual(tmp[0]/fs, 0.000)
+        self.assertAlmostEqual(tmp[1]/fs, 5.000)
+        self.assertAlmostEqual(tmp[-1]/fs, 95.000)
+        tmp = load_track("tracks/pressure")
+        self.assertAlmostEqual(tmp[0]/bar, -0.284470689513E+04)
+        self.assertAlmostEqual(tmp[1]/bar, 0.264474996707E+04)
+        self.assertAlmostEqual(tmp[-1]/bar, 0.523529867036E+03)
 
     def test_from_cpmd_traj(self):
         self.execute("tr-from-cpmd-traj", [os.path.join(input_dir, "cpmd_h2/TRAJECTORY")])
