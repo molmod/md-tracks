@@ -1316,10 +1316,10 @@ class CommandsTestCase(BaseTestCase):
             os.path.join(output_dir, "reduce.png")
         ])
 
-    def test_diff(self):
+    def test_msd(self):
         self.from_xyz("water32", "pos")
         self.from_cp2k_ener("water32")
-        self.execute("tr-diff", glob.glob("tracks/atom.pos.???????.?") + [
+        self.execute("tr-msd", glob.glob("tracks/atom.pos.???????.?") + [
             "tracks/atom.pos.msd", "--delta-origin=2"
         ])
         self.execute("tr-plot", [
@@ -1327,6 +1327,8 @@ class CommandsTestCase(BaseTestCase):
             ":line", "tracks/time", "tracks/atom.pos.msd",
             os.path.join(output_dir, "diff_msd.png")
         ])
+        lines = self.execute("tr-msd-fit", ["tracks/atom.pos.msd", "tracks/time", "--slice=10:100:", "--unit=cm**2/s"])
+        self.assertAlmostEqual(float(lines[0].split()[-1]), 2.2861e-05)
 
     def test_qh_entropy(self):
         self.from_xyz("ar108", "pos")

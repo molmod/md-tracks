@@ -1,0 +1,74 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+from tracks.core import load_track
+from tracks.parse import parse_slice, parse_x_step
+from tracks.optparse import add_quiet_option, add_slice_option
+from tracks.log import log, usage_tail
+
+from molmod.units import parse_unit
+
+import numpy
+from optparse import OptionParser
+
+usage = """%prog time input {time_axis|timestep}
+
+%prog fits a straight line to (a part of) the msd curve and prints the
+diffusion coefficient.
+
+The input is typically generated with tr-msd, but we strongly advise to inspect
+the behaviour of the msd in a plot before making the fit. From this plot one
+can estimate the part where the msd is in the steady state regime and not
+disturbed by statistical errors.
+""" + usage_tail
+
+parser = OptionParser(usage)
+add_quiet_option(parser)
+add_slice_option(parser)
+parser.add_option(
+    "-u", "--unit", default='cm**2/s',
+    help="The diffusion coefficient is printed in the given UNIT. [default=%default]",
+)
+(options, args) = parser.parse_args()
+
+log.verbose = options.verbose
+if len(args) == 2:
+    path_msd, path_time = args
+else:
+    parser.error("Expecting two arguments.")
+
+sub = parse_slice(options.slice)
+unit = parse_unit(options.unit)
+
+msd = load_track(path_msd, sub)
+time_step = parse_x_step(path_time)*(sub.step or 1)
+
+time = numpy.arange(len(msd), dtype=float)*time_step
+
+dm = numpy.array([time, numpy.ones(len(msd))]).transpose()
+ev = msd
+
+x, resids, rang, s = numpy.linalg.lstsq(dm, ev)
+
+print "Diffusion coefficient [%s]: %12.4e" % (options.unit, 0.5*x[0]/unit)
+
+
+
