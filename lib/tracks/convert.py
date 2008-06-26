@@ -21,7 +21,6 @@
 
 from tracks.core import MultiTracksReader, MultiTracksWriter
 from molmod.io.xyz import XYZReader, XYZWriter
-from molmod.io.cp2k import CellReader
 from molmod.io.atrj import ATRJReader
 from molmod.units import angstrom, fs, A, deg, amu, ps, bar
 
