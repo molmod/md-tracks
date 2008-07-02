@@ -21,7 +21,7 @@
 
 from common import *
 
-from tracks.wrappers import tr_read, tr_rfft
+from tracks.wrappers import tr_to_txt, tr_rfft
 from tracks.core import dump_track
 from tracks.log import log
 
@@ -31,11 +31,15 @@ import unittest, numpy, os, glob
 log.verbose = False
 
 
+tr_to_txt.name = os.path.join(scripts_dir, tr_to_txt.name)
+tr_rfft.name = os.path.join(scripts_dir, tr_rfft.name)
+
+
 class WrapperTestCase(BaseTestCase):
-    def test_tr_read(self):
+    def test_tr_to_txt(self):
         values = numpy.arange(0, 10, 0.1, float)
         dump_track(os.path.join(tmp_dir, "tmp"), values)
-        output = tr_read(os.path.join(tmp_dir, "tmp"))
+        output = tr_to_txt(os.path.join(tmp_dir, "tmp"))
         check_values = numpy.array([float(word) for word in output], float)
         self.assertArraysAlmostEqual(values, check_values, 1e-10)
 

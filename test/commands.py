@@ -391,10 +391,10 @@ class CommandsTestCase(BaseTestCase):
         ])
         self.from_xyz("ar108", "pos")
 
-    def test_read_write_slice_length(self):
+    def test_txt_slice_length(self):
         self.from_cp2k_ener("water32")
-        # tr-read
-        lines = self.execute("tr-read", ["tracks/temperature"])
+        # tr-to-txt
+        lines = self.execute("tr-to-txt", ["tracks/temperature"])
         tmp1 = numpy.array([float(line) for line in lines], float)
         tmp2 = load_track("tracks/temperature")
         self.assertArraysEqual(tmp1, tmp2)
@@ -409,10 +409,10 @@ class CommandsTestCase(BaseTestCase):
         t = load_track("tracks/temperature")
         ts = load_track("tracks/temperature_sliced")
         self.assertArraysEqual(t[20:80:5], ts)
-        # tr-write
+        # tr-from-txt
         tmp1 = numpy.arange(101, dtype=float)
         lines = [str(val) for val in tmp1]
-        self.execute("tr-write", ["tracks/tmp"], stdin=lines)
+        self.execute("tr-from-txt", ["tracks/tmp"], stdin=lines)
         tmp2 = load_track("tracks/tmp")
         self.assertArraysEqual(tmp1, tmp2)
 
@@ -423,8 +423,8 @@ class CommandsTestCase(BaseTestCase):
             self.from_cp2k_ener("thf01")
             t1 = load_track("tracks/time", sub)
             k1 = load_track("tracks/kinetic_energy", sub)
-            lines = self.execute("tr-read", ["-s%s" % subs, "ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
-            self.execute("tr-write", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
+            lines = self.execute("tr-to-txt", ["-s%s" % subs, "ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
+            self.execute("tr-from-txt", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
             t2 = load_track("tracks/time")
             k2 = load_track("tracks/kinetic_energy")
             self.assertArraysAlmostEqual(t1, t2, 1e-5)
@@ -433,8 +433,8 @@ class CommandsTestCase(BaseTestCase):
             self.from_cp2k_ener("thf01")
             t1 = load_track("tracks/time", sub)
             k1 = load_track("tracks/kinetic_energy", sub)
-            lines = self.execute("tr-read", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
-            self.execute("tr-write", ["-s%s" % subs, "ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
+            lines = self.execute("tr-to-txt", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
+            self.execute("tr-from-txt", ["-s%s" % subs, "ps", "tracks/time", "kjmol", "tracks/kinetic_energy"], stdin=lines)
             t2 = load_track("tracks/time")
             k2 = load_track("tracks/kinetic_energy")
             self.assertArraysAlmostEqual(t1, t2, 1e-5)
@@ -442,8 +442,8 @@ class CommandsTestCase(BaseTestCase):
             # - in write, no slice
             self.from_cp2k_ener("thf01")
             k1 = load_track("tracks/kinetic_energy")
-            lines = self.execute("tr-read", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
-            self.execute("tr-write", ["ps", "-", "kjmol", "tracks/test"], stdin=lines)
+            lines = self.execute("tr-to-txt", ["ps", "tracks/time", "kjmol", "tracks/kinetic_energy"])
+            self.execute("tr-from-txt", ["ps", "-", "kjmol", "tracks/test"], stdin=lines)
             k2 = load_track("tracks/test")
             self.assertArraysAlmostEqual(k1, k2, 1e-5)
         check("::")
@@ -1118,7 +1118,7 @@ class CommandsTestCase(BaseTestCase):
         for bin_filename in sorted(glob.glob("tracks/atom.bond.pos.df.bin.???????")):
             output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
             lines.append(output[0])
-        self.execute("tr-write", ["tracks/atom.bond.pos.df.hist", "tracks/atom.bond.pos.df.hist.error"], stdin=lines)
+        self.execute("tr-from-txt", ["tracks/atom.bond.pos.df.hist", "tracks/atom.bond.pos.df.hist.error"], stdin=lines)
         df_hist_bis = load_track("tracks/atom.bond.pos.df.hist")
         self.assertAlmostEqual(df_hist_bis.sum(), 1.0, 2)
         self.assertArraysAlmostEqual(df_hist, df_hist_bis, 1e-5)
@@ -1132,7 +1132,7 @@ class CommandsTestCase(BaseTestCase):
         for bin_filename in sorted(glob.glob("tracks/atom.bond.pos.df.cumul.bin.???????")):
             output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
             lines.append(output[0])
-        self.execute("tr-write", ["tracks/atom.bond.pos.df.cumul.hist", "tracks/atom.bond.pos.df.cumul.hist.error"], stdin=lines)
+        self.execute("tr-from-txt", ["tracks/atom.bond.pos.df.cumul.hist", "tracks/atom.bond.pos.df.cumul.hist.error"], stdin=lines)
         cdf_hist_bis = load_track("tracks/atom.bond.pos.df.cumul.hist")
         self.assertAlmostEqual(cdf_hist_bis[-1], 1.0, 2)
         self.assertArraysAlmostEqual(cdf_hist, cdf_hist_bis, 1e-5)
