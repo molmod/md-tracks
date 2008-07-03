@@ -342,3 +342,46 @@ def dlpoly_output_to_tracks(
         mtw.dump_row(tuple(row))
     mtw.finalize()
 
+
+def lammps_dump_to_tracks(filename, destination, meta, sub=slice(None), clear=True):
+    from molmod.io.lammps import DumpReader
+
+    units = []
+    for unit, name, isvector in meta:
+        if isvector:
+            units.extend([unit, unit, unit])
+        else:
+            units.append(unit)
+
+    dump_reader = DumpReader(filename, units, sub)
+    num_atoms = dump_reader.num_atoms
+
+    filenames = [os.path.join(destination, "step")]
+    fields = [("step", int)]
+
+    for unit, name, isvector in meta:
+        if isvector:
+            for i in xrange(num_atoms):
+                filenames.append(os.path.join(destination, "atom.%s.%07i.x" % (name, i)))
+            fields.append(("atom.%s.x" % name, float, num_atoms))
+            for i in xrange(num_atoms):
+                filenames.append(os.path.join(destination, "atom.%s.%07i.y" % (name, i)))
+            fields.append(("atom.%s.y" % name, float, num_atoms))
+            for i in xrange(num_atoms):
+                filenames.append(os.path.join(destination, "atom.%s.%07i.z" % (name, i)))
+            fields.append(("atom.%s.z" % name, float, num_atoms))
+        else:
+            for i in xrange(num_atoms):
+                filenames.append(os.path.join(destination, "atom.%s.%07i" % (name, i)))
+            fields.append(("atom.%s" % name, float, num_atoms))
+
+
+    dtype = numpy.dtype(fields)
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
+    for frame in dump_reader:
+        mtw.dump_row(tuple(frame))
+    mtw.finalize()
+
+
+
+

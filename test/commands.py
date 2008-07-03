@@ -361,6 +361,19 @@ class CommandsTestCase(BaseTestCase):
         # test will be extended once we know for sure that our assumptions for
         # the units in the dl_poly file are correct.
 
+    def test_from_lammps_dump(self):
+        self.execute("tr-from-lammps-dump", [os.path.join(input_dir, "lammps2", "dump.txt"), "A", "pos3", "A/fs", "vel3"])
+        step = load_track("tracks/step")
+        self.assertAlmostEqual(step[0], 0)
+        self.assertAlmostEqual(step[-1], 45)
+        pos0x = load_track("tracks/atom.pos.0000000.x")
+        self.assertAlmostEqual(pos0x[0]/angstrom, 0.76561)
+        self.assertAlmostEqual(pos0x[-1]/angstrom, 0.897658)
+        vel5y = load_track("tracks/atom.vel.0000005.y")
+        self.assertAlmostEqual(vel5y[0]/(angstrom/fs), 0.0188858)
+        self.assertAlmostEqual(vel5y[5]/(angstrom/fs), 0.00913911)
+        self.assertAlmostEqual(vel5y[-1]/(angstrom/fs), 0.00252762)
+
     def test_to_xyz(self):
         self.from_xyz("thf01", "pos")
         # all-atoms version

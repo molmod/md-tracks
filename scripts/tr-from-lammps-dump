@@ -1,0 +1,107 @@
+#!/usr/bin/python
+# Tracks provides tools for analyzing large trajectory files.
+# Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
+#
+# This file is part of Tracks.
+#
+# Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.convert import lammps_dump_to_tracks
+from tracks.parse import parse_slice
+from tracks.optparse import add_quiet_option, add_slice_option, add_append_option
+from tracks.log import log, usage_tail
+
+from molmod.units import parse_unit
+
+from optparse import OptionParser
+
+
+usage = """%prog filename unit1 field1[3] [unit2 field2[3] ...] [output_directory]
+
+%prog transforms the given lammps dump file into tracks. Which tracks are
+generated, depends on the contents of the dump file and the command line
+arguments. (There is not much meta information in the dump file, so the exact
+meaning of the data in the dump file must be given as command line arguments.)
+
+A step file will always be generated, it contains the integer step counter. The
+remaining files are atom related data that are interpreted based on the command
+line arguments. The dump filename is followed by pairs of unit and field. If
+the last character of a field is '3', it is assumed that three cartesian
+components are present in the dump file for this field.
+
+Example: When the the lammps input contains these lines:
+
+  units real
+  dump 3 all custom 1 custom.txt tag xu yu zu vx vy vz q
+
+the corresponding tracks script looks like this:
+
+  tr-from-lammps-dump custom.txt A pos3 A/fs vel3 au charge
+
+These files will be generated in the tracks directory:
+
+  tracks/step
+
+and for each atom these files are created:
+
+  tracks/atom.pos.${i}.x
+  tracks/atom.pos.${i}.y
+  tracks/atom.pos.${i}.z
+  tracks/atom.vel.${i}.x
+  tracks/atom.vel.${i}.y
+  tracks/atom.vel.${i}.z
+  tracks/atom.charge.${i}
+
+where ${i} is a contigous atom counter starting from zero. (The atom indexes
+from lammps are discarded.) The values in the tracks are always converted to
+atomic units.
+""" + usage_tail
+
+parser = OptionParser(usage)
+add_slice_option(parser)
+add_quiet_option(parser)
+add_append_option(parser)
+(options, args) = parser.parse_args()
+
+
+log.verbose = options.verbose
+if len(args) >= 3:
+    filename = args[0]
+    fields = []
+    for i in xrange((len(args)-1)/2):
+        name = args[2*i+2]
+        isvector = (name[-1]=='3')
+        if isvector: name = name[:-1]
+        fields.append((
+           parse_unit(args[2*i+1]),
+           name, isvector
+        ))
+    if len(args) % 2 == 0:
+        output_dir = args[-1]
+    else:
+        output_dir = "tracks"
+
+else:
+    parser.error("Expecting at least three arguments.")
+
+sub = parse_slice(options.slice)
+lammps_dump_to_tracks(
+    filename, output_dir, fields, sub=sub, clear=options.clear,
+)
+
+
+
