@@ -1011,14 +1011,14 @@ class CommandsTestCase(BaseTestCase):
         self.from_xyz("water32", "vel", ["-u1"])
         self.from_cp2k_ener("water32")
         # first test the --filter-molecules
-        self.execute("tr-split-com", ["-m2,5", "--no-rel", "tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])
+        self.execute("tr-split-com", ["-m2,5", "tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])
         self.assertEqual(len(glob.glob("tracks/com.vel.*")),6)
         self.assertEqual(len(glob.glob("tracks/rel.vel.*")),0)
-        self.execute("tr-split-com", ["-m2,5", "tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])
+        self.execute("tr-split-com", ["-m2,5", "--rel", "tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])
         self.assertEqual(len(glob.glob("tracks/com.vel.*")),6)
         self.assertEqual(len(glob.glob("tracks/rel.vel.*")),18)
         # then do the remaining tests
-        self.execute("tr-split-com", ["tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])
+        self.execute("tr-split-com", ["tracks/atom.vel", "--rel", "vel", os.path.join(input_dir, "water32/init.psf")])
         psf = PSFFile(os.path.join(input_dir, "water32/init.psf"))
         # check that the coms have in total no translational kinetic energy
         for c in 'xyz':

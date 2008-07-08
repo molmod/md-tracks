@@ -57,7 +57,7 @@ parser.add_option(
          "comma-separated list of molecule indexes. Counting starts at zero.",
 )
 parser.add_option(
-    "--no-rel", action="store_false", dest="relative", default=True,
+    "--rel", action="store_true", dest="relative", default=False,
     help="Don't write out the relative coordinates."
 )
 parser.add_option(
