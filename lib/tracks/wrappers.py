@@ -66,6 +66,7 @@ names = [
     "tr-format-indexes", "tr-from-atrj", "tr-from-cp2k-cell",
     "tr-from-cp2k-ener", "tr-from-cp2k-stress", "tr-from-cpmd-ener",
     "tr-from-cpmd-traj", "tr-from-dlpoly-hist", "tr-from-dlpoly-output",
+    "tr-from-lammps-dump",
     "tr-from-txt", "tr-from-xyz", "tr-hist", "tr-ic-bend",  "tr-ic-dihed",
     "tr-ic-dist", "tr-ic-dtl", "tr-ic-oop", "tr-ic-psf", "tr-ic-puckering",
     "tr-integrate", "tr-irfft", "tr-length", "tr-mean-std", "tr-msd",
