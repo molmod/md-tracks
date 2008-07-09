@@ -1090,16 +1090,6 @@ class CommandsTestCase(BaseTestCase):
         self.assert_(len(output)==1)
         self.assertEqual(set([0,1,2,3,4]), set(int(word) for word in output[0].split(",")))
 
-    def test_format_indexes(self):
-        output = self.execute("tr-format-indexes", ["none", "0,1,2,3"])[0]
-        self.assertEqual(output, "0,1,2,3")
-        output = self.execute("tr-format-indexes", ["suffix", "0,1,2,3"])[0]
-        self.assertEqual(output, "0000000.0000001.0000002.0000003")
-        output = self.execute("tr-format-indexes", ["prefix=test", "0,1,2,3"])[0]
-        self.assertEqual(output, "test.0000000 test.0000001 test.0000002 test.0000003")
-        output = self.execute("tr-format-indexes", ["prefix_xyz=test", "0,1,2,3"])[0]
-        self.assertEqual(output, "test.0000000.x test.0000000.y test.0000000.z test.0000001.x test.0000001.y test.0000001.z test.0000002.x test.0000002.y test.0000002.z test.0000003.x test.0000003.y test.0000003.z")
-
     def test_fluct(self):
         self.from_cp2k_ener("thf01")
         self.execute("tr-fluct", ["tracks/temperature", "tracks/temperature", "tracks/test"])
@@ -1217,15 +1207,13 @@ class CommandsTestCase(BaseTestCase):
         self.from_xyz("water32", "pos")
         self.from_cp2k_ener("water32")
 
-        atoms_O = self.execute("tr-select", [os.path.join(input_dir, "water32/init.psf"), "at", "a.number==8"])[0]
-        prefixes_O = self.execute("tr-format-indexes", ["prefix=tracks/atom.pos", atoms_O])[0].split()
-        self.execute("tr-rdf", prefixes_O + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_O_O"])
+        prefixes_O = self.execute("tr-select", [os.path.join(input_dir, "water32/init.psf"), "at", "a.number==8", "--prefix=tracks/atom.pos"])[0]
+        self.execute("tr-rdf", prefixes_O.split() + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_O_O"])
 
-        atoms_H = self.execute("tr-select", [os.path.join(input_dir, "water32/init.psf"), "at", "a.number==1"])[0]
-        prefixes_H = self.execute("tr-format-indexes", ["prefix=tracks/atom.pos", atoms_H])[0].split()
-        self.execute("tr-rdf", prefixes_H + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_H_H"])
+        prefixes_H = self.execute("tr-select", [os.path.join(input_dir, "water32/init.psf"), "at", "a.number==1", "--prefix=tracks/atom.pos"])[0]
+        self.execute("tr-rdf", prefixes_H.split() + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_H_H"])
 
-        self.execute("tr-rdf", prefixes_H + ['-'] + prefixes_O + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_O_H"])
+        self.execute("tr-rdf", prefixes_H.split() + ['-'] + prefixes_O.split() + ["-s::20", "9.865*A,9.865*A,9.865*A", "10*A", "80", "tracks/rdf_O_H"])
 
         self.execute("tr-plot", [
             "--xunit=A", "--yunit=1", "--xlabel=Iteratomic distance", "--ylabel=g(r)", "--title=Radial distribution functions",

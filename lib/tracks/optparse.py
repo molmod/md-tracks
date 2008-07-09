@@ -74,3 +74,16 @@ def add_ic_project_option(parser, name):
         help="Project the cartesian velocity vector on the tangents of the internal"
              "coordinate. (in this case %s)" % name,
     )
+
+def add_select_options(parser):
+    parser.add_option(
+        "-p", "--prefix", help="Format the indexes with the given prefix. The "
+        "output will look like 'PREFIX.0000000 PREFIX.0000001 ...'"
+    )
+    parser.add_option(
+        "--xyz", action='store_true', default=False,
+        help="Append x, y and z extension to the prefixes. (Only applicable when "
+        "-p is used. The output will look like 'PREFIX.0000000.x prefix.0000000.y "
+        "PREFIX.0000000.z PREFIX.0000001.x ...'"
+    )
+

@@ -21,6 +21,7 @@
 
 
 from tracks.log import usage_tail
+from tracks.optparse import add_select_options
 
 from molmod.io.psf import PSFFile
 from molmod.data.periodic import periodic
@@ -147,6 +148,7 @@ tr-ac $(%prog example.psf 'a.number==8' -p tracks/atom.vel --xyz) tracks/time tr
 """ + usage_tail
 
 parser = OptionParser(usage)
+add_select_options(parser)
 (options, args) = parser.parse_args()
 
 
@@ -264,7 +266,16 @@ for atom in atoms:
 
 result = list(set(result)) # remove duplicates
 result.sort() # sort the indexes
-print ",".join([str(value) for value in result])
+
+if options.prefix is None:
+    print ",".join([str(value) for value in result])
+else:
+    p = options.prefix
+    if options.xyz:
+        print " ".join("%s.%07i.x %s.%07i.y %s.%07i.z" % (p, i, p, i, p, i) for i in result)
+    else:
+        print " ".join("%s.%07i" % (p, i) for i in result)
+
 
 
 

@@ -21,6 +21,7 @@
 
 
 from tracks.log import usage_tail
+from tracks.optparse import add_select_options
 
 from molmod.io.psf import PSFFile
 from molmod.graphs import MatchGenerator, RingMatchDefinition
@@ -37,6 +38,7 @@ form a ring. The order of the atom indexes correspons to the order of the
 atoms in the rings."""
 
 parser = OptionParser(usage)
+add_select_options(parser)
 (options, args) = parser.parse_args()
 
 
@@ -52,13 +54,24 @@ psf = PSFFile(path_psf)
 graph = psf.get_graph()
 graph.init_neighbors()
 
+def print_indexes(indexes):
+    if options.prefix is None:
+        print ",".join([str(value) for value in indexes])
+    else:
+        p = options.prefix
+        if options.xyz:
+            print " ".join("%s.%07i.x %s.%07i.y %s.%07i.z" % (p, i, p, i, p, i) for i in indexes)
+        else:
+            print " ".join("%s.%07i" % (p, i) for i in indexes)
+
+
 match_generator = MatchGenerator(
     RingMatchDefinition(ring_size),
 )
 for ring_match in match_generator(graph):
     if len(ring_match.forward) == ring_size:
-        # ignore smaller rings
-        print ",".join([str(atom_index) for key, atom_index in sorted(ring_match.forward.items())])
+        # ignore smaller rings (larger rings are not in anyway)
+        print_indexes(list(atom_index for key, atom_index in sorted(ring_match.forward.items())))
 
 
 

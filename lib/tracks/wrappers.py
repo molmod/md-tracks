@@ -63,7 +63,7 @@ class Wrapper(object):
 names = [
     "tr-ac", "tr-ac-error", "tr-angular-momentum", "tr-blav", "tr-calc",
     "tr-corr", "tr-cwt", "tr-derive", "tr-fit-peaks", "tr-fluct",
-    "tr-format-indexes", "tr-from-atrj", "tr-from-cp2k-cell",
+    "tr-from-atrj", "tr-from-cp2k-cell",
     "tr-from-cp2k-ener", "tr-from-cp2k-stress", "tr-from-cpmd-ener",
     "tr-from-cpmd-traj", "tr-from-dlpoly-hist", "tr-from-dlpoly-output",
     "tr-from-lammps-dump",
