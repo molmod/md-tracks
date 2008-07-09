@@ -1237,8 +1237,8 @@ class CommandsTestCase(BaseTestCase):
         self.from_xyz("water32", "vel", ["-u1"])
         self.from_cp2k_ener("water32")
         # split positions and velocities in com and rel
-        self.execute("tr-split-com", ["tracks/atom.pos", "pos", os.path.join(input_dir, "water32/init.psf")])
-        self.execute("tr-split-com", ["tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf")])
+        self.execute("tr-split-com", ["tracks/atom.pos", "pos", os.path.join(input_dir, "water32/init.psf"), "--rel"])
+        self.execute("tr-split-com", ["tracks/atom.vel", "vel", os.path.join(input_dir, "water32/init.psf"), "--rel"])
         # compute the angular momenta
         self.execute("tr-angular-momentum", ["tracks/rel", os.path.join(input_dir, "water32/init.psf")])
         # check the number of generated files:
