@@ -1,4 +1,14 @@
 include COPYING
+include README
 include test/*.py
+include test/input/ar108/*
+include test/input/bartek.atrj
+include test/input/cpmd_h2/*
+include test/input/dlpoly_uo/*
+include test/input/lammps2/*
+include test/input/org01/*
 include test/input/thf01/*
+include test/input/thf64/*
+include test/input/thfdiff/*
 include test/input/water32/*
+
