@@ -2,7 +2,7 @@ CopyrightHolders: Toon Verstraelen <Toon.Verstraelen@UGent.be>
 Section: science
 Priority: extra
 PurePython: 1
-Depends: python-numpy (>= 1.0.1), python-matplotlib, python-molmod (>=0.002)
+Depends: python-numpy (>= 1.0.1), python-matplotlib, python-molmod (>=0.003)
 Suggests: 
 ShortDescription: Specialized scripts for MD/MC trajectory analysis.
 LongDescription: The scripts assume that the trajectory files are given in the xyz format.

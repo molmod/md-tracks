@@ -1,4 +1,4 @@
-Tracks 0.002 README
+MD-Tracks 0.003 README
 ===================
 
 Contents of this README File:
@@ -36,7 +36,7 @@ The following software has to be installed on your system before you can use
 Tracks:
  1) Python (>=2.4, <3.0): see http://www.python.org/
  2) Numpy (>=1.0.1): see http://www.scipy.org/
- 3) MolMod (>= 0.002): see http://molmod.ugent.be/code/
+ 3) MolMod (>= 0.003): see http://molmod.ugent.be/code/
 
 
 How to install

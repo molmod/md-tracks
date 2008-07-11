@@ -1,14 +1,15 @@
-# Tracks provides tools for analyzing large trajectory files.
+# MD-Tracks is a statistical analysis toolkit for molecular dynamics
+# and monte carlo simulations.
 # Copyright (C) 2007 - 2008 Toon Verstraelen <Toon.Verstraelen@UGent.be>
 #
-# This file is part of Tracks.
+# This file is part of MD-Tracks.
 #
-# Tracks is free software; you can redistribute it and/or
+# MD-Tracks is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 3
 # of the License, or (at your option) any later version.
 #
-# Tracks is distributed in the hope that it will be useful,
+# MD-Tracks is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -381,6 +382,7 @@ def lammps_dump_to_tracks(filename, destination, meta, sub=slice(None), clear=Tr
     for frame in dump_reader:
         mtw.dump_row(tuple(frame))
     mtw.finalize()
+
 
 
 
