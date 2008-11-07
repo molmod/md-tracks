@@ -221,12 +221,11 @@ class Atom(object):
 # Initialize the atom and molecule objects:
 psf = PSFFile(path_psf)
 graph = psf.get_graph()
-graph.init_neighbors()
 
 atoms = []
 molecules = dict((index, Molecule(Symbol(index))) for index in numpy.unique(psf.molecules))
 
-for a_index, (number, m_index, label) in enumerate(zip(psf.numbers, psf.molecules, psf.symbols)):
+for a_index, (number, m_index, label) in enumerate(zip(psf.numbers, psf.molecules, psf.atom_types)):
     symbol = periodic[number].symbol
     l = graph.neighbors.get(a_index)
     if l is None:
@@ -235,7 +234,7 @@ for a_index, (number, m_index, label) in enumerate(zip(psf.numbers, psf.molecule
         nindexes = [nindex for nindex in l]
     nnumbers = [psf.numbers[nindex] for nindex in nindexes]
     nsymbols = [periodic[n].symbol for n in nnumbers]
-    nlabels = [psf.symbols[nindex] for nindex in nindexes]
+    nlabels = [psf.atom_types[nindex] for nindex in nindexes]
     molecule = molecules[m_index]
     atom = Atom(
         a_index,

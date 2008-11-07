@@ -306,7 +306,7 @@ elif kind == 'dihed':
                 log("WARNING %s" % str(e))
 
 elif kind == 'dtl':
-    from molmod.graphs import MatchGenerator, SubgraphMatchDefinition, Graph
+    from molmod.graphs import GraphSearch, SubgraphPattern, CriteriaSet, Graph
 
     if len(filter_args) == 0:
         atom_filter1 = AtomFilter()
@@ -320,44 +320,44 @@ elif kind == 'dtl':
         parser.error("When kind is dtl, three or none atom filter arguments are expected, got %i." % len(filter_args))
 
     graph = psf.get_graph()
-    match_generator = MatchGenerator(SubgraphMatchDefinition(
-        Graph(set([frozenset([1,2]),frozenset([1,3])])),
-        node_tags = {1: 1, 2: 2, 3: 3}
+    match_generator = GraphSearch(SubgraphPattern(
+        Graph([(0,1),(0,2)]),
+        [CriteriaSet({0: atom_filter1, 1: atom_filter2, 2: atom_filter3})],
+        node_tags = {0: 0, 1: 1, 2: 2}
     ))
 
     for match in match_generator(graph):
-        index1 = match.forward[1]
-        index2 = match.forward[2]
-        index3 = match.forward[3]
-        if atom_filter1(index1) and atom_filter2(index2) and atom_filter3(index3):
-            try:
-                pos_name = '%s.dtl.pos.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
-                if vel_prefix is None:
-                    dump_track(pos_name, vector.dtl(
-                        vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
-                        vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
-                        vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
-                        track_cell=track_cell,
-                    ))
-                else:
-                    vel_name = '%s.dtl.vel.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
-                    dtl_pos, dtl_vel = vector.dtl(
-                        vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
-                        vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
-                        vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
-                        vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
-                        vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
-                        vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
-                        track_cell=track_cell,
-                    )
-                    dump_track(pos_name, dtl_pos)
-                    dump_track(vel_name, dtl_vel)
-                log("DONE %s" % pos_name)
-            except TrackNotFoundError, e:
-                log("WARNING %s" % str(e))
+        index1 = match.forward[0]
+        index2 = match.forward[1]
+        index3 = match.forward[2]
+        try:
+            pos_name = '%s.dtl.pos.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
+            if vel_prefix is None:
+                dump_track(pos_name, vector.dtl(
+                    vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                    vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                    vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                    track_cell=track_cell,
+                ))
+            else:
+                vel_name = '%s.dtl.vel.%07i.%07i.%07i' % (output_prefix, index1, index2, index3)
+                dtl_pos, dtl_vel = vector.dtl(
+                    vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index1), sub),
+                    vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index2), sub),
+                    vector.TrackVector.from_prefix("%s.%07i" % (pos_prefix, index3), sub),
+                    vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index1), sub),
+                    vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index2), sub),
+                    vector.TrackVector.from_prefix("%s.%07i" % (vel_prefix, index3), sub),
+                    track_cell=track_cell,
+                )
+                dump_track(pos_name, dtl_pos)
+                dump_track(vel_name, dtl_vel)
+            log("DONE %s" % pos_name)
+        except TrackNotFoundError, e:
+            log("WARNING %s" % str(e))
 
 elif kind == 'oop':
-    from molmod.graphs import MatchGenerator, SubgraphMatchDefinition, CriteriaSet, Graph
+    from molmod.graphs import GraphSearch, SubgraphPattern, CriteriaSet, Graph
 
     if len(filter_args) == 0:
         atom_filter1 = AtomFilter()
@@ -373,16 +373,16 @@ elif kind == 'oop':
         parser.error("When kind is oop, four or none arguments are expected, got %i." % len(filter_args))
 
     graph = psf.get_graph()
-    match_generator = MatchGenerator(SubgraphMatchDefinition(
-        Graph(set([frozenset([4,1]), frozenset([4,2]), frozenset([4,3])])),
-        [CriteriaSet({1: atom_filter1, 2: atom_filter2, 3: atom_filter3, 4: atom_filter4})],
+    match_generator = GraphSearch(SubgraphPattern(
+        Graph([(3,0), (3,1), (3,2)]),
+        [CriteriaSet({0: atom_filter1, 1: atom_filter2, 2: atom_filter3, 3: atom_filter4})],
     ))
 
     for match in match_generator(graph):
-        index1 = match.forward[1]
-        index2 = match.forward[2]
-        index3 = match.forward[3]
-        index4 = match.forward[4]
+        index1 = match.forward[0]
+        index2 = match.forward[1]
+        index3 = match.forward[2]
+        index4 = match.forward[3]
         try:
             pos_name = '%s.oop.pos.%07i.%07i.%07i.%07i' % (output_prefix, index1, index2, index3, index4)
             if vel_prefix is None:

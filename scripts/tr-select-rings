@@ -24,7 +24,7 @@ from tracks.log import usage_tail
 from tracks.optparse import add_select_options
 
 from molmod.io.psf import PSFFile
-from molmod.graphs import MatchGenerator, RingMatchDefinition
+from molmod.graphs import GraphSearch, RingPattern
 
 import numpy
 from optparse import OptionParser
@@ -52,7 +52,6 @@ else:
 # Initialize the atom and molecule objects:
 psf = PSFFile(path_psf)
 graph = psf.get_graph()
-graph.init_neighbors()
 
 def print_indexes(indexes):
     if options.prefix is None:
@@ -65,8 +64,8 @@ def print_indexes(indexes):
             print " ".join("%s.%07i" % (p, i) for i in indexes)
 
 
-match_generator = MatchGenerator(
-    RingMatchDefinition(ring_size),
+match_generator = GraphSearch(
+    RingPattern(ring_size),
 )
 for ring_match in match_generator(graph):
     if len(ring_match.forward) == ring_size:
