@@ -315,6 +315,7 @@ PlotDescriptor.kinds["scatter"] = ScatterDescriptor
 class BarDescriptor(PlotDescriptor):
     parser = OptionParser(line_usage)
     add_color_option(parser)
+    add_line_style_option(parser)
     add_line_width_option(parser)
     add_alpha_option(parser)
     add_label_option(parser)
@@ -343,6 +344,7 @@ class BarDescriptor(PlotDescriptor):
         if self.options.color is not None: kwargs["color"] = self.options.color
         kwargs["linewidth"] = float(self.options.linewidth)
         kwargs["alpha"] = float(self.options.alpha)
+        kwargs["linestyle"] = str(self.options.linestyle)
         self.patch = pylab.plot(points_x, points_y, **kwargs)[0]
         self.options.color = self.patch.get_color()
         if self.error is not None:
