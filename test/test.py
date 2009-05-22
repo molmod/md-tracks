@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # MD-Tracks is a statistical analysis toolkit for molecular dynamics
 # and monte carlo simulations.
 # Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center

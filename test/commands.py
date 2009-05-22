@@ -73,7 +73,7 @@ class CommandsTestCase(BaseTestCase):
         if lib_dir is None:
             env = {}
         else:
-            env = {"PYTHONPATH": lib_dir}
+            env = {"PYTHONPATH": "%s:%s" % (lib_dir, os.getenv("PYTHONPATH"))}
         p = Popen(
             ["/usr/bin/python", os.path.join(scripts_dir, command)] + args,
             stdin=PIPE, stdout=PIPE, stderr=PIPE, env=env,
