@@ -427,7 +427,6 @@ def gro_to_tracks(filename, destination, sub=slice(None), clear=True):
     filenames = [os.path.join(destination, name) for name in names]
     mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     for time, pos, vel, cell in gro_reader:
-        print time, pos, vel, cell
         mtw.dump_row((time, pos, vel, cell))
     mtw.finalize()
 
