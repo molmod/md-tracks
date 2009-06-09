@@ -41,7 +41,7 @@ import tracks.cell as cell
 
 from molmod.io.psf import PSFFile
 from molmod.io.xyz import XYZReader, XYZFile
-from molmod.units import angstrom, fs, ps, kcalmol, bar
+from molmod.units import angstrom, nm, fs, ps, kcalmol, bar
 from molmod.constants import lightspeed, boltzmann
 from molmod.data.periodic import periodic
 
@@ -386,6 +386,21 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(vel5y[0]/(angstrom/fs), 0.0188858)
         self.assertAlmostEqual(vel5y[5]/(angstrom/fs), 0.00913911)
         self.assertAlmostEqual(vel5y[-1]/(angstrom/fs), 0.00252762)
+
+    def test_from_gro(self):
+        self.execute("tr-from-gro", [os.path.join(input_dir, "gromacs", "water2.gro")])
+        time = load_track("tracks/time")
+        self.assertAlmostEqual(time[0]/ps, 0.0)
+        self.assertAlmostEqual(time[-1]/ps, 1.0)
+        pos0x = load_track("tracks/atom.pos.0000000.x")
+        self.assertAlmostEqual(pos0x[0]/nm, 0.126)
+        vel5y = load_track("tracks/atom.vel.0000005.y")
+        self.assertAlmostEqual(vel5y[1]/(nm/ps), -0.8216)
+        cellby = load_track("tracks/cell.b.y")
+        self.assertAlmostEqual(cellby[1]/nm, 1.82060)
+        cellbz = load_track("tracks/cell.b.z")
+        self.assertAlmostEqual(cellbz[1]/nm, 0.0)
+        
 
     def test_to_xyz(self):
         self.from_xyz("thf01", "pos")

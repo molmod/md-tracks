@@ -396,3 +396,38 @@ def lammps_dump_to_tracks(filename, destination, meta, sub=slice(None), clear=Tr
     mtw.finalize()
 
 
+def gro_to_tracks(filename, destination, sub=slice(None), clear=True):
+    from molmod.io.gromacs import GroReader
+
+    gro_reader = GroReader(filename, sub)
+    num_atoms = gro_reader.num_atoms
+
+    names = ["time"]
+    fields = [("time", numpy.float32)]
+    names.extend(sum((
+        ["atom.pos.%07i.x" % index, "atom.pos.%07i.y" % index,
+         "atom.pos.%07i.z" % index]
+        for index in xrange(num_atoms)
+    ), []))
+    fields.append(("pos", numpy.float32, (num_atoms,3)))
+    names.extend(sum((
+        ["atom.vel.%07i.x" % index, "atom.vel.%07i.y" % index,
+         "atom.vel.%07i.z" % index]
+        for index in xrange(num_atoms)
+    ), []))
+    fields.append(("vel", numpy.float32, (num_atoms,3)))
+    names.extend([
+        "cell.a.x", "cell.b.x", "cell.c.x",
+        "cell.a.y", "cell.b.y", "cell.c.y",
+        "cell.a.z", "cell.b.z", "cell.c.z",
+    ])
+    fields.append(("cell", numpy.float32, (3,3)))
+
+    dtype = numpy.dtype(fields)
+    filenames = [os.path.join(destination, name) for name in names]
+    mtw = MultiTracksWriter(filenames, dtype, clear=clear)
+    for time, pos, vel, cell in gro_reader:
+        print time, pos, vel, cell
+        mtw.dump_row((time, pos, vel, cell))
+    mtw.finalize()
+

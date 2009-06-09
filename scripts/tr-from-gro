@@ -1,0 +1,82 @@
+#!/usr/bin/python
+# MD-Tracks is a statistical analysis toolkit for molecular dynamics
+# and monte carlo simulations.
+# Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
+# for Molecular Modeling (CMM), Ghent University, Ghent, Belgium; all rights
+# reserved unless otherwise stated.
+#
+# This file is part of MD-Tracks.
+#
+# MD-Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# In addition to the regulations of the GNU General Public License,
+# publications and communications based in parts on this program or on
+# parts of this program are required to cite the following article:
+#
+# "MD-TRACKS: A productive solution for the advanced analysis of Molecular
+# Dynamics and Monte Carlo simulations", Toon Verstraelen, Marc Van Houteghem,
+# Veronique Van Speybroeck and Michel Waroquier, Journal of Chemical Information
+# and Modeling, 48 (12), 2414-2424, 2008
+# DOI:10.1021/ci800233y
+#
+# MD-Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.convert import gro_to_tracks
+from tracks.parse import parse_slice
+from tracks.optparse import add_quiet_option, add_slice_option, add_append_option
+from tracks.log import log, usage_tail
+
+from molmod.units import parse_unit
+
+from optparse import OptionParser
+
+
+usage = """%prog filename [output_directory]
+
+%prog transforms the given gromacs .gro file into tracks
+
+The following files will be generated in the output directory (which defaults
+to 'tracks'):
+
+  step
+  time
+  cell.{a|b|c}.{x|y|z}    (components of the cell vectors)
+  atom.pos.${i}.{x|y|z}
+  atom.vel.${i}.{x|y|z}   (if available in history file)
+
+where ${i} is the atom index. Counting starts at zero. The values in the
+tracks are always converted to atomic units.
+""" + usage_tail
+
+parser = OptionParser(usage)
+add_slice_option(parser)
+add_quiet_option(parser)
+add_append_option(parser)
+(options, args) = parser.parse_args()
+
+
+log.verbose = options.verbose
+if len(args) == 1:
+    filename = args[0]
+    output_dir = "tracks"
+elif len(args) == 2:
+    filename, output_dir = args
+else:
+    parser.error("Expecting one or two arguments.")
+
+sub = parse_slice(options.slice)
+gro_to_tracks(filename, output_dir, sub=sub, clear=options.clear)
+
+
