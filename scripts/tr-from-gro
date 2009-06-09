@@ -50,8 +50,7 @@ usage = """%prog filename [output_directory]
 The following files will be generated in the output directory (which defaults
 to 'tracks'):
 
-  step
-  time
+  time                    (if present in the .gro file)
   cell.{a|b|c}.{x|y|z}    (components of the cell vectors)
   atom.pos.${i}.{x|y|z}
   atom.vel.${i}.{x|y|z}   (if available in history file)
