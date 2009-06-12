@@ -697,13 +697,6 @@ class CommandsTestCase(BaseTestCase):
         self.check_deriv("tracks/test_pos", "tracks/test_vel", "tracks/time", 1e-1)
         proj_norm_sq = 0.0
         orig_norm_sq = 0.0
-        for c in 'xyz':
-            for i in 1,2:
-                proj = load_track("tracks/atom.vel.%07i.proj.test_vel.%s" % (i, c))
-                orig = load_track("tracks/atom.vel.%07i.%s" % (i, c))
-                proj_norm_sq += abs(proj)**2
-                orig_norm_sq += abs(orig)**2
-        self.assert_((proj_norm_sq <= orig_norm_sq).all())
 
     def test_ic_bend(self):
         self.from_xyz("thf01", "pos")
