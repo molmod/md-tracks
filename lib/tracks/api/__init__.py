@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # MD-Tracks is a statistical analysis toolkit for molecular dynamics
 # and monte carlo simulations.
 # Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
@@ -32,28 +31,6 @@
 #
 # --
 
-if __name__ == "__main__":
-    from distutils.core import setup
-    from glob import glob
 
-    setup(name='MD-Tracks',
-        version='0.003',
-        description='MD-Tracks is a statistical analysis toolkit for molecular '
-        'dynamics and monte carlo simulations.',
-        author='Toon Verstraelen',
-        author_email='Toon.Verstraelen@UGent.be',
-        url='http://molmod.ugent.be/code/',
-        package_dir = {'tracks': 'lib/tracks'},
-        packages = ['tracks', 'tracks.api'],
-        scripts=glob("scripts/*"),
-        classifiers=[
-            'Development Status :: 3 - Alpha',
-            'Environment :: Console',
-            'Intended Audience :: Science/Research',
-            'License :: OSI Approved :: GNU General Public License (GPL)',
-            'Operating System :: POSIX :: Linux',
-            'Programming Language :: Python',
-        ],
-    )
-
+from spectrum import *
 
