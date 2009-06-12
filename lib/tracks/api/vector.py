@@ -68,15 +68,31 @@ class TrackVector(object):
         else:
             return TrackVector([c1*other for c1 in self.data])
 
+    __rmul__ = __mul__
+
     def __div__(self, other):
         if isinstance(other, TrackVector):
             return TrackVector([c1/c2 for c1, c2 in zip(self.data, other.data)])
         else:
             return TrackVector([c1/other for c1 in self.data])
 
+    def __iadd__(self, other):
+        for c1, c2 in zip(self.data, other.data):
+            c1 += c2
+        return self
+
     def __isub__(self, other):
         for c1, c2 in zip(self.data, other.data):
             c1 -= c2
+        return self
+
+    def __imul__(self, other):
+        if isinstance(other, TrackVector):
+            for c1, c2 in zip(self.data, other.data):
+                c1 *= c2
+        else:
+            for c1 in self.data:
+                c1 *= other
         return self
 
     def __idiv__(self, other):
@@ -130,9 +146,7 @@ def dist(p1, p2, v1=None, v2=None, track_cell=None, project=False):
         if not project:
             return pd, vd
         else:
-            proj1 = p_delta*(vd/pd/2)
-            proj2 = -proj1
-            return pd, vd, proj1, proj2
+            return pd, vd, vd
 
 
 def bend(p1, p2, p3, v1=None, v2=None, v3=None, return_cos=False, track_cell=None):
