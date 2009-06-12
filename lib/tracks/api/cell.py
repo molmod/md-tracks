@@ -35,7 +35,7 @@
 from tracks.core import load_track
 from tracks.util import fix_slice
 from tracks.parse import parse_unit
-from tracks.vector import TrackVector
+from tracks.api.vector import TrackVector
 
 from molmod.unit_cell import UnitCell
 

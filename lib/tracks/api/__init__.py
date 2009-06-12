@@ -33,4 +33,7 @@
 
 
 from spectrum import *
+from vector import *
+from cell import *
+
 

@@ -36,8 +36,8 @@ from common import *
 
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_slice
-import tracks.vector as vector
-import tracks.cell as cell
+import tracks.api.vector as vector
+import tracks.api.cell as cell
 
 from molmod.io.psf import PSFFile
 from molmod.io.xyz import XYZReader, XYZFile

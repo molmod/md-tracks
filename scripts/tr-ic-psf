@@ -39,8 +39,8 @@ from tracks.optparse import add_quiet_option, add_slice_option, \
     add_cell_option, add_cos_option
 from tracks.util import AtomFilter
 from tracks.log import log, usage_tail
-import tracks.vector as vector
-import tracks.cell as cell
+import tracks.api.vector as vector
+import tracks.api.cell as cell
 
 from molmod.io.psf import PSFFile
 

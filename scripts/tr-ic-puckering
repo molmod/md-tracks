@@ -38,7 +38,7 @@ from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option, \
     add_cell_option, add_ic_project_option
 from tracks.log import log, usage_tail
-import tracks.vector as vector
+import tracks.api.vector as vector
 
 import numpy, os
 from optparse import OptionParser

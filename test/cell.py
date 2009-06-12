@@ -33,8 +33,8 @@
 
 from common import *
 
-import tracks.vector as vector
-import tracks.cell as cell
+import tracks.api.vector as vector
+import tracks.api.cell as cell
 
 import numpy
 
