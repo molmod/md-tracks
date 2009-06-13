@@ -67,7 +67,7 @@ class AtomFilter(object):
             self.filter_atoms = frozenset(filter_atoms)
 
     def __call__(self, *test_indexes):
-        """Test wither one of the indexes belongs to the predefined set."""
+        """Test wether one of the indexes belongs to the predefined set."""
         if self.filter_atoms is None:
             return True
         return len(self.filter_atoms.intersection(test_indexes)) > 0
