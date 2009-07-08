@@ -50,13 +50,21 @@ class Wrapper(object):
         self.name = name
 
     def __call__(self, *arguments):
+        def iter_args():
+            for argument in arguments:
+                if isinstance(argument, list):
+                    for arg in argument:
+                        yield arg
+                else:
+                    yield argument
+
         args = []
-        for argument in arguments:
-            if isinstance(argument, list):
-                args.extend(argument)
+        for arg in iter_args():
+            if (isinstance(arg, float) or isinstance(arg, int)) and arg < 0:
+                args.append("'(%s)'" % arg)
             else:
-                args.append(argument)
-        args = [str(arg) for arg in args]
+                args.append(str(arg))
+
         command = "%s %s" % (self.name, " ".join(args))
         if self.verbose:
             print command
@@ -74,19 +82,19 @@ class Wrapper(object):
 
 # when scripts are added, this list must be updated
 names = [
-    "tr-ac", "tr-ac-error", "tr-angular-momentum", "tr-blav", "tr-calc",
-    "tr-corr", "tr-cwt", "tr-derive", "tr-fit-peaks", "tr-fluct",
-    "tr-from-atrj", "tr-from-cp2k-cell",
+    "tr-ac", "tr-ac-error", "tr-ac-fft", "tr-angular-momentum",
+    "tr-blav", "tr-calc", "tr-corr", "tr-cwt", "tr-derive", "tr-fit-geom",
+    "tr-fit-peaks", "tr-fluct", "tr-from-atrj", "tr-from-cp2k-cell",
     "tr-from-cp2k-ener", "tr-from-cp2k-stress", "tr-from-cpmd-ener",
     "tr-from-cpmd-traj", "tr-from-dlpoly-hist", "tr-from-dlpoly-output",
     "tr-from-lammps-dump", "tr-from-gro",
     "tr-from-txt", "tr-from-xyz", "tr-hist", "tr-ic-bend",  "tr-ic-dihed",
     "tr-ic-dist", "tr-ic-dtl", "tr-ic-oop", "tr-ic-psf", "tr-ic-puckering",
     "tr-integrate", "tr-irfft", "tr-length", "tr-mean-std", "tr-msd",
-    "tr-msd-fit", "tr-norm", "tr-pca", "tr-plot", "tr-qh-entropy", "tr-rdf",
+    "tr-msd-fit", "tr-norm", "tr-pca", "tr-pca-geom", "tr-plot", "tr-qh-entropy", "tr-rdf",
     "tr-reduce", "tr-rfft", "tr-select", "tr-select-rings",
     "tr-shortest-distance", "tr-slice", "tr-spectrum", "tr-split-com",
-    "tr-to-txt", "tr-to-xyz",
+    "tr-to-txt", "tr-to-xyz", "tr-to-xyz-mode",
 ]
 
 for name in names:

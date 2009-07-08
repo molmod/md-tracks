@@ -41,9 +41,11 @@ from tracks.log import log
 import unittest, numpy, os, glob
 
 
+__all__ = ["WrapperTestCase"]
+
+
 log.verbose = False
-
-
+# make sure the wrappers point to the scripts in the script dir.
 tr_to_txt.name = os.path.join(scripts_dir, tr_to_txt.name)
 tr_rfft.name = os.path.join(scripts_dir, tr_rfft.name)
 
@@ -52,8 +54,8 @@ class WrapperTestCase(BaseTestCase):
     def test_tr_to_txt(self):
         values = numpy.arange(0, 10, 0.1, float)
         dump_track(os.path.join(tmp_dir, "tmp"), values)
-        output = tr_to_txt(os.path.join(tmp_dir, "tmp"))
-        check_values = numpy.array([float(word) for word in output], float)
+        output = tr_to_txt(-1.0, os.path.join(tmp_dir, "tmp"))
+        check_values = numpy.array([-float(word) for word in output], float)
         self.assertArraysAlmostEqual(values, check_values, 1e-10)
 
     def test_names(self):
