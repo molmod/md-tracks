@@ -735,6 +735,16 @@ class CommandsTestCase(BaseTestCase):
         diheds = load_track("tracks/test")
         self.assertAlmostEqual(diheds[0]*180/numpy.pi, 0.000, 3)
         self.assertAlmostEqual(diheds[1]*180/numpy.pi, -1.919, 3)
+        self.assert_(diheds[99] < 0)
+        self.assert_(diheds[199] > 0)
+        self.assertAlmostEqual(diheds[-1]*180/numpy.pi, 21.320, 3)
+        # just pos, different atom order
+        self.execute("tr-ic-dihed", ["tracks/atom.pos.0000001", "tracks/atom.pos.0000004", "tracks/atom.pos.0000003", "tracks/atom.pos.0000002", "tracks/test"])
+        diheds = load_track("tracks/test")
+        self.assertAlmostEqual(diheds[0]*180/numpy.pi, 0.000, 3)
+        self.assertAlmostEqual(diheds[1]*180/numpy.pi, -1.919, 3)
+        self.assert_(diheds[99] < 0)
+        self.assert_(diheds[199] > 0)
         self.assertAlmostEqual(diheds[-1]*180/numpy.pi, 21.320, 3)
         # slice
         self.execute("tr-ic-dihed", ["-s20:601:5", "tracks/atom.pos.0000002", "tracks/atom.pos.0000003", "tracks/atom.pos.0000004", "tracks/atom.pos.0000001", "tracks/test"])
