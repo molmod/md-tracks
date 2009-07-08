@@ -100,4 +100,39 @@ def add_select_options(parser):
         "PREFIX.0000000.z PREFIX.0000001.x ...'"
     )
 
+def add_cor_time_unit(parser):
+    parser.add_option(
+        "-t", "--time-unit", default='au',
+        help="The correlation time is printed in the given TIME_UNIT. [default=%default]",
+    )
+
+def add_blocks_option(parser):
+    parser.add_option(
+        "-b", "--blocks", default="1",
+        help="The input data is divided in BLOCKS and the final "
+        "power spectrum is the average over all the power spectra of the distinct "
+        "blocks. This reduces the noise in the amplitude vector, but it also "
+        "reduces the resolution on the frequency/wavenumber axis. "
+        "[default=%default]"
+    )
+
+def add_pca_options(parser, default_unit):
+    parser.add_option(
+        "-c", "--corr-coeff", action="store_true", default=False,
+        help="Perform pca on the correlation coefficient matrix instead of the "
+             "covariance matrix.",
+    )
+    parser.add_option(
+        "-p", "--dump-pcs", action="store_true", default=False,
+        help="Dump the principal components in the tracks database",
+    )
+    parser.add_option(
+        "-n", "--num-levels", default=2, type="int",
+        help="The number of levels of block sizes to run the pca. "
+             "[default=%default]. At least 2."
+    )
+    parser.add_option(
+        "-u", "--unit", default=default_unit,
+        help="The unit in which the sigma's are printed on screen. [default=%default]",
+    )
 

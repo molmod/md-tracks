@@ -35,7 +35,7 @@
 
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_x_step, parse_slice
-from tracks.optparse import add_quiet_option, add_slice_option
+from tracks.optparse import add_quiet_option, add_slice_option, add_cor_time_unit
 from tracks.log import log, usage_tail
 
 from molmod.units import parse_unit
@@ -69,10 +69,7 @@ parser.add_option(
     "-u", "--unit", default='au',
     help="The mean and error are printed in the given UNIT. [default=%default]",
 )
-parser.add_option(
-    "-t", "--time-unit", default='au',
-    help="The correlation time is printed in the given TIME_UNIT. [default=%default]",
-)
+add_cor_time_unit(parser)
 add_quiet_option(parser)
 parser.add_option(
     "-b", "--min-blocks", default="100",

@@ -36,9 +36,11 @@
 
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_x_step
-from tracks.optparse import add_quiet_option, add_blocks_option
+from tracks.optparse import add_quiet_option, add_cor_time_unit, add_blocks_option
 from tracks.log import log, usage_tail
-from tracks.api import SpectrumProcessor
+from tracks.api import SpectrumProcessor, fit_cor_time
+
+from molmod.units import parse_unit
 
 import numpy
 
@@ -47,18 +49,23 @@ from optparse import OptionParser
 
 usage = """%prog input1 [input2 ...] {time_axis|time_step} output_prefix
 
-%prog computes the power spectrum of the given inputs. Four outputs are written:
-written:
+%prog computes the average auto-correlation function for a set of tracks
+(${input1}, ${input2}, ...) and stores the result in a track ${output}.
+The normalized auto- correlation function will be stored in
+${output}.normalized. The next-to-last argument is a track that contains the
+time-axis, or it can also be the time step between two discrete data points.
 
-The frequency axis: ${output_prefix}.frequencies
-The wavenumber axis: ${output_prefix}.wavenumbers
-The amplitudes: ${output_prefix}.amplitudes
-The statistical error on the amplitudes: ${output_prefix}.amplitudes.err
+This implementation uses the fast Fourier transform algorithm. If you prefer
+autocorrelation functions that are not computed with the FFT method, see tr-ac.
+
+A simple exponential model is fitted to the normalized autocorrelation function
+to estimated the correlation time. The fitted parameter is printed on screen.
 """ + usage_tail
 
 parser = OptionParser(usage)
 add_quiet_option(parser)
 add_blocks_option(parser)
+add_cor_time_unit(parser)
 (options, args) = parser.parse_args()
 
 if len(args) >= 3:
@@ -69,6 +76,7 @@ else:
     parser.error("Expecting at least three arguments.")
 
 num_blocks = int(options.blocks)
+time_unit = parse_unit(options.time_unit)
 
 # generate the spectrum
 sp = SpectrumProcessor(time_step, num_blocks)
@@ -78,17 +86,13 @@ for path_in in paths_in:
     sp.process(f)
 freq_res, wave_res, amp, amp_err = sp.get_results()
 
-dump_track("%s.amplitudes" % output_prefix, amp)
-log("WRITTEN %s.amplitudes" % output_prefix)
-dump_track("%s.amplitudes.err" % output_prefix, amp_err)
-log("WRITTEN %s.amplitudes.err" % output_prefix)
-# print the overall statistical error:
-print "Average relative statistical error: %.2f %%" % (2*amp_err.std()/amp.max()*100)
+ac = numpy.fft.irfft(amp)
+dump_track("%s.ac" % output_prefix, ac)
+log("WRITTEN %s.ac" % output_prefix)
+ac /= ac[0]
+dump_track("%s.ac.normalized" % output_prefix, ac)
+log("WRITTEN %s.ac.normalized" % output_prefix)
 
-# the frequency and wavenumber axis
-dump_track("%s.wavenumbers" % output_prefix, wave_res*numpy.arange(sp.block_size))
-log("WRITTEN %s.wavenumbers" % output_prefix)
-dump_track("%s.frequencies" % output_prefix, freq_res*numpy.arange(sp.block_size))
-log("WRITTEN %s.frequencies" % output_prefix)
-
+cor_time = fit_cor_time(time_step, ac)
+log("Correlation time [%s]: %.3f" % (options.time_unit, cor_time/time_unit))
 

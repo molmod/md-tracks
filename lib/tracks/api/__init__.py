@@ -32,8 +32,11 @@
 # --
 
 
+from ac import *
+from cell import *
+from geom import *
+from pca import *
 from spectrum import *
 from vector import *
-from cell import *
 
 

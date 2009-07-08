@@ -1,0 +1,157 @@
+#!/usr/bin/python
+# MD-Tracks is a statistical analysis toolkit for molecular dynamics
+# and monte carlo simulations.
+# Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
+# for Molecular Modeling (CMM), Ghent University, Ghent, Belgium; all rights
+# reserved unless otherwise stated.
+#
+# This file is part of MD-Tracks.
+#
+# MD-Tracks is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# In addition to the regulations of the GNU General Public License,
+# publications and communications based in parts on this program or on
+# parts of this program are required to cite the following article:
+#
+# "MD-TRACKS: A productive solution for the advanced analysis of Molecular
+# Dynamics and Monte Carlo simulations", Toon Verstraelen, Marc Van Houteghem,
+# Veronique Van Speybroeck and Michel Waroquier, Journal of Chemical Information
+# and Modeling, 48 (12), 2414-2424, 2008
+# DOI:10.1021/ci800233y
+#
+# MD-Tracks is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+#
+# --
+
+
+from tracks.core import MultiTracksReader, MultiTracksWriter
+from tracks.parse import parse_slice
+from tracks.optparse import add_quiet_option, add_slice_option, \
+    add_filter_atoms_option
+from tracks.util import AtomFilter
+from tracks.log import log, usage_tail
+from tracks.api import fit_geometry
+
+from molmod.io.xyz import XYZFile, XYZWriter
+from molmod.data.periodic import periodic
+
+from optparse import OptionParser
+import numpy
+
+usage = """%prog [options] pos_prefix reference.xyz output_prefix
+
+%prog fits the geometry at each time step to the reference geometry, using the
+global rotation and translation degrees of freedom. The root mean square
+devation between the rotated/translated geometry and the reference is always
+written to ${output_prefix}.rmsd.
+
+Optionally, the rotated/tranlsated geometry and the rotation matrix and
+translation vector can be written into the tracks database. (See options)
+
+The implementation is based on the Kabsch algorithm.
+http://en.wikipedia.org/wiki/Kabsch_algorithm
+http://dx.doi.org/10.1107%2FS0567739476001873
+""" + usage_tail
+
+
+parser = OptionParser(usage)
+add_quiet_option(parser)
+add_slice_option(parser)
+add_filter_atoms_option(parser)
+parser.add_option(
+    "-g", "--geom", action="store_true", default=False,
+    help="Write the rotated and translated geometries to "
+         "${output_prefix}.pos.${index}.(xyz)",
+)
+parser.add_option(
+    "-t", "--transform", action="store_true", default=False,
+    help="Write the rotation matrix to ${output_prefix}.rot.(abc).(xyz) and "
+         "write the translation vector to ${output_prefix}.trans.(xyz)."
+)
+parser.add_option(
+    "-w", "--weighted", action="store_true", default=False,
+    help="Use atom masses as weights in the fit. This non-standard, but is "
+         "actually closer to the purpose of this script: to remove the linear "
+         "and angular momentum from the trajectory."
+)
+(options, args) = parser.parse_args()
+
+
+log.verbose = options.verbose
+if len(args) == 3:
+    pos_prefix, fn_reference, output_prefix = args
+else:
+    parser.error("Expecting three arguments.")
+
+sub = parse_slice(options.slice)
+atom_filter = AtomFilter(options.filter_atoms)
+
+# load the reference geometry
+ref_mol = XYZFile(fn_reference).get_molecule()
+if atom_filter.filter_atoms is None:
+    atom_indexes = range(ref_mol.size)
+else:
+    atom_indexes = list(atom_filter.filter_atoms)
+    atom_indexes.sort()
+    if atom_indexes[0] < 0 or atom_indexes[-1] >= ref_mol.size:
+        parser.error("The indexes in the atom filter are out of range")
+
+# construct the multitracks reader
+N = len(atom_indexes)
+filenames = []
+for i in atom_indexes:
+    tmp = "%s.%07i" % (pos_prefix, i)
+    for xyz in "xyz":
+        filenames.append("%s.%s" % (tmp, xyz))
+dtype = numpy.dtype([("frame", float, (N,3))])
+mtr = MultiTracksReader(filenames, dtype, sub=sub)
+
+# construct the multitracks writer
+filenames = ["%s.rmsd" % output_prefix]
+dtype = [("rmsd", float)]
+if options.geom:
+    for i in atom_indexes:
+        tmp = "%s.pos.%07i" % (output_prefix, i)
+        for xyz in "xyz":
+            filenames.append("%s.%s" % (tmp, xyz))
+    dtype.append(("geom", float, (N,3)))
+if options.transform:
+    for xyz in "xyz":
+        filenames.append("%s.trans.%s" % (output_prefix, xyz))
+    dtype.append(("trans", float, 3))
+    for xyz in "xyz":
+        for abc in "abc":
+            filenames.append("%s.rot.%s.%s" % (output_prefix, abc, xyz))
+    dtype.append(("rot", float, (3,3)))
+dtype = numpy.dtype(dtype)
+mtw = MultiTracksWriter(filenames, dtype)
+
+# prepare other arguments
+ref_coordinates = numpy.array([ref_mol.coordinates[index] for index in atom_indexes])
+if options.weighted:
+    weights = numpy.array([periodic[ref_mol.numbers[index]].mass for index in atom_indexes])
+else:
+    weights = None
+
+# call the tracks api to perform the fitting procedure
+frames = fit_geometry(ref_coordinates, mtr, mtw, options.geom, options.transform, weights)
+
+
+
+
+
+
+
+
+
+
+

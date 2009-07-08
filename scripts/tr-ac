@@ -35,8 +35,9 @@
 
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_x_step
-from tracks.optparse import add_quiet_option
+from tracks.optparse import add_quiet_option, add_cor_time_unit
 from tracks.log import log, usage_tail
+from tracks.api import fit_cor_time
 
 from molmod.units import parse_unit
 
@@ -51,6 +52,12 @@ usage = """%prog [options] input1 [input2 ...] {time_axis|time_step} output
 The normalized auto- correlation function will be stored in
 ${output}.normalized. The next-to-last argument is a track that contains the
 time-axis, or it can also be the time step between two discrete data points.
+
+This implementation does not use fast Fourier transforms. If you prefer
+autocorrelation functions computed with the FFT method, see tr-ac-fft.
+
+A simple exponential model is fitted to the normalized autocorrelation function
+to estimated the correlation time. The fitted parameter is printed on screen.
 """ + usage_tail
 
 parser = OptionParser(usage)
@@ -66,6 +73,7 @@ parser.add_option(
     help="Take into account that the average of the tracks is non-zero.",
 )
 add_quiet_option(parser)
+add_cor_time_unit(parser)
 (options, args) = parser.parse_args()
 
 
@@ -76,6 +84,8 @@ if len(args) >= 3:
     path_out = args[-1]
 else:
     parser.error("Expecting at least three arguments.")
+
+time_unit = parse_unit(options.time_unit)
 
 length = len(load_track(paths_in[0]))
 if options.max_delta_t is None:
@@ -101,7 +111,10 @@ result /= len(paths_in)
 
 dump_track(path_out, result)
 log("WRITTEN %s" % path_out)
-dump_track("%s.normalized" % path_out, result/result[0])
+result /= result[0]
+dump_track("%s.normalized" % path_out, result)
 log("WRITTEN %s.normalized" % path_out)
 
+cor_time = fit_cor_time(time_step, result)
+log("Correlation time [%s]: %.3f" % (options.time_unit, cor_time/time_unit))
 

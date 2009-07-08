@@ -38,12 +38,15 @@ import common
 import import_test
 
 import unittest
+
+from api import *
+from cell import *
 from commands import *
 from core import *
 from fit import *
-from wrappers import *
 from parse import *
-from cell import *
+from wrappers import *
+
 unittest.main()
 
 

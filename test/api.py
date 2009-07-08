@@ -33,54 +33,47 @@
 # --
 
 
-from tracks.parse import parse_slice
-from tracks.optparse import add_quiet_option, add_slice_option, add_pca_options
-from tracks.log import log, usage_tail
-from tracks.api import pca_common_usage, pca_common_script
+from common import *
 
-from molmod.units import parse_unit
+from tracks.api import cov_overlap, cov_overlap_multi
 
-import numpy
-from optparse import OptionParser
+import unittest, numpy
 
 
-usage = """%prog [options] input1 input2 [input3...] output_prefix
+__all__ = ["PCATestCase"]
 
-%prog applies principal component analysis to the input tracks. An overview
-of the eigenvalues and the cosine contents is printed on screen
 
-""" + pca_common_usage + usage_tail
+class PCATestCase(BaseTestCase):
+    def check_sanity(self, overlap_fn, num):
+        size = 10
+        trials = 10
+        for trial in xrange(trials):
+            # construct 'num' random positive definite matrices
+            covs = []
+            for i in xrange(num):
+                A = numpy.random.normal(0, 1, (size,size))
+                covs.append(numpy.dot(A.transpose(), A))
 
-parser = OptionParser(usage)
-add_quiet_option(parser)
-add_slice_option(parser)
-add_pca_options(parser, "au")
-parser.add_option(
-    "-z", "--zero-mean", action="store_true", default=False,
-    help="Do not substract the mean from the input tracks prior to pca.",
-)
-(options, args) = parser.parse_args()
+            # test the scale invariance of the overlap function
+            scale = numpy.random.uniform(1,2)
+            covs_mod = [cov*scale for cov in covs]
+            self.assertAlmostEqual(overlap_fn(covs), overlap_fn(covs_mod))
 
-if len(args) >= 2:
-    paths_in = args[:-1]
-    output_prefix = args[-1]
-else:
-    parser.error("Expecting at least two arguments.")
+            # test the invariance of the overlap function under a unitary
+            # tranformation
+            tmp = numpy.random.normal(0, 1, (size,size))
+            U,S,Vt = numpy.linalg.svd(tmp)
+            del S
+            del Vt
+            covs_mod = [numpy.dot(U.transpose(), numpy.dot(cov, U)) for cov in covs]
+            self.assertAlmostEqual(overlap_fn(covs), overlap_fn(covs_mod))
 
-# parse options
-sub = parse_slice(options.slice)
-unit = parse_unit(options.unit)
-log.verbose = options.verbose
+    def test_cov_overlap(self):
+        def my_overlap(covs):
+            return cov_overlap(*covs)
+        self.check_sanity(my_overlap, 2)
 
-# prepare for pca
-dtype = numpy.dtype([("data", float, len(paths_in))])
-if options.zero_mean:
-    reference = numpy.zeros(len(paths_in), float)
-else:
-    reference = None
+    def test_cov_overlap_multi(self):
+        self.check_sanity(cov_overlap_multi, 3)
 
-# call the pca script
-pca_common_script(
-    paths_in, dtype, sub, None, options.corr_coeff, reference,
-    output_prefix, options.num_levels, options.dump_pcs, options.unit, unit
-)
+

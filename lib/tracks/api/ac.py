@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # MD-Tracks is a statistical analysis toolkit for molecular dynamics
 # and monte carlo simulations.
 # Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
@@ -33,54 +32,28 @@
 # --
 
 
-from tracks.parse import parse_slice
-from tracks.optparse import add_quiet_option, add_slice_option, add_pca_options
-from tracks.log import log, usage_tail
-from tracks.api import pca_common_usage, pca_common_script
-
-from molmod.units import parse_unit
-
 import numpy
-from optparse import OptionParser
 
 
-usage = """%prog [options] input1 input2 [input3...] output_prefix
+__all__ = ["fit_cor_time"]
 
-%prog applies principal component analysis to the input tracks. An overview
-of the eigenvalues and the cosine contents is printed on screen
+def fit_cor_time(time_step, ac):
+    """Fit the correlation time from a normalized autocorrelation function
 
-""" + pca_common_usage + usage_tail
+       The fit is performed based on a simple single exponential decay model.
+       Only the beginning of the ac is used for the fit. As soon as the ac drops
+       below 0.4, the rest of the data is discarded.
 
-parser = OptionParser(usage)
-add_quiet_option(parser)
-add_slice_option(parser)
-add_pca_options(parser, "au")
-parser.add_option(
-    "-z", "--zero-mean", action="store_true", default=False,
-    help="Do not substract the mean from the input tracks prior to pca.",
-)
-(options, args) = parser.parse_args()
+       Arguments:
+         time_step  --  The time step in atomic units
+         ac  --  An array with the normalized autocorrelation function
+    """
+    tmp = (ac<0.4).nonzero()[0]
+    if len(tmp) == 0:
+        return numpy.nan
+    end = tmp[0]
+    time = numpy.arange(end)*time_step
+    ac_log = numpy.log(ac[:end])
+    time_constant = -1.0/(numpy.dot(ac_log[:end], time[:end])/numpy.dot(time[:end], time[:end]))
+    return time_constant
 
-if len(args) >= 2:
-    paths_in = args[:-1]
-    output_prefix = args[-1]
-else:
-    parser.error("Expecting at least two arguments.")
-
-# parse options
-sub = parse_slice(options.slice)
-unit = parse_unit(options.unit)
-log.verbose = options.verbose
-
-# prepare for pca
-dtype = numpy.dtype([("data", float, len(paths_in))])
-if options.zero_mean:
-    reference = numpy.zeros(len(paths_in), float)
-else:
-    reference = None
-
-# call the pca script
-pca_common_script(
-    paths_in, dtype, sub, None, options.corr_coeff, reference,
-    output_prefix, options.num_levels, options.dump_pcs, options.unit, unit
-)

@@ -400,7 +400,7 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(cellby[1]/nm, 1.82060)
         cellbz = load_track("tracks/cell.b.z")
         self.assertAlmostEqual(cellbz[1]/nm, 0.0)
-        
+
 
     def test_to_xyz(self):
         self.from_xyz("thf01", "pos")
@@ -559,6 +559,12 @@ class CommandsTestCase(BaseTestCase):
         tmp2 = load_track("tracks/vac_b2.normalized.error")
         self.assertArraysEqual(tmp1, tmp2)
         self.assertArrayConstant(tmp1, tmp1[0])
+
+    def test_ac_fft(self):
+        self.from_xyz("thf01", "vel", ["-u1"])
+        self.from_cp2k_ener("thf01")
+        ndim = len(glob.glob("tracks/atom.vel.*"))
+        self.execute("tr-ac-fft", glob.glob("tracks/atom.vel.*") + ["5.0*fs", "tracks/vac", "-t", "fs"])
 
     def test_integrate(self):
         self.from_xyz("thf01", "vel", ["-u1"])
@@ -1227,12 +1233,80 @@ class CommandsTestCase(BaseTestCase):
         self.from_xyz("thf01", "pos")
         self.from_cp2k_ener("thf01")
         self.execute("tr-ic-psf", ["bond", "tracks/atom.pos", os.path.join(input_dir, "thf01/init.psf")])
-        self.execute("tr-pca", glob.glob("tracks/atom.bond.pos.*") + ["-n", "-e", "tracks/pca.evals", "-m", "tracks/pca.mode"])
+        self.execute("tr-pca", glob.glob("tracks/atom.bond.pos.*") + ["tracks/pca", "-p"])
         self.execute("tr-plot", [
             "--xunit=ps", "--yunit=A", "--xlabel=Time", "--ylabel=Amplitude", "--title=First principal bond stretch mode",
-            ":line", "tracks/time", "tracks/pca.mode.0000000",
-            os.path.join(output_dir, "pca_first_time"),
+            ":line", "tracks/time", "tracks/pca.pc.0000000",
+            os.path.join(output_dir, "pc_first_time"),
         ])
+        self.execute("tr-plot", [
+            ":line", "tracks/pca.ccs", os.path.join(output_dir, "pca_ccs"),
+        ])
+        self.execute("tr-plot", [
+            "--yunit=A", ":line", "tracks/pca.sigmas", os.path.join(output_dir, "pca_evals"),
+        ])
+
+    def test_pca_cosine_content(self):
+        num = 10
+        paths_in = []
+        for i in xrange(10):
+            delta = numpy.random.normal(0,0.01,5000)
+            y = numpy.cumsum(delta)
+            path = "y%i" % i
+            dump_track(path, y)
+            paths_in.append(path)
+        self.execute("tr-pca", paths_in + ["pca", "-p", "-n", "4"])
+        self.execute("tr-plot", [":line", "pca.ccs",
+            os.path.join(output_dir, "pca_cosine_content_ccs.png")
+        ])
+        self.execute("tr-plot", [":line", "pca.sigmas",
+            os.path.join(output_dir, "pca_cosine_content_sigmas.png")
+        ])
+
+        pc0 = load_track("pca.pc.0000000")
+        cosamp = load_track("pca.cosamp")
+        t = numpy.arange(len(pc0),dtype=float)*(numpy.pi/len(pc0))
+
+        for i in xrange(num):
+            cos = cosamp[i]*numpy.cos((i+1)*t)
+            dump_track("pca.cos.%07i" % i, cos)
+            self.execute("tr-plot", [
+                ":line", "pca.pc.%07i" % i,
+                ":line", "pca.cos.%07i" % i,
+                os.path.join(output_dir, "pca_cosine_content_pc_%07i.png" % i)
+            ])
+
+    def test_pca_geom1(self):
+        self.from_xyz("thf01", "pos")
+        self.from_cp2k_ener("thf01")
+        fn_average = os.path.join(output_dir, "average.xyz")
+        self.execute("tr-pca-geom", ["tracks/atom.pos", os.path.join(input_dir, "thf01", "init.xyz"), "tracks/pca", fn_average, "-p"])
+        self.execute("tr-plot", [
+            "--xunit=ps", "--yunit=A", "--xlabel=Time", "--ylabel=Amplitude", "--title=First Cartesian principal component",
+            ":line", "tracks/time", "tracks/pca.pc.0000000",
+            os.path.join(output_dir, "pca_geom_first_time"),
+        ])
+        self.execute("tr-plot", [
+            ":line", "tracks/pca.ccs", os.path.join(output_dir, "pca_geom_ccs"),
+        ])
+        self.execute("tr-plot", [
+            "--yunit=A", ":line", "tracks/pca.sigmas", os.path.join(output_dir, "pca_geom_evals"),
+        ])
+        self.execute("tr-to-xyz-mode", [
+            "tracks/pca.mode.0000000",
+            os.path.join(input_dir, "thf01", "init.xyz"),
+            os.path.join(output_dir, "pca_geom_thf01_mode0.xyz"),
+        ])
+        self.assert_(os.path.isfile(fn_average))
+
+    def test_pca_geom2(self):
+        self.from_xyz("solvated", "pos")
+        fn_average = os.path.join(output_dir, "average.xyz")
+        output = self.execute("tr-pca-geom", [
+            "tracks/atom.pos", os.path.join(input_dir, "solvated", "init.xyz"),
+            "tracks/pca", fn_average, "-a", "144,145,146,147,148,149,150,151,152"
+        ])
+        self.assertEqual(XYZFile(fn_average).symbols[1], "Si")
 
     def test_rdf_water32(self):
         self.from_xyz("water32", "pos")
@@ -1523,4 +1597,39 @@ class CommandsTestCase(BaseTestCase):
             # compare both projections
             self.assertArraysAlmostEqual(cart_proj, cart_proj_file, 1e-5, do_abs=True)
 
+    def test_fit_geom1(self):
+        # TODO: this is a blind test
+        self.from_xyz("org01", "pos")
+        self.execute("tr-fit-geom", ["-w", "-g", "-t",
+            "tracks/atom.pos",
+            os.path.join(input_dir, "org01", "init.xyz"),
+            "tracks/fit",
+        ])
+        self.assert_(os.path.isfile("tracks/fit.rmsd"))
+        self.assert_(os.path.isfile("tracks/fit.pos.0000000.x"))
+        self.assert_(os.path.isfile("tracks/fit.pos.0000033.z"))
+        self.assert_(os.path.isfile("tracks/fit.rot.a.x"))
+        self.assert_(os.path.isfile("tracks/fit.rot.c.z"))
+        self.assert_(os.path.isfile("tracks/fit.trans.x"))
+        self.assert_(os.path.isfile("tracks/fit.trans.z"))
+
+
+    def test_fit_geom2(self):
+        # TODO: this is a blind test
+        self.from_xyz("solvated", "pos")
+        self.execute("tr-fit-geom", ["-w", "-g", "-t",
+            "-a", "144,145,146,147,148,149,150,151,152",
+            "tracks/atom.pos",
+            os.path.join(input_dir, "solvated", "init.xyz"),
+            "tracks/fit",
+        ])
+        self.assert_(os.path.isfile("tracks/fit.rmsd"))
+        self.assert_(not os.path.isfile("tracks/fit.pos.0000000.x"))
+        self.assert_(not os.path.isfile("tracks/fit.pos.0000139.z"))
+        self.assert_(os.path.isfile("tracks/fit.pos.0000144.x"))
+        self.assert_(os.path.isfile("tracks/fit.pos.0000152.z"))
+        self.assert_(os.path.isfile("tracks/fit.rot.a.x"))
+        self.assert_(os.path.isfile("tracks/fit.rot.c.z"))
+        self.assert_(os.path.isfile("tracks/fit.trans.x"))
+        self.assert_(os.path.isfile("tracks/fit.trans.z"))
 
