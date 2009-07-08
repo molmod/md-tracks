@@ -40,7 +40,7 @@ import numpy
 __all__ = [
     "TrackVector",
     "dot", "cross", "triple",
-    "bend", "dihed", "dist",
+    "dist", "bend", "dihed", "oop", "dtl",
     "linear_comb", "puckering",
 ]
 
