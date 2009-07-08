@@ -172,7 +172,7 @@ class MultiTrackTestCase(BaseTestCase):
         mtw = MultiTracksWriter(filenames, data.dtype, buffer_size=5*1024)
         for row in data:
             mtw.dump_row(row)
-        mtw.finalize()
+        mtw.finish()
 
         # load it back manually
         data_check = self.read_data(data.dtype, len(data), filenames)
@@ -187,11 +187,11 @@ class MultiTrackTestCase(BaseTestCase):
         mtw = MultiTracksWriter(filenames, data.dtype, buffer_size=5*1024)
         for row in data:
             mtw.dump_row(row)
-        mtw.finalize()
+        mtw.finish()
         mtw = MultiTracksWriter(filenames, data.dtype, buffer_size=5*1024, clear=False)
         for row in data:
             mtw.dump_row(row)
-        mtw.finalize()
+        mtw.finish()
 
         # load it back manually
         data_check = self.read_data(data.dtype, len(data)*2, filenames)

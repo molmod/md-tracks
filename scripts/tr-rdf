@@ -34,7 +34,7 @@
 
 
 from tracks.core import load_track, dump_track, MultiTracksReader, MultiTracksWriter
-from tracks.parse import parse_slice, yield_unit_cells
+from tracks.parse import parse_slice, iter_unit_cells
 from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.log import log, usage_tail
 
@@ -134,7 +134,7 @@ else:
     correction = 1/float(len(prefixes_a))
 
 
-def yield_deltas():
+def iter_deltas():
     if prefixes_b is None:
         filenames = sum([["%s.x" % prefix_a, "%s.y" % prefix_a, "%s.z" % prefix_a] for prefix_a in prefixes_a], [])
         num_a = len(prefixes_a)
@@ -168,8 +168,8 @@ def yield_deltas():
                     counter += 1
             yield deltas
 
-def yield_distances():
-    for uc, deltas in itertools.izip(yield_unit_cells(unit_cell_str, sub), yield_deltas()):
+def iter_distances():
+    for uc, deltas in itertools.izip(iter_unit_cells(unit_cell_str, sub), iter_deltas()):
         rho = N/uc.generalized_volume()
         reference_counts = rho*4*numpy.pi/3*((radii+bin_width)**3-radii**3)
         distances = []
@@ -189,18 +189,18 @@ if options.bin_tracks:
     )
     dtype = numpy.dtype([("bin", float, nbins),("cumul_bin", float, nbins)])
     mtw = MultiTracksWriter(bin_filenames, dtype)
-    for distances, reference_counts in yield_distances():
+    for distances, reference_counts in iter_distances():
         if options.normalize:
             counts = correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
             mtw.dump_row((counts/reference_counts, counts.cumsum()))
         else:
             counts = numpy.histogram(distances, nbins, (0,rmax), False)[0]
             mtw.dump_row((counts, counts.cumsum()))
-    mtw.finalize()
+    mtw.finish()
 else:
     counts = 0.0
     row_count = 0
-    for distances, reference_counts in yield_distances():
+    for distances, reference_counts in iter_distances():
         if options.normalize:
             counts += correction*numpy.histogram(distances, nbins, (0,rmax), False)[0]
         else:

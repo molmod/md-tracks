@@ -43,7 +43,7 @@ import sys, numpy
 
 __all__ = [
     "Error", "parse_slice", "get_delta", "parse_x_step",
-    "parse_x_duration", "parse_x_length", "yield_unit_cells",
+    "parse_x_duration", "parse_x_length", "iter_unit_cells",
 ]
 
 
@@ -120,7 +120,7 @@ def parse_x_length(s):
     return _parse_x_track(s, fn, int)
 
 
-def yield_unit_cells(unit_cell_str, sub=None):
+def iter_unit_cells(unit_cell_str, sub=None):
     sub = fix_slice(sub)
     if len(unit_cell_str) == 0:
         uc = UnitCell(

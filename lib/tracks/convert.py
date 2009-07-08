@@ -48,7 +48,7 @@ __all__ = [
 ]
 
 
-def yield_real_lines(f):
+def iter_real_lines(f):
     for line in f:
         line = line[:line.find("#")]
         if len(line.strip()) > 0:
@@ -73,7 +73,7 @@ def xyz_to_tracks(filename, middle_word, destination, sub=slice(None), file_unit
     mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     for title, coordinates in xyz_reader:
         mtw.dump_row((coordinates[atom_indexes],))
-    mtw.finalize()
+    mtw.finish()
 
 
 def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
@@ -84,12 +84,12 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     dtype = numpy.dtype([  (name, t, 1) for name, t in zip(names, dtypes)  ])
     mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     f = file(filename)
-    for line in itertools.islice(yield_real_lines(f), sub.start, sub.stop, sub.step):
+    for line in itertools.islice(iter_real_lines(f), sub.start, sub.stop, sub.step):
         row = [float(word) for word in line.split()[:6]]
         row[1] = row[1]*fs
         mtw.dump_row(tuple(row))
     f.close()
-    mtw.finalize()
+    mtw.finish()
 
 
 def cpmd_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
@@ -104,7 +104,7 @@ def cpmd_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
         row = tuple(float(word) for word in line.split()[:7])
         mtw.dump_row(row)
     f.close()
-    mtw.finalize()
+    mtw.finish()
 
 
 def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
@@ -113,7 +113,7 @@ def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
     dtype = numpy.dtype([("step", int),("time", float),("cell", float, (3,3)),("volume", float),("norms", float, 3),("angles", float, 3)])
     mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     f = file(filename)
-    for line in itertools.islice(yield_real_lines(f), sub.start, sub.stop, sub.step):
+    for line in itertools.islice(iter_real_lines(f), sub.start, sub.stop, sub.step):
         values = [float(word) for word in line.split()[:12]]
         row = [int(values[0]),values[1]*fs]
         cell = numpy.array(values[2:11]).reshape(3,3).transpose()*A
@@ -127,7 +127,7 @@ def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
         row.append(numpy.array([alpha,beta,gamma]))
         mtw.dump_row(tuple(row))
     f.close()
-    mtw.finalize()
+    mtw.finish()
 
 
 def cp2k_stress_to_tracks(filename, destination, sub=slice(None), clear=True):
@@ -136,7 +136,7 @@ def cp2k_stress_to_tracks(filename, destination, sub=slice(None), clear=True):
     dtype = numpy.dtype([("step", int),("time", float),("stress", float, (3,3)),("pressure", float)])
     mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     f = file(filename)
-    for line in itertools.islice(yield_real_lines(f), sub.start, sub.stop, sub.step):
+    for line in itertools.islice(iter_real_lines(f), sub.start, sub.stop, sub.step):
         values = [float(word) for word in line.split()[:11]]
         row = [int(values[0]),values[1]*fs]
         cell = numpy.array(values[2:11]).reshape(3,3).transpose()*bar
@@ -144,7 +144,7 @@ def cp2k_stress_to_tracks(filename, destination, sub=slice(None), clear=True):
         row.append((cell[0,0]+cell[1,1]+cell[2,2])/3)
         mtw.dump_row(tuple(row))
     f.close()
-    mtw.finalize()
+    mtw.finish()
 
 
 def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_indexes=None, clear=True):
@@ -182,7 +182,7 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
             counter = 0
             row = 0
     f.close()
-    mtw.finalize()
+    mtw.finish()
 
 
 def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angstrom, atom_indexes=None, unit_cell_iter=None, groups=None):
@@ -262,7 +262,7 @@ def atrj_to_tracks(filename, destination, sub=slice(None), atom_indexes=None, cl
            frame.coordinates[atom_indexes],
            frame.time, frame.step, frame.total_energy
         ))
-    mtw.finalize()
+    mtw.finish()
 
 
 def dlpoly_history_to_tracks(
@@ -326,7 +326,7 @@ def dlpoly_history_to_tracks(
         if hist_reader.keytrj > 0:
             frame["frc"] = frame["frc"][atom_indexes]
         mtw.dump_row(tuple(frame[name] for name, type, shape in fields))
-    mtw.finalize()
+    mtw.finish()
 
 
 def dlpoly_output_to_tracks(
@@ -353,7 +353,7 @@ def dlpoly_output_to_tracks(
     mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     for row in output_reader:
         mtw.dump_row(tuple(row))
-    mtw.finalize()
+    mtw.finish()
 
 
 def lammps_dump_to_tracks(filename, destination, meta, sub=slice(None), clear=True):
@@ -393,7 +393,7 @@ def lammps_dump_to_tracks(filename, destination, meta, sub=slice(None), clear=Tr
     mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     for frame in dump_reader:
         mtw.dump_row(tuple(frame))
-    mtw.finalize()
+    mtw.finish()
 
 
 def gro_to_tracks(filename, destination, sub=slice(None), clear=True):
@@ -428,5 +428,5 @@ def gro_to_tracks(filename, destination, sub=slice(None), clear=True):
     mtw = MultiTracksWriter(filenames, dtype, clear=clear)
     for time, pos, vel, cell in gro_reader:
         mtw.dump_row((time, pos, vel, cell))
-    mtw.finalize()
+    mtw.finish()
 

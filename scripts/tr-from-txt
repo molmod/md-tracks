@@ -95,6 +95,6 @@ for line in itertools.islice(sys.stdin, sub.start, sub.stop, sub.step):
     words = line.split()
     row = numpy.array(tuple(float(words[index]) for index in columns))
     mtw.dump_row(row*units)
-mtw.finalize()
+mtw.finish()
 
 

@@ -34,7 +34,7 @@
 
 
 from tracks.convert import tracks_to_xyz
-from tracks.parse import parse_slice, yield_unit_cells
+from tracks.parse import parse_slice, iter_unit_cells
 from tracks.optparse import add_quiet_option, add_slice_option, \
     add_filter_atoms_option
 from tracks.util import AtomFilter
@@ -99,7 +99,7 @@ if unit_cell_str is None:
     unit_cell_iter = None
     groups = None
 else:
-    unit_cell_iter = yield_unit_cells(unit_cell_str)
+    unit_cell_iter = iter_unit_cells(unit_cell_str)
     if ref_psf_path is None:
         groups = None
     else:

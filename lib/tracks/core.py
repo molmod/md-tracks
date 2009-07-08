@@ -178,7 +178,7 @@ class MultiTrackBase(object):
                 l.append((index, track))
                 counter += 1
 
-    def _yield_fields(self, buffer=None):
+    def _iter_fields(self, buffer=None):
         if buffer is None:
             buffer = self.buffer
         for name in self.buffer.dtype.names:
@@ -196,15 +196,27 @@ class MultiTracksReader(MultiTrackBase):
         if dot_interval is None:
             dot_interval = context.default_dot_interval
 
-        self.init_buffer(buffer_size, dtype)
-        self.init_tracks(filenames, dtype)
-
         # some residual parameters
         self.dot_interval = dot_interval
         self.row_counter = 0
         self.sub = fix_slice(sub)
 
-    def yield_buffers(self):
+        self.init_buffer(buffer_size, dtype)
+        self.init_tracks(filenames, dtype)
+        self.init_shortest()
+
+    def init_shortest(self):
+        # compute the length of the shortest track in the reader
+        self.shortest = None
+        for tracks in self.tracks.itervalues():
+            for i, track in tracks:
+                size = track.size()
+                if self.shortest is None or self.shortest > size:
+                    self.shortest = size
+        # take into account the slicing
+        self.shortest = (min(self.shortest, self.sub.stop) - self.sub.start)/self.sub.step
+
+    def iter_buffers(self):
         buffer_counter = 0
         while True:
             # determin the part that will be read from disk
@@ -217,7 +229,7 @@ class MultiTracksReader(MultiTrackBase):
             # it in the buffer array
             log(" %i " % start, False)
             first_size = None
-            for track, column in self._yield_fields():
+            for track, column in self._iter_fields():
                 size = track.read_into(column, slice(start, stop, self.sub.step))
                 if first_size is None:
                     first_size = size
@@ -232,17 +244,17 @@ class MultiTracksReader(MultiTrackBase):
                 break
             buffer_counter += 1
         log(" %i " % stop, False)
-        log.finalize()
+        log.finish()
 
-    def yield_rows(self):
-        for buffer in self.yield_buffers():
+    def iter_rows(self):
+        for buffer in self.iter_buffers():
             for row in buffer:
                 self.row_counter += 1
                 if self.row_counter % self.dot_interval == 0:
                     log(".", False)
                 yield row
 
-    __iter__ = yield_rows
+    __iter__ = iter_rows
 
 
 class MultiTracksWriter(MultiTrackBase):
@@ -270,7 +282,7 @@ class MultiTracksWriter(MultiTrackBase):
     def _flush_buffer(self):
         if self.current_row == 0:
             return
-        for track, column in self._yield_fields():
+        for track, column in self._iter_fields():
             track.append(column[:self.current_row])
         log(" %i " % self.row_counter, False)
         self.current_row = 0
@@ -290,11 +302,11 @@ class MultiTracksWriter(MultiTrackBase):
         #if buffer.dtype != self.buffer.dtype:
         #    raise Error("The given buffer must have the same dtype as the internal buffer.")
         self._flush_buffer()
-        for track, column in self._yield_fields(buffer):
+        for track, column in self._iter_fields(buffer):
             track.append(column)
 
-    def finalize(self):
+    def finish(self):
         self._flush_buffer()
-        log.finalize()
+        log.finish()
 
 

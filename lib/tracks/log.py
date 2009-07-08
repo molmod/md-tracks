@@ -61,7 +61,7 @@ class Logger(object):
                 self.f.flush()
             self.old_newline = newline
 
-    def finalize(self):
+    def finish(self):
         if not self.old_newline and self.verbose:
             self.f.write("\n")
 

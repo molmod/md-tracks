@@ -93,7 +93,7 @@ cov = 0
 length = 0
 ref = None
 
-for block in mtr.yield_buffers():
+for block in mtr.iter_buffers():
     block = block["data"]
     if ref is None:
         ref = block[0]
