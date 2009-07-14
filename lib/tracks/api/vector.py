@@ -60,7 +60,12 @@ class TrackVector(object):
         return TrackVector([c1 - c2 for c1, c2 in zip(self.data, other.data)])
 
     def __add__(self, other):
-        return TrackVector([c1 + c2 for c1, c2 in zip(self.data, other.data)])
+        if isinstance(other, TrackVector):
+            return TrackVector([c1 + c2 for c1, c2 in zip(self.data, other.data)])
+        else:
+            return TrackVector([c1 + other for c1 in self.data])
+
+    __radd__ = __add__
 
     def __mul__(self, other):
         if isinstance(other, TrackVector):
