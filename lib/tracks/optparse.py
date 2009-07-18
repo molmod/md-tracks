@@ -136,3 +136,9 @@ def add_pca_options(parser, default_unit):
         help="The unit in which the sigma's are printed on screen. [default=%default]",
     )
 
+def add_zero_mean_option(parser):
+    parser.add_option(
+        "-z", "--zero-mean", action="store_true", default=False,
+        help="Do not substract the mean from the input tracks prior to pca.",
+    )
+

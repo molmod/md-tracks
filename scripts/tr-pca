@@ -34,7 +34,8 @@
 
 
 from tracks.parse import parse_slice
-from tracks.optparse import add_quiet_option, add_slice_option, add_pca_options
+from tracks.optparse import add_quiet_option, add_slice_option, \
+    add_pca_options, add_zero_mean_option
 from tracks.log import log, usage_tail
 from tracks.api import pca_common_usage, pca_common_script
 
@@ -55,10 +56,7 @@ parser = OptionParser(usage)
 add_quiet_option(parser)
 add_slice_option(parser)
 add_pca_options(parser, "au")
-parser.add_option(
-    "-z", "--zero-mean", action="store_true", default=False,
-    help="Do not substract the mean from the input tracks prior to pca.",
-)
+add_zero_mean_option(parser)
 (options, args) = parser.parse_args()
 
 if len(args) >= 2:

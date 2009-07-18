@@ -35,7 +35,8 @@
 
 from tracks.core import load_track, dump_track
 from tracks.parse import parse_x_step
-from tracks.optparse import add_quiet_option, add_cor_time_unit
+from tracks.optparse import add_quiet_option, add_cor_time_unit, \
+    add_zero_mean_option
 from tracks.log import log, usage_tail
 from tracks.api import fit_cor_time
 
@@ -68,10 +69,7 @@ parser.add_option(
          "track size. The lower this value, the better the statistical "
          "accuracy of the end result."
 )
-parser.add_option(
-    "-n", "--non-zero-average", default=False, action="store_true",
-    help="Take into account that the average of the tracks is non-zero.",
-)
+add_zero_mean_option(parser)
 add_quiet_option(parser)
 add_cor_time_unit(parser)
 (options, args) = parser.parse_args()
@@ -102,7 +100,7 @@ for path_in in paths_in:
     f = load_track(path_in)
     if len(f) != length:
         raise Error("All input tracks must have the same length.")
-    if options.non_zero_average:
+    if not options.zero_mean:
         f = f - f.mean()
     tmp = numpy.correlate(f, f[:average_steps], 'valid')/average_steps
     result += tmp
