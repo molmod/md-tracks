@@ -109,6 +109,8 @@ class SpectrumProcessor(object):
                      distant time steps. (See the time_step argument of the
                      __init__ method.)
         """
+        if len(fn) < 2*self._blocks:
+            raise ValueError("The length of the input for the spectrum must at least be two times the block size.")
         if self._input_length is None:
             self._input_length = len(fn)
             self._block_size = len(fn)/self._blocks

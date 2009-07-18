@@ -35,12 +35,23 @@
 
 from common import *
 
-from tracks.api import cov_overlap, cov_overlap_multi
+from tracks.api import cov_overlap, cov_overlap_multi, mean_error
 
 import unittest, numpy
 
 
-__all__ = ["PCATestCase"]
+__all__ = ["ACTestCase", "PCATestCase"]
+
+
+class ACTestCase(BaseTestCase):
+    def test_mean_error(self):
+        length = 1000
+        signal = numpy.random.normal(0,0.3,length)
+        signal += numpy.cos(numpy.arange(length, dtype=float)/length*10*numpy.pi)
+        signal += 0.3
+        mean, error = mean_error(signal)
+        self.assert_(abs(mean - 0.3) < 0.1)
+        self.assert_(error < 0.15)
 
 
 class PCATestCase(BaseTestCase):
