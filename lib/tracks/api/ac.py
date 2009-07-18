@@ -42,18 +42,20 @@ def fit_cor_time(time_step, ac):
 
        The fit is performed based on a simple single exponential decay model.
        Only the beginning of the ac is used for the fit. As soon as the ac drops
-       below 0.4, the rest of the data is discarded.
+       below 1/e, the rest of the data is discarded. If no significant time
+       correlation is found, the time_step is returned as correlation time.
 
        Arguments:
          time_step  --  The time step in atomic units
          ac  --  An array with the normalized autocorrelation function
     """
-    tmp = (ac<0.4).nonzero()[0]
+    tmp = (ac<0.3678794).nonzero()[0]
     if len(tmp) == 0:
-        return numpy.nan
+        return time_step
     end = tmp[0]
     time = numpy.arange(end)*time_step
     ac_log = numpy.log(ac[:end])
-    time_constant = -1.0/(numpy.dot(ac_log[:end], time[:end])/numpy.dot(time[:end], time[:end]))
-    return time_constant
+    correlation_time = -1.0/(numpy.dot(ac_log[:end], time[:end])/numpy.dot(time[:end], time[:end]))
+    return correlation_time
+
 
