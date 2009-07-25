@@ -37,6 +37,7 @@ from tracks.core import load_track, dump_track
 from tracks.parse import parse_x_step, parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option, add_cor_time_unit
 from tracks.log import log, usage_tail
+from tracks.api import mean_error_blav
 
 from molmod.units import parse_unit
 
@@ -72,7 +73,7 @@ parser.add_option(
 add_cor_time_unit(parser)
 add_quiet_option(parser)
 parser.add_option(
-    "-b", "--min-blocks", default="100",
+    "-b", "--min-blocks", default="100", type="int",
     help="The minimum number of blocks to be considered."
 )
 add_slice_option(parser)
@@ -90,64 +91,17 @@ if len(args) == 2:
 else:
     parser.error("Expecting two arguments.")
 
-min_blocks = int(options.min_blocks)
 sub = parse_slice(options.slice)
+unit = parse_unit(options.unit)
+time_unit = parse_unit(options.time_unit)
 time_step *= sub.step
 f = load_track(path_in, sub)
 
-x = [] # block sizes
-y = [] # error on the mean
-c = [] # correlation time
-s = [] # statistical inefficiency
 
-for block_size in xrange(1, len(f)/min_blocks):
-    n_blocks = len(f)/block_size
-    total_size = n_blocks * block_size
-    averages = numpy.array([
-        f[i*block_size:(i+1)*block_size].mean() for i in xrange(n_blocks)
-    ], float)
-
-    x.append(block_size*time_step)
-    y.append(averages.std()/numpy.sqrt(n_blocks))
-    c.append(0.5*averages.var()/f[:total_size].var()*block_size*time_step)
-    s.append(averages.var()/f[:total_size].var()*block_size)
-
-x = numpy.array(x)
-y = numpy.array(y)
-c = numpy.array(c)
-s = numpy.array(s)
-
-l = len(y)*2/3
-if l == 0:
-    raise Error("Too few blocks to do a proper estimate of the error.")
-unit = parse_unit(options.unit)
-time_unit = parse_unit(options.time_unit)
-
-select = numpy.arange(len(x)-l, len(x))
-# perform a fit with a + b/t, a is an estimate of the error
-(yinf, by), resids, rank, svals = numpy.linalg.lstsq(
-    numpy.array([numpy.ones(len(select), float), 1/x[select]]).transpose(),
-    y[select],
-)
-
-select = select[numpy.isfinite(c[select])]
-if len(select) > 3:
-    (cinf, bc), resids, rank, svals = numpy.linalg.lstsq(
-        numpy.array([numpy.ones(len(select), float), 1/x[select]]).transpose(),
-        c[select],
-    )
-    (sinf, bs), resids, rank, svals = numpy.linalg.lstsq(
-        numpy.array([numpy.ones(len(select), float), 1/x[select]]).transpose(),
-        s[select],
-    )
-else:
-    cinf = numpy.inf
-    sinf = numpy.inf
-    bc = 0
-    bs = 0
+mean, einf, cinf, sinf, be, bc, bs, x, e, c, s, l = mean_error_blav(time_step, f, options.min_blocks)
 
 
-print "%s %s %s %s" % (f.mean()/unit, yinf/unit, cinf/time_unit, sinf)
+print "%s %s %s %s" % (mean/unit, einf/unit, cinf/time_unit, sinf)
 
 if options.plot_error is not None:
     if cinf != numpy.inf:
@@ -156,9 +110,9 @@ if options.plot_error is not None:
         pylab.title("Block average plot for %s" % path_in)
         pylab.xlabel("Block size [%s]" % options.time_unit)
         pylab.ylabel("Error on the mean [%s]" % options.unit)
-        pylab.plot(x/time_unit,y/unit,"k+")
-        pylab.plot(x[-l:]/time_unit,(yinf+by/x[-l:])/unit,"r-", linewidth=1)
-        pylab.axhline(yinf/unit, color="r", linewidth=1)
+        pylab.plot(x/time_unit,e/unit,"k+")
+        pylab.plot(x[-l:]/time_unit,(einf+be/x[-l:])/unit,"r-", linewidth=1)
+        pylab.axhline(einf/unit, color="r", linewidth=1)
         pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
         pylab.savefig(options.plot_error)
     else:
@@ -177,6 +131,6 @@ if options.plot_ctime is not None:
         pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
         pylab.savefig(options.plot_ctime)
     else:
-        log('Block average plot skipped due to cinf=numpy.inf.')
+        log('Block average plot skipped due to sinf=numpy.inf.')
 
 
