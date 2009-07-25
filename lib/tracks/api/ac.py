@@ -39,7 +39,7 @@ import numpy
 
 __all__ = [
     "fit_cor_time", "compute_ac_fft", "cor_time", "mean_error_fit",
-    "mean_error_blav"
+    "compute_blav", "mean_error_blav"
 ]
 
 
@@ -126,14 +126,11 @@ def mean_error_fit(signal, num_blocks=10):
     tau = cor_time(1.0, [signal], num_blocks)
     mean = signal.mean()
     std = signal.std()
-    return mean, std*numpy.sqrt(2*tau/len(signal))
+    return mean, std*numpy.sqrt(tau/len(signal))
 
 
-def mean_error_blav(time_step, signal, min_blocks=100):
-    """Compute the mean and the rror on the mean.
-
-       The error on the mean takes into account the time correlation in the
-       signal. The result is based on the block average method.
+def compute_blav(time_step, signal, min_blocks=100):
+    """Analyze the signal with the block average method.
 
        Arguments:
          time_step  --  the time step of the second argument.
@@ -205,3 +202,14 @@ def mean_error_blav(time_step, signal, min_blocks=100):
 
     return signal.mean(), einf, cinf, sinf, be, bc, bs, x, e, c, s, l
 
+
+def mean_error_blav(signal, min_blocks=100):
+    """Compute the mean and the error on the mean with the block average method.
+
+       Argument:
+         signal  --  A time dependent function.
+
+       Optional argument:
+         min_blocks  --  The minimum number of blocks to be considered.
+    """
+    return compute_blav(1.0, signal, min_blocks=100)[:2]

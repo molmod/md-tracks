@@ -35,7 +35,7 @@
 
 from common import *
 
-from tracks.api import cov_overlap, cov_overlap_multi, mean_error_fit
+from tracks.api import *
 
 import unittest, numpy
 
@@ -50,6 +50,9 @@ class ACTestCase(BaseTestCase):
         signal += numpy.cos(numpy.arange(length, dtype=float)/length*10*numpy.pi)
         signal += 0.3
         mean, error = mean_error_fit(signal)
+        self.assert_(abs(mean - 0.3) < 0.1)
+        self.assert_(error < 0.15)
+        mean, error = mean_error_blav(signal)
         self.assert_(abs(mean - 0.3) < 0.1)
         self.assert_(error < 0.15)
 

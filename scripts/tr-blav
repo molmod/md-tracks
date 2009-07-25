@@ -37,7 +37,7 @@ from tracks.core import load_track, dump_track
 from tracks.parse import parse_x_step, parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option, add_cor_time_unit
 from tracks.log import log, usage_tail
-from tracks.api import mean_error_blav
+from tracks.api import compute_blav
 
 from molmod.units import parse_unit
 
@@ -98,7 +98,7 @@ time_step *= sub.step
 f = load_track(path_in, sub)
 
 
-mean, einf, cinf, sinf, be, bc, bs, x, e, c, s, l = mean_error_blav(time_step, f, options.min_blocks)
+mean, einf, cinf, sinf, be, bc, bs, x, e, c, s, l = compute_blav(time_step, f, options.min_blocks)
 
 
 print "%s %s %s %s" % (mean/unit, einf/unit, cinf/time_unit, sinf)
