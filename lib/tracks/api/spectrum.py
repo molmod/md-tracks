@@ -40,7 +40,7 @@ import numpy
 __all__ = ["compute_spectrum", "SpectrumProcessor"]
 
 
-def compute_spectrum(time_step, inputs, blocks=10):
+def compute_spectrum(time_step, inputs, num_blocks=10):
     """A simple interface to the SpectrumProccessor.
 
        Arguments:
@@ -48,12 +48,12 @@ def compute_spectrum(time_step, inputs, blocks=10):
                         to the process method.
          inputs  --  A list of one-dimensional arrays with function values taken
                      at equi-distant time steps.
-         blocks  --  The number of blocks in which the inputs will be
-                     divided. A Fourier transform of each block is computed
-                     and the final spectrum is the average over all blocks.
-                     [default=10] A larger number of blocks implies a lower
-                     resolution on the frequency scale, but yields an
-                     improved statistical accuracy of the amplitudes.
+         num_blocks  --  The number of blocks in which the inputs will be
+                         divided. A Fourier transform of each block is computed
+                         and the final spectrum is the average over all blocks.
+                         [default=10] A larger number of blocks implies a lower
+                         resolution on the frequency scale, but yields an
+                         improved statistical accuracy of the amplitudes.
 
        Returns a tuple with four elements:
          frequency_res -- The resolution of the spectrum on the frequency
@@ -63,7 +63,7 @@ def compute_spectrum(time_step, inputs, blocks=10):
          amplitudes  --  An array of amplitudes representing the spectrum.
          amplitudes_err  --  The statistical error on the amplitudes.
     """
-    sp = SpectrumProcessor(time_step, blocks)
+    sp = SpectrumProcessor(time_step, num_blocks)
     for i in inputs:
         sp.process(i)
     return sp.get_results()
@@ -77,21 +77,21 @@ class SpectrumProcessor(object):
        time.
     """
 
-    def __init__(self, time_step, blocks=10):
+    def __init__(self, time_step, num_blocks=10):
         """Initialize a spectrum SpectrumProcessor instance.
 
            Arguments:
              time_step  --  The time step [au] of the inputs that will be given
                             to the process method.
-             blocks  --  The number of blocks in which the inputs will be
-                         divided. A Fourier transform of each block is computed
-                         and the final spectrum is the average over all blocks.
-                         [default=10] A larger number of blocks implies a lower
-                         resolution on the frequency scale, but yields an
-                         improved statistical accuracy of the amplitudes.
+             num_blocks  --  The number of blocks in which the inputs will be
+                             divided. A Fourier transform of each block is computed
+                             and the final spectrum is the average over all blocks.
+                             [default=10] A larger number of blocks implies a lower
+                             resolution on the frequency scale, but yields an
+                             improved statistical accuracy of the amplitudes.
         """
         self._time_step = time_step
-        self._blocks = blocks
+        self._num_blocks = num_blocks
         self._sum = 0
         self._sum_sq = 0
         self._count = 0
@@ -109,15 +109,15 @@ class SpectrumProcessor(object):
                      distant time steps. (See the time_step argument of the
                      __init__ method.)
         """
-        if len(fn) < 2*self._blocks:
+        if len(fn) < 2*self._num_blocks:
             raise ValueError("The length of the input for the spectrum must at least be two times the block size.")
         if self._input_length is None:
             self._input_length = len(fn)
-            self._block_size = len(fn)/self._blocks
+            self._block_size = len(fn)/self._num_blocks
         elif self._input_length != len(fn):
             raise ValueError("All inputs must have the same length.")
 
-        for index in xrange(self._blocks):
+        for index in xrange(self._num_blocks):
             fn_block = fn[index*self._block_size:(index+1)*self._block_size]
             amp_block = abs(numpy.fft.rfft(fn_block))**2
             self._sum += amp_block
