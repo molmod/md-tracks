@@ -38,7 +38,7 @@ import numpy
 
 
 __all__ = [
-    "fit_cor_time", "compute_ac_fft", "cor_time", "mean_error_fit",
+    "fit_cor_time", "compute_ac_fft", "cor_time", "mean_error_ac",
     "compute_blav", "mean_error_blav"
 ]
 
@@ -84,7 +84,7 @@ def compute_ac_fft(inputs, num_blocks=10, zero_mean=False):
         if not zero_mean:
             inp = inp - inp.mean()
         sp.process(inp)
-    freq_res, wave_res, amp, amp_err = sp.get_results()
+    amp = sp.get_results()[2]
     return numpy.fft.irfft(amp)
 
 
@@ -109,24 +109,28 @@ def cor_time(time_step, inputs, num_blocks=10, zero_mean=False):
     return fit_cor_time(time_step, ac)
 
 
-def mean_error_fit(signal, num_blocks=10):
+def mean_error_ac(signal, std=None, num_blocks=10):
     """Compute the mean and the error on the mean.
 
        The error on the mean takes into account the time correlation in the
-       signal. The result is based on the fit of an exponential to the
-       normalized autocorrelation function.
+       signal. The autocorrelation function is computed with the fft algorithm.
+       See Appendix D of the book "Understanding molecular simulation" by Daan
+       Frenkel and Berend Smit for more information.
 
        Argument:
          signal  --  A time dependent function.
 
        Optional argumnts:
+         std  --  The standard deviation on the signal, computed as signal.std()
+                  is not given
          num_blocks  --  The number of blocks used in the fast Fourrier
                          transform.
     """
     tau = cor_time(1.0, [signal], num_blocks)
     mean = signal.mean()
-    std = signal.std()
-    return mean, std*numpy.sqrt(tau/len(signal))
+    if std is None:
+        std = signal.std()
+    return mean, std*numpy.sqrt(2*tau/len(signal))
 
 
 def compute_blav(time_step, signal, min_blocks=100):
@@ -213,3 +217,4 @@ def mean_error_blav(signal, min_blocks=100):
          min_blocks  --  The minimum number of blocks to be considered.
     """
     return compute_blav(1.0, signal, min_blocks=100)[:2]
+

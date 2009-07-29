@@ -49,7 +49,7 @@ class ACTestCase(BaseTestCase):
         signal = numpy.random.normal(0,0.3,length)
         signal += numpy.cos(numpy.arange(length, dtype=float)/length*10*numpy.pi)
         signal += 0.3
-        mean, error = mean_error_fit(signal)
+        mean, error = mean_error_ac(signal)
         self.assert_(abs(mean - 0.3) < 0.1)
         self.assert_(error < 0.15)
         mean, error = mean_error_blav(signal)
