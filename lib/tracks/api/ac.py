@@ -67,6 +67,25 @@ def fit_cor_time(time_step, ac):
     return correlation_time
 
 
+def integrate_cor_time(time_step, ac):
+    """Integrate the correlation time from a normalized autocorrelation function.
+
+       The integration is carried out over the first positive part of the auto-
+       correlation function.
+
+       Arguments:
+         time_step  --  The time step in atomic units.
+         ac  --  An array with the normalized autocorrelation function.
+    """
+    tmp = (ac<0).nonzero()[0]
+    if len(tmp) == 0:
+        return time_step
+    end = tmp[0]
+    if end <= 1:
+        return time_step
+    return time_step*ac[:end].sum()
+
+
 def compute_ac_fft(inputs, num_blocks=10, zero_mean=False):
     """Compute the autocorrelation of a given set of signals
 
@@ -106,7 +125,7 @@ def cor_time(time_step, inputs, num_blocks=10, zero_mean=False):
     """
     ac = compute_ac_fft(inputs, num_blocks, zero_mean)
     ac /= ac[0]
-    return fit_cor_time(time_step, ac)
+    return integrate_cor_time(time_step, ac)
 
 
 def mean_error_ac(signal, std=None, num_blocks=10):
