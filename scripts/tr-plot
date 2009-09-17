@@ -189,7 +189,7 @@ class PlotDescriptor(object):
     kinds = {}
 
     def __new__(type, args):
-        result = object.__new__(type, args)
+        result = object.__new__(type)
         cls = PlotDescriptor.kinds.get(args[0].lower()[1:])
         if cls is None:
             raise Error("line type '%s' not recognized." % args[0])
