@@ -40,7 +40,7 @@ from tracks.log import usage_tail
 
 import molmod.units
 import molmod.constants
-from molmod.data.periodic import periodic
+from molmod.periodic import periodic
 
 from optparse import OptionParser
 import numpy

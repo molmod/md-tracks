@@ -36,7 +36,7 @@ from tracks.core import TrackNotFoundError, Track, MultiTracksReader
 from tracks.util import fix_slice
 
 from molmod.units import parse_unit
-from molmod.unit_cell import UnitCell
+from molmod.unit_cells import UnitCell
 
 import sys, numpy
 
@@ -145,11 +145,10 @@ def iter_unit_cells(unit_cell_str, sub=None):
             )
         elif len(parameters) == 6:
             a,b,c,alpha,beta,gamma = parameters
-            uc = UnitCell(
-                numpy.array([[1,0,0],[0,1,0],[0,0,1]], float),
-                numpy.array([True, True, True]),
+            uc = UnitCell.from_parameters3(
+                numpy.array([a,b,c]),
+                numpy.array([alpha,beta,gamma])
             )
-            uc.set_parameterst(numpy.array([a,b,c]), numpy.array([alpha,beta,gamma]))
         elif len(parameters) == 9:
             uc = UnitCell(
                 numpy.array(parameters, float).reshape((3,3)),
@@ -163,13 +162,10 @@ def iter_unit_cells(unit_cell_str, sub=None):
         filenames = ["%s.%s" % (unit_cell_str, suffix) for suffix in ["a.x", "a.y", "a.z", "b.x", "b.y", "b.z", "c.x", "c.y", "c.z"]]
         dtype = numpy.dtype([("cell", float, (3,3))])
         mtr = MultiTracksReader(filenames, dtype, sub=sub)
-        uc = UnitCell(
-            numpy.array([[1,0,0],[0,1,0],[0,0,1]], float),
-            numpy.array([True, True, True]),
-        )
         for row in mtr:
-            uc.cell[:] = row["cell"]
-            uc.update_reciproke()
-            yield uc
+            yield UnitCell(
+                numpy.array(row["cell"], float),
+                numpy.array([True, True, True]),
+            )
 
 

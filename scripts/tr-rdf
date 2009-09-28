@@ -39,7 +39,6 @@ from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.log import log, usage_tail
 
 from molmod.units import parse_unit
-from molmod.unit_cell import UnitCell
 
 import numpy, itertools
 from optparse import OptionParser
@@ -170,7 +169,7 @@ def iter_deltas():
 
 def iter_distances():
     for uc, deltas in itertools.izip(iter_unit_cells(unit_cell_str, sub), iter_deltas()):
-        rho = N/uc.generalized_volume()
+        rho = N/uc.generalized_volume
         reference_counts = rho*4*numpy.pi/3*((radii+bin_width)**3-radii**3)
         distances = []
         if uc is None:
@@ -178,7 +177,7 @@ def iter_distances():
         else:
             deltas = numpy.array([uc.shortest_vector(delta) for delta in deltas])
             for n in uc.get_radius_indexes(rmax):
-                distances.append(numpy.sqrt((numpy.array(deltas+numpy.dot(uc.cell, n))**2).sum(axis=1)))
+                distances.append(numpy.sqrt((numpy.array(deltas+numpy.dot(uc.matrix, n))**2).sum(axis=1)))
             distances = numpy.concatenate(distances)
         yield distances[distances < rmax], reference_counts
 

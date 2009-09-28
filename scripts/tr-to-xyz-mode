@@ -40,7 +40,7 @@ from tracks.optparse import add_filter_atoms_option
 
 from molmod.units import parse_unit
 from molmod.io.xyz import XYZFile, XYZWriter
-from molmod.data.periodic import periodic
+from molmod.periodic import periodic
 
 from optparse import OptionParser
 import numpy

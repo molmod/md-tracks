@@ -42,7 +42,7 @@ from tracks.log import log, usage_tail
 from tracks.api import fit_geometry
 
 from molmod.io.xyz import XYZFile, XYZWriter
-from molmod.data.periodic import periodic
+from molmod.periodic import periodic
 
 from optparse import OptionParser
 import numpy

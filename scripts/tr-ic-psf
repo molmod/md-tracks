@@ -336,7 +336,7 @@ elif kind == 'dtl':
     match_generator = GraphSearch(SubgraphPattern(
         Graph([(0,1),(0,2)]),
         [CriteriaSet({0: atom_filter1, 1: atom_filter2, 2: atom_filter3})],
-        node_tags = {0: 0, 1: 1, 2: 2}
+        vertex_tags = {0: 0, 1: 1, 2: 2}
     ))
 
     for match in match_generator(graph):

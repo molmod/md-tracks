@@ -40,7 +40,7 @@ from tracks.util import AtomFilter
 from tracks.log import log, usage_tail
 from tracks.api import pca_common_usage, pca_common_script
 
-from molmod.data.periodic import periodic
+from molmod.periodic import periodic
 from molmod.io.xyz import XYZFile
 from molmod.units import parse_unit
 from molmod.molecules import Molecule

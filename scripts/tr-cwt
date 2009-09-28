@@ -39,7 +39,6 @@ from tracks.optparse import add_slice_option
 from tracks.log import usage_tail
 
 from molmod.constants import lightspeed
-from molmod.units import cm, fs
 
 import numpy
 from optparse import OptionParser

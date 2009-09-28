@@ -37,7 +37,7 @@ from tracks.core import load_track, dump_track
 from tracks.optparse import add_quiet_option
 from tracks.log import log, usage_tail
 
-from molmod.data.periodic import periodic
+from molmod.periodic import periodic
 from molmod.io.psf import PSFFile
 
 import numpy, os

@@ -37,7 +37,7 @@ from tracks.log import usage_tail
 from tracks.optparse import add_select_options
 
 from molmod.io.psf import PSFFile
-from molmod.data.periodic import periodic
+from molmod.periodic import periodic
 
 import numpy
 from optparse import OptionParser

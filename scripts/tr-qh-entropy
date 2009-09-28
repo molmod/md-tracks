@@ -37,7 +37,7 @@ from tracks.parse import parse_slice, parse_unit
 from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.log import log, usage_tail
 
-from molmod.data.periodic import periodic
+from molmod.periodic import periodic
 from molmod.io.xyz import XYZFile
 from molmod.constants import boltzmann
 

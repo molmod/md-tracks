@@ -33,9 +33,8 @@
 
 
 from tracks.core import MultiTracksReader, MultiTracksWriter
-from molmod.io.xyz import XYZReader, XYZWriter
-from molmod.io.atrj import ATRJReader
-from molmod.units import angstrom, fs, A, deg, amu, ps, bar
+from molmod.io import *
+from molmod.units import angstrom, femtosecond, deg, amu, picosecond, bar
 
 import os, numpy, itertools
 
@@ -86,7 +85,7 @@ def cp2k_ener_to_tracks(filename, destination, sub=slice(None), clear=True):
     f = file(filename)
     for line in itertools.islice(iter_real_lines(f), sub.start, sub.stop, sub.step):
         row = [float(word) for word in line.split()[:6]]
-        row[1] = row[1]*fs
+        row[1] = row[1]*femtosecond
         mtw.dump_row(tuple(row))
     f.close()
     mtw.finish()
@@ -115,10 +114,10 @@ def cp2k_cell_to_tracks(filename, destination, sub=slice(None), clear=True):
     f = file(filename)
     for line in itertools.islice(iter_real_lines(f), sub.start, sub.stop, sub.step):
         values = [float(word) for word in line.split()[:12]]
-        row = [int(values[0]),values[1]*fs]
-        cell = numpy.array(values[2:11]).reshape(3,3).transpose()*A
+        row = [int(values[0]),values[1]*femtosecond]
+        cell = numpy.array(values[2:11]).reshape(3,3).transpose()*angstrom
         row.append(cell)
-        row.append(values[11] * A**3)
+        row.append(values[11] * angstrom**3)
         norms = numpy.sqrt((cell**2).sum(axis=0))
         row.append(norms)
         alpha = numpy.arccos(numpy.clip(numpy.dot(cell[:,1],cell[:,2])/norms[1]/norms[2], -1,1))
@@ -138,7 +137,7 @@ def cp2k_stress_to_tracks(filename, destination, sub=slice(None), clear=True):
     f = file(filename)
     for line in itertools.islice(iter_real_lines(f), sub.start, sub.stop, sub.step):
         values = [float(word) for word in line.split()[:11]]
-        row = [int(values[0]),values[1]*fs]
+        row = [int(values[0]),values[1]*femtosecond]
         cell = numpy.array(values[2:11]).reshape(3,3).transpose()*bar
         row.append(cell)
         row.append((cell[0,0]+cell[1,1]+cell[2,2])/3)
@@ -224,11 +223,11 @@ def tracks_to_xyz(prefix, destination, symbols, sub=slice(None), file_unit=angst
             except StopIteration:
                 raise ValueError("Not enough frames in the unit cell tracks.")
             if groups is None:
-                coordinates -= numpy.dot(uc.cell, numpy.floor(numpy.dot(uc.cell_reciproke, coordinates.transpose()))).transpose()
+                coordinates -= numpy.dot(uc.matrix, numpy.floor(numpy.dot(uc.reciprocal, coordinates.transpose()))).transpose()
             else:
                 for group in groups:
                     center = coordinates[group].mean(axis=0)
-                    coordinates[group] -= numpy.dot(uc.cell, numpy.floor(numpy.dot(uc.cell_reciproke, center)))
+                    coordinates[group] -= numpy.dot(uc.matrix, numpy.floor(numpy.dot(uc.reciprocal, center)))
         xyz_writer.dump("None", coordinates)
     f.close()
 
@@ -267,11 +266,10 @@ def atrj_to_tracks(filename, destination, sub=slice(None), atom_indexes=None, cl
 
 def dlpoly_history_to_tracks(
     filename, destination, sub=slice(None), atom_indexes=None, clear=True,
-    pos_unit=A, vel_unit=A/ps, frc_unit=amu*A/ps**2, time_unit=ps,
+    pos_unit=angstrom, vel_unit=angstrom/picosecond, frc_unit=amu*angstrom/picosecond**2, time_unit=picosecond,
     mass_unit=amu
 ):
-    import molmod.io.dlpoly as dlpoly
-    hist_reader = dlpoly.HistoryReader(filename, sub, pos_unit, vel_unit, frc_unit, time_unit, mass_unit)
+    hist_reader = DLPolyHistoryReader(filename, sub, pos_unit, vel_unit, frc_unit, time_unit, mass_unit)
 
     if atom_indexes is None:
         atom_indexes = range(hist_reader.num_atoms)
@@ -331,10 +329,9 @@ def dlpoly_history_to_tracks(
 
 def dlpoly_output_to_tracks(
     filename, destination, sub=slice(None), clear=True, skip_equi_period=True,
-    pos_unit=A, time_unit=ps, angle_unit=deg, e_unit=amu/(A/ps)**2
+    pos_unit=angstrom, time_unit=picosecond, angle_unit=deg, e_unit=amu/(angstrom/picosecond)**2
 ):
-    import molmod.io.dlpoly as dlpoly
-    output_reader = dlpoly.OutputReader(filename, sub, skip_equi_period, pos_unit, time_unit, angle_unit, e_unit)
+    output_reader = DLPolyOutputReader(filename, sub, skip_equi_period, pos_unit, time_unit, angle_unit, e_unit)
 
     filenames = [
         "step", "conserved_quantity", "temperature", "potential_energy",
@@ -357,7 +354,6 @@ def dlpoly_output_to_tracks(
 
 
 def lammps_dump_to_tracks(filename, destination, meta, sub=slice(None), clear=True):
-    from molmod.io.lammps import DumpReader
 
     units = []
     for unit, name, isvector in meta:
@@ -366,7 +362,7 @@ def lammps_dump_to_tracks(filename, destination, meta, sub=slice(None), clear=Tr
         else:
             units.append(unit)
 
-    dump_reader = DumpReader(filename, units, sub)
+    dump_reader = LAMMPSDumpReader(filename, units, sub)
     num_atoms = dump_reader.num_atoms
 
     filenames = [os.path.join(destination, "step")]
@@ -397,8 +393,6 @@ def lammps_dump_to_tracks(filename, destination, meta, sub=slice(None), clear=Tr
 
 
 def gro_to_tracks(filename, destination, sub=slice(None), clear=True):
-    from molmod.io.gromacs import GroReader
-
     gro_reader = GroReader(filename, sub)
     num_atoms = gro_reader.num_atoms
 

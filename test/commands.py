@@ -41,9 +41,10 @@ import tracks.api.cell as cell
 
 from molmod.io.psf import PSFFile
 from molmod.io.xyz import XYZReader, XYZFile
-from molmod.units import angstrom, nm, fs, ps, kcalmol, bar
+from molmod.units import angstrom, nanometer, femtosecond, picosecond, kcalmol, \
+    bar
 from molmod.constants import lightspeed, boltzmann
-from molmod.data.periodic import periodic
+from molmod.periodic import periodic
 
 import numpy, os, glob, shutil
 
@@ -161,9 +162,9 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(tmp[1], 5)
         self.assertEqual(tmp[-1], 5000)
         tmp = load_track("tracks/time")
-        self.assertAlmostEqual(tmp[0]/fs, 0.0, 5)
-        self.assertAlmostEqual(tmp[1]/fs, 5.0, 5)
-        self.assertAlmostEqual(tmp[-1]/fs, 5000.0, 5)
+        self.assertAlmostEqual(tmp[0]/femtosecond, 0.0, 5)
+        self.assertAlmostEqual(tmp[1]/femtosecond, 5.0, 5)
+        self.assertAlmostEqual(tmp[-1]/femtosecond, 5000.0, 5)
         tmp = load_track("tracks/kinetic_energy")
         self.assertAlmostEqual(tmp[0], 0.015675735, 5)
         self.assertAlmostEqual(tmp[1], 0.008711175, 5)
@@ -188,9 +189,9 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(tmp[1], 125)
         self.assertEqual(tmp[-1], 3000)
         tmp = load_track("tracks/time")
-        self.assertAlmostEqual(tmp[0]/fs, 100.0, 5)
-        self.assertAlmostEqual(tmp[1]/fs, 125.0, 5)
-        self.assertAlmostEqual(tmp[-1]/fs, 3000.0, 5)
+        self.assertAlmostEqual(tmp[0]/femtosecond, 100.0, 5)
+        self.assertAlmostEqual(tmp[1]/femtosecond, 125.0, 5)
+        self.assertAlmostEqual(tmp[-1]/femtosecond, 3000.0, 5)
         tmp = load_track("tracks/kinetic_energy")
         self.assertAlmostEqual(tmp[0], 0.007844166, 5)
         self.assertAlmostEqual(tmp[1], 0.008257514, 5)
@@ -215,9 +216,9 @@ class CommandsTestCase(BaseTestCase):
         self.assertEqual(tmp[118], 5)
         self.assertEqual(tmp[-1], 5000)
         tmp = load_track("tracks/time")
-        self.assertAlmostEqual(tmp[117]/fs, 0.0, 5)
-        self.assertAlmostEqual(tmp[118]/fs, 5.0, 5)
-        self.assertAlmostEqual(tmp[-1]/fs, 5000.0, 5)
+        self.assertAlmostEqual(tmp[117]/femtosecond, 0.0, 5)
+        self.assertAlmostEqual(tmp[118]/femtosecond, 5.0, 5)
+        self.assertAlmostEqual(tmp[-1]/femtosecond, 5000.0, 5)
         tmp = load_track("tracks/kinetic_energy")
         self.assertAlmostEqual(tmp[117], 0.015675735, 5)
         self.assertAlmostEqual(tmp[118], 0.008711175, 5)
@@ -247,9 +248,9 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(tmp[1]/angstrom, 20.4977671159)
         self.assertAlmostEqual(tmp[-1]/angstrom, 20.4328712109)
         tmp = load_track("tracks/time")
-        self.assertAlmostEqual(tmp[0]/fs, 0.000)
-        self.assertAlmostEqual(tmp[1]/fs, 5.000)
-        self.assertAlmostEqual(tmp[-1]/fs, 95.000)
+        self.assertAlmostEqual(tmp[0]/femtosecond, 0.000)
+        self.assertAlmostEqual(tmp[1]/femtosecond, 5.000)
+        self.assertAlmostEqual(tmp[-1]/femtosecond, 95.000)
         tmp = load_track("tracks/volume")
         self.assertAlmostEqual(tmp[0]/angstrom**3, 8615.1250000000)
         self.assertAlmostEqual(tmp[1]/angstrom**3, 8612.3101980259)
@@ -267,9 +268,9 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(tmp[1]/bar, -19.6129483571)
         self.assertAlmostEqual(tmp[-1]/bar, 6209.6972369552)
         tmp = load_track("tracks/time")
-        self.assertAlmostEqual(tmp[0]/fs, 0.000)
-        self.assertAlmostEqual(tmp[1]/fs, 5.000)
-        self.assertAlmostEqual(tmp[-1]/fs, 95.000)
+        self.assertAlmostEqual(tmp[0]/femtosecond, 0.000)
+        self.assertAlmostEqual(tmp[1]/femtosecond, 5.000)
+        self.assertAlmostEqual(tmp[-1]/femtosecond, 95.000)
         tmp = load_track("tracks/pressure")
         self.assertAlmostEqual(tmp[0]/bar, -0.284470689513E+04)
         self.assertAlmostEqual(tmp[1]/bar, 0.264474996707E+04)
@@ -329,7 +330,7 @@ class CommandsTestCase(BaseTestCase):
         # normal test
         self.execute("tr-from-atrj", [os.path.join(input_dir, "bartek.atrj")])
         time = load_track("tracks/time")
-        self.assertArraysAlmostEqual(time, numpy.array([1, 2, 3])*ps, 1e-5)
+        self.assertArraysAlmostEqual(time, numpy.array([1, 2, 3])*picosecond, 1e-5)
         step = load_track("tracks/step")
         self.assertArraysAlmostEqual(step, numpy.array([1000, 2000, 3000]), 1e-5)
         step = load_track("tracks/total_energy")
@@ -343,7 +344,7 @@ class CommandsTestCase(BaseTestCase):
         # slicing test
         self.execute("tr-from-atrj", [os.path.join(input_dir, "bartek.atrj"), "--slice=::2"])
         time = load_track("tracks/time")
-        self.assertArraysAlmostEqual(time, numpy.array([1, 3])*ps, 1e-5)
+        self.assertArraysAlmostEqual(time, numpy.array([1, 3])*picosecond, 1e-5)
         step = load_track("tracks/step")
         self.assertArraysAlmostEqual(step, numpy.array([1000, 3000]), 1e-5)
         step = load_track("tracks/total_energy")
@@ -358,8 +359,8 @@ class CommandsTestCase(BaseTestCase):
     def test_from_dlpoly_hist(self):
         self.execute("tr-from-dlpoly-hist", [os.path.join(input_dir, "dlpoly_uo", "HISTORY")])
         time = load_track("tracks/time")
-        self.assertAlmostEqual(time[0], 4*ps)
-        self.assertAlmostEqual(time[1], 4.05*ps)
+        self.assertAlmostEqual(time[0], 4*picosecond)
+        self.assertAlmostEqual(time[1], 4.05*picosecond)
         # test will be extended once we know for sure that our assumptions for
         # the units in the dl_poly file are correct.
 
@@ -369,8 +370,8 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(step[0], 4000)
         self.assertAlmostEqual(step[1], 4050)
         time = load_track("tracks/time")
-        self.assertAlmostEqual(time[0], 4*ps)
-        self.assertAlmostEqual(time[1], 4.05*ps)
+        self.assertAlmostEqual(time[0], 4*picosecond)
+        self.assertAlmostEqual(time[1], 4.05*picosecond)
         # test will be extended once we know for sure that our assumptions for
         # the units in the dl_poly file are correct.
 
@@ -383,23 +384,23 @@ class CommandsTestCase(BaseTestCase):
         self.assertAlmostEqual(pos0x[0]/angstrom, 0.76561)
         self.assertAlmostEqual(pos0x[-1]/angstrom, 0.897658)
         vel5y = load_track("tracks/atom.vel.0000005.y")
-        self.assertAlmostEqual(vel5y[0]/(angstrom/fs), 0.0188858)
-        self.assertAlmostEqual(vel5y[5]/(angstrom/fs), 0.00913911)
-        self.assertAlmostEqual(vel5y[-1]/(angstrom/fs), 0.00252762)
+        self.assertAlmostEqual(vel5y[0]/(angstrom/femtosecond), 0.0188858)
+        self.assertAlmostEqual(vel5y[5]/(angstrom/femtosecond), 0.00913911)
+        self.assertAlmostEqual(vel5y[-1]/(angstrom/femtosecond), 0.00252762)
 
     def test_from_gro(self):
         self.execute("tr-from-gro", [os.path.join(input_dir, "gromacs", "water2.gro")])
         time = load_track("tracks/time")
-        self.assertAlmostEqual(time[0]/ps, 0.0)
-        self.assertAlmostEqual(time[-1]/ps, 1.0)
+        self.assertAlmostEqual(time[0]/picosecond, 0.0)
+        self.assertAlmostEqual(time[-1]/picosecond, 1.0)
         pos0x = load_track("tracks/atom.pos.0000000.x")
-        self.assertAlmostEqual(pos0x[0]/nm, 0.126)
+        self.assertAlmostEqual(pos0x[0]/nanometer, 0.126)
         vel5y = load_track("tracks/atom.vel.0000005.y")
-        self.assertAlmostEqual(vel5y[1]/(nm/ps), -0.8216)
+        self.assertAlmostEqual(vel5y[1]/(nanometer/picosecond), -0.8216)
         cellby = load_track("tracks/cell.b.y")
-        self.assertAlmostEqual(cellby[1]/nm, 1.82060)
+        self.assertAlmostEqual(cellby[1]/nanometer, 1.82060)
         cellbz = load_track("tracks/cell.b.z")
-        self.assertAlmostEqual(cellbz[1]/nm, 0.0)
+        self.assertAlmostEqual(cellbz[1]/nanometer, 0.0)
 
 
     def test_to_xyz(self):
@@ -1370,10 +1371,10 @@ class CommandsTestCase(BaseTestCase):
 
     def test_cwt(self):
         signal = numpy.zeros(1000, float)
-        time = numpy.arange(1000)*fs
-        #signal[:500] = numpy.sin(time[:500]*2*numpy.pi/(50*fs))
-        #signal[500:1000] = numpy.sin(time[500:1000]*2*numpy.pi/(25*fs))
-        freq_mod = (numpy.cos(2*time/time[-1]*2*numpy.pi)+5)/6/(17*fs)
+        time = numpy.arange(1000)*femtosecond
+        #signal[:500] = numpy.sin(time[:500]*2*numpy.pi/(50*femtosecond))
+        #signal[500:1000] = numpy.sin(time[500:1000]*2*numpy.pi/(25*femtosecond))
+        freq_mod = (numpy.cos(2*time/time[-1]*2*numpy.pi)+5)/6/(17*femtosecond)
         time_step = time[1]-time[0]
         signal = numpy.sin((freq_mod*2*numpy.pi*time_step).cumsum())
         dump_track("time", time)
