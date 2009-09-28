@@ -78,7 +78,7 @@ def get_delta(x_axis):
     return delta[0]
 
 
-def parse_x_step(s, measure="time"):
+def parse_x_step(s):
     """Convert s into a discretization step.
 
     The argument s can be a track file that contains a equidistant x axis, or a

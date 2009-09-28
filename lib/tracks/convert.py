@@ -33,7 +33,8 @@
 
 
 from tracks.core import MultiTracksReader, MultiTracksWriter
-from molmod.io import *
+from molmod.io import XYZReader, ATRJReader, DLPolyHistoryReader, \
+    DLPolyOutputReader, LAMMPSDumpReader, GroReader, XYZWriter
 from molmod.units import angstrom, femtosecond, deg, amu, picosecond, bar
 
 import os, numpy, itertools

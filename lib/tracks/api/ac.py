@@ -202,10 +202,10 @@ def compute_blav(time_step, signal, min_blocks=100):
     if l == 0:
         raise ValueError("Too few blocks to do a proper estimate of the error.")
     select = numpy.arange(len(x)-l, len(x))
-    (einf, be), resids, rank, svals = numpy.linalg.lstsq(
+    einf, be = numpy.linalg.lstsq(
         numpy.array([numpy.ones(len(select), float), 1/x[select]]).transpose(),
         e[select],
-    )
+    )[0]
 
     select = select[numpy.isfinite(c[select])]
     if len(select) > 3:
@@ -235,5 +235,5 @@ def mean_error_blav(signal, min_blocks=100):
        Optional argument:
          min_blocks  --  The minimum number of blocks to be considered.
     """
-    return compute_blav(1.0, signal, min_blocks=100)[:2]
+    return compute_blav(1.0, signal, min_blocks=min_blocks)[:2]
 

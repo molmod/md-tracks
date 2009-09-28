@@ -32,7 +32,7 @@
 # --
 
 
-import os, shlex, sys
+import shlex
 from subprocess import Popen, PIPE
 
 

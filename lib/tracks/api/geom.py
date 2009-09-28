@@ -32,12 +32,7 @@
 # --
 
 
-from molmod.ext import molecules_distance_matrix, ff_dm_quad
-from molmod.minimizer import Minimizer, NewtonGLineSearch
 from molmod.transformations import superpose
-from molmod.units import angstrom
-
-from tracks.log import log
 
 import numpy
 

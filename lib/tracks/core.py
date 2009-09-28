@@ -36,7 +36,7 @@ from tracks.log import log
 from tracks.util import fix_slice
 from tracks import context
 
-import numpy, os, struct, itertools
+import numpy, os
 
 
 __all__ = [
@@ -191,6 +191,7 @@ class MultiTrackBase(object):
 
 class MultiTracksReader(MultiTrackBase):
     def __init__(self, filenames, dtype, buffer_size=None, dot_interval=None, sub=slice(None)):
+        MultiTrackBase.__init__(self)
         if buffer_size is None:
             buffer_size = context.default_buffer_size
         if dot_interval is None:
@@ -259,6 +260,7 @@ class MultiTracksReader(MultiTrackBase):
 
 class MultiTracksWriter(MultiTrackBase):
     def __init__(self, filenames, dtype, buffer_size=None, dot_interval=None, clear=True):
+        MultiTrackBase.__init__(self)
         if buffer_size is None:
             buffer_size = context.default_buffer_size
         if dot_interval is None:

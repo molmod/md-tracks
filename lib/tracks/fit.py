@@ -35,24 +35,10 @@
 import numpy
 
 
-__all__ = ["Model", "GaussianModel", "PeakModel", "FitCostFunction"]
+__all__ = ["GaussianModel", "PeakModel", "FitCostFunction"]
 
 
-class Model(object):
-    def get_parameters(self):
-        raise NotImplementedError
-
-    def set_parameters(self, parameters):
-        raise NotImplementedError
-
-    def __call__(self, f):
-        raise NotImplementedError
-
-    def gradient(self, f):
-        raise NotImplementedError
-
-
-class GaussianModel(Model):
+class GaussianModel(object):
     def __init__(self, parameters):
         assert parameters.shape == (3,)
         self.parameters = parameters
@@ -98,7 +84,7 @@ class GaussianModel(Model):
         return result
 
 
-class PeakModel(Model):
+class PeakModel(object):
     def __init__(self, parameters=None):
         if parameters is None:
             self.b = 0

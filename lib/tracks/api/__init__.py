@@ -32,11 +32,11 @@
 # --
 
 
-from ac import *
-from cell import *
-from geom import *
-from pca import *
-from spectrum import *
-from vector import *
+from tracks.api.ac import *
+from tracks.api.cell import *
+from tracks.api.geom import *
+from tracks.api.pca import *
+from tracks.api.spectrum import *
+from tracks.api.vector import *
 
 
