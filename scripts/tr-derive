@@ -34,10 +34,8 @@
 
 
 from tracks.core import load_track, dump_track
-from tracks.parse import parse_slice, parse_x_step
+from tracks.parse import parse_x_step
 from tracks.log import log, usage_tail
-
-from molmod.units import parse_unit
 
 import numpy, os
 from optparse import OptionParser

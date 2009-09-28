@@ -41,7 +41,7 @@ from tracks.log import log, usage_tail
 import tracks.api.vector as vector
 import tracks.api.cell as cell
 
-import numpy, os
+import os
 from optparse import OptionParser
 
 

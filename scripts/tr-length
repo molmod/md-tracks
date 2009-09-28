@@ -34,12 +34,8 @@
 
 
 from tracks.core import track_size
-from tracks.parse import parse_slice
 from tracks.log import usage_tail
 
-from molmod.units import parse_unit
-
-import numpy
 from optparse import OptionParser
 
 

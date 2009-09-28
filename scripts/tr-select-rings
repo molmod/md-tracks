@@ -39,7 +39,6 @@ from tracks.optparse import add_select_options
 from molmod.io.psf import PSFFile
 from molmod.graphs import GraphSearch, RingPattern
 
-import numpy
 from optparse import OptionParser
 
 
@@ -48,7 +47,7 @@ usage = """%prog [options] connectivity.psf ring_size
 %prog prints out all the ring structures in the psf file, one line per ring
 structure. Each line consists of a comma-separated list of atom indexes that
 form a ring. The order of the atom indexes correspons to the order of the
-atoms in the rings."""
+atoms in the rings.""" + usage_tail
 
 parser = OptionParser(usage)
 add_select_options(parser)

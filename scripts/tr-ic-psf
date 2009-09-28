@@ -44,7 +44,7 @@ import tracks.api.cell as cell
 
 from molmod.io.psf import PSFFile
 
-import numpy, os
+import os
 from optparse import OptionParser
 
 

@@ -37,8 +37,6 @@ from tracks.parse import parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.log import log, usage_tail
 
-from molmod.units import parse_unit
-
 import numpy
 from optparse import OptionParser
 
@@ -76,7 +74,7 @@ for path_in in paths_in:
         result = numpy.zeros(max_steps, float)
         counts = numpy.zeros(max_steps, int)
 
-    for origin in xrange(0,len(inp)-1,delta_origin):
+    for origin in xrange(0, len(inp)-1,delta_origin):
         size = len(inp)-origin-1
         result[:size] += (inp[origin] - inp[origin+1:])**2
         counts[:size] += 1

@@ -33,7 +33,7 @@
 # --
 
 
-from tracks.core import load_track, dump_track
+from tracks.core import load_track
 from tracks.parse import parse_x_step, parse_slice
 from tracks.optparse import add_quiet_option, add_slice_option, add_cor_time_unit
 from tracks.log import log, usage_tail
@@ -110,10 +110,10 @@ if options.plot_error is not None:
         pylab.title("Block average plot for %s" % path_in)
         pylab.xlabel("Block size [%s]" % options.time_unit)
         pylab.ylabel("Error on the mean [%s]" % options.unit)
-        pylab.plot(x/time_unit,e/unit,"k+")
-        pylab.plot(x[-l:]/time_unit,(einf+be/x[-l:])/unit,"r-", linewidth=1)
+        pylab.plot(x/time_unit, e/unit, "k+")
+        pylab.plot(x[-l:]/time_unit, (einf+be/x[-l:])/unit, "r-", linewidth=1)
         pylab.axhline(einf/unit, color="r", linewidth=1)
-        pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
+        pylab.grid(True, linestyle="-", linewidth=0.2, alpha=0.5)
         pylab.savefig(options.plot_error)
     else:
         log('Block average plot skipped due to cinf=numpy.inf.')
@@ -125,10 +125,10 @@ if options.plot_ctime is not None:
         pylab.title("Block average plot for %s" % path_in)
         pylab.xlabel("Block size [%s]" % options.time_unit)
         pylab.ylabel("Correlation time [%s]" % options.time_unit)
-        pylab.plot(x/time_unit,c/time_unit,"k+")
-        pylab.plot(x[-l:]/time_unit,(cinf+bc/x[-l:])/time_unit,"r-", linewidth=1)
+        pylab.plot(x/time_unit, c/time_unit, "k+")
+        pylab.plot(x[-l:]/time_unit, (cinf+bc/x[-l:])/time_unit, "r-", linewidth=1)
         pylab.axhline(cinf/time_unit, color="r", linewidth=1)
-        pylab.grid(True,linestyle="-",linewidth=0.2, alpha=0.5)
+        pylab.grid(True, linestyle="-", linewidth=0.2, alpha=0.5)
         pylab.savefig(options.plot_ctime)
     else:
         log('Block average plot skipped due to sinf=numpy.inf.')

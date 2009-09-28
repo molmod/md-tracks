@@ -38,7 +38,6 @@ from tracks.optparse import add_quiet_option, add_slice_option
 from tracks.parse import parse_slice
 from tracks.log import log, usage_tail
 
-import numpy
 from optparse import OptionParser
 
 
@@ -68,7 +67,7 @@ sub = parse_slice(options.slice)
 for path_in in paths_in:
     inp = load_track(path_in, sub)
     inp = inp[:(len(inp)/block_size)*block_size]
-    inp = inp.reshape((-1,block_size))
+    inp = inp.reshape((-1, block_size))
     reduced = inp.mean(axis=1)
     reduced_std = inp.std(axis=1)
     reduced_min = inp.min(axis=1)

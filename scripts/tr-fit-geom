@@ -41,7 +41,7 @@ from tracks.util import AtomFilter
 from tracks.log import log, usage_tail
 from tracks.api import fit_geometry
 
-from molmod.io.xyz import XYZFile, XYZWriter
+from molmod.io.xyz import XYZFile
 from molmod.periodic import periodic
 
 from optparse import OptionParser

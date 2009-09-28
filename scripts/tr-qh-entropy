@@ -32,10 +32,10 @@
 #
 # --
 
-from tracks.core import MultiTracksReader, Track, dump_track, MultiTracksWriter
+from tracks.core import MultiTracksReader
 from tracks.parse import parse_slice, parse_unit
 from tracks.optparse import add_quiet_option, add_slice_option
-from tracks.log import log, usage_tail
+from tracks.log import usage_tail
 
 from molmod.periodic import periodic
 from molmod.io.xyz import XYZFile

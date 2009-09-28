@@ -419,7 +419,7 @@ class HLineDescriptor(StraightHLineDescriptor):
         kwargs["xmin"] = float(self.options.min)
         kwargs["xmax"] = float(self.options.max)
         for value in self.values:
-           self.patch = pylab.axhline((value-yref)/yunit, **kwargs)
+            self.patch = pylab.axhline((value-yref)/yunit, **kwargs)
 
 PlotDescriptor.kinds["hline"] = HLineDescriptor
 

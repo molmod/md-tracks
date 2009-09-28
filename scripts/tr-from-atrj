@@ -40,8 +40,6 @@ from tracks.optparse import add_quiet_option, add_slice_option,  \
 from tracks.util import AtomFilter
 from tracks.log import log, usage_tail
 
-from molmod.units import parse_unit
-
 from optparse import OptionParser
 
 

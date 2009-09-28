@@ -37,7 +37,7 @@ from tracks.core import load_track, dump_track
 from tracks.parse import parse_slice
 from tracks.log import usage_tail
 
-import numpy, os
+import os
 from optparse import OptionParser
 
 
