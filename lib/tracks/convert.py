@@ -34,7 +34,8 @@
 
 from tracks.core import MultiTracksReader, MultiTracksWriter
 from molmod.io import XYZReader, ATRJReader, DLPolyHistoryReader, \
-    DLPolyOutputReader, LAMMPSDumpReader, GroReader, XYZWriter
+    DLPolyOutputReader, LAMMPSDumpReader, GroReader, XYZWriter, \
+    CPMDTrajectoryReader
 from molmod.units import angstrom, femtosecond, deg, amu, picosecond, bar
 
 import os, numpy, itertools
@@ -156,32 +157,24 @@ def cpmd_traj_to_tracks(filename, num_atoms, destination, sub=slice(None), atom_
         atom_indexes = range(num_atoms)
     else:
         atom_indexes = list(atom_indexes)
-    names = sum((
-        ["atom.pos.%07i.x" % index, "atom.pos.%07i.y" % index, "atom.pos.%07i.z" % index, "atom.vel.%07i.x" % index, "atom.vel.%07i.y" % index, "atom.vel.%07i.z" % index]
-        for index in atom_indexes
-    ), [])
+    names = []
+    for index in atom_indexes:
+        names.append("atom.pos.%07i.x" % index)
+        names.append("atom.pos.%07i.y" % index)
+        names.append("atom.pos.%07i.z" % index)
+    for index in atom_indexes:
+        names.append("atom.vel.%07i.x" % index)
+        names.append("atom.vel.%07i.y" % index)
+        names.append("atom.vel.%07i.z" % index)
     filenames = list(os.path.join(destination, name) for name in names)
 
-    shape = (len(atom_indexes), 6)
-    dtype = numpy.dtype([("cor", float, shape)])
+    shape = (len(atom_indexes), 3)
+    dtype = numpy.dtype([("pos", float, shape), ("vel", float, shape)])
     mtw = MultiTracksWriter(filenames, dtype, clear=clear)
 
-    f = file(filename)
-    counter = 0
-    row = 0
-    frame = numpy.zeros(shape, float)
-    for line in f:
-        if row < len(atom_indexes) or atom_indexes[row] == counter:
-            words = line.split()[1:]
-            for col, word in enumerate(words):
-                frame[row,col] = float(word)
-            row += 1
-        counter += 1
-        if counter == num_atoms:
-            mtw.dump_row((frame,))
-            counter = 0
-            row = 0
-    f.close()
+    ctr = CPMDTrajectoryReader(filename, sub)
+    for pos, vel in ctr:
+        mtw.dump_row((pos,vel))
     mtw.finish()
 
 
