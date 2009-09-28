@@ -200,7 +200,7 @@ def compute_blav(time_step, signal, min_blocks=100):
 
     l = len(e)*2/3
     if l == 0:
-        raise Error("Too few blocks to do a proper estimate of the error.")
+        raise ValueError("Too few blocks to do a proper estimate of the error.")
     select = numpy.arange(len(x)-l, len(x))
     (einf, be), resids, rank, svals = numpy.linalg.lstsq(
         numpy.array([numpy.ones(len(select), float), 1/x[select]]).transpose(),

@@ -327,7 +327,7 @@ class CovarianceBlocks(object):
            However it is computationally much cheaper to call this method.
         """
         if num > len(self.blocks):
-            raise ValueError("Not enough blocks: num=%i > len(self.covs)=%i" % (num, len(self.covs)))
+            raise ValueError("Not enough blocks: num=%i > len(self.covs)=%i" % (num, len(self.blocks)))
         result = CovarianceBlocks(self.block_size*num, self.weights, self.correlation, self.reference)
         for i in xrange(len(self.blocks)/num):
             for j in xrange(num):

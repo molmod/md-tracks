@@ -42,13 +42,9 @@ import sys, numpy
 
 
 __all__ = [
-    "Error", "parse_slice", "get_delta", "parse_x_step",
+    "parse_slice", "get_delta", "parse_x_step",
     "parse_x_duration", "parse_x_length", "iter_unit_cells",
 ]
-
-
-class Error(Exception):
-    pass
 
 
 def parse_slice(s):
@@ -72,13 +68,13 @@ def _parse_x_track(s, fn, convert=parse_unit):
         try:
             return convert(s)
         except ValueError:
-            raise Error("Can not open file %s and can not interpret %s." % (s, s))
+            raise ValueError("Can not open file %s and can not interpret %s." % (s, s))
 
 
 def get_delta(x_axis):
     delta = x_axis[1:] - x_axis[:-1]
     if (delta[0] != delta).all():
-        raise Error("The %s-axis is not equidistant. Is %s truly a %s-axis?" % (measure, s, measure))
+        raise ValueError("The axis is not equidistant.")
     return delta[0]
 
 

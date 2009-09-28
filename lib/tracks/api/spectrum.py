@@ -136,7 +136,7 @@ class SpectrumProcessor(object):
              amplitudes_err  --  The statistical error on the amplitudes.
         """
         if self._count == 0:
-            raise SpectrumError("There are no results yet. Call the process method first.")
+            raise RuntimeError("There are no results yet. Call the process method first.")
 
         amplitudes = self._sum/(self._count*self._block_size)
         amplitudes_sq = self._sum_sq/(self._count*self._block_size)
