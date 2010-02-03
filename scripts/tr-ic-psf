@@ -319,7 +319,7 @@ elif kind == 'dihed':
                 log("WARNING %s" % str(e))
 
 elif kind == 'dtl':
-    from molmod.graphs import GraphSearch, SubgraphPattern, CriteriaSet, Graph
+    from molmod import GraphSearch, CustomPattern, CriteriaSet, Graph
 
     if len(filter_args) == 0:
         atom_filter1 = AtomFilter()
@@ -333,7 +333,7 @@ elif kind == 'dtl':
         parser.error("When kind is dtl, three or none atom filter arguments are expected, got %i." % len(filter_args))
 
     graph = psf.get_graph()
-    match_generator = GraphSearch(SubgraphPattern(
+    match_generator = GraphSearch(CustomPattern(
         Graph([(0,1),(0,2)]),
         [CriteriaSet({0: atom_filter1, 1: atom_filter2, 2: atom_filter3})],
         vertex_tags = {0: 0, 1: 1, 2: 2}
@@ -370,7 +370,7 @@ elif kind == 'dtl':
             log("WARNING %s" % str(e))
 
 elif kind == 'oop':
-    from molmod.graphs import GraphSearch, SubgraphPattern, CriteriaSet, Graph
+    from molmod.graphs import GraphSearch, CustomPattern, CriteriaSet, Graph
 
     if len(filter_args) == 0:
         atom_filter1 = AtomFilter()
@@ -386,7 +386,7 @@ elif kind == 'oop':
         parser.error("When kind is oop, four or none arguments are expected, got %i." % len(filter_args))
 
     graph = psf.get_graph()
-    match_generator = GraphSearch(SubgraphPattern(
+    match_generator = GraphSearch(CustomPattern(
         Graph([(3,0), (3,1), (3,2)]),
         [CriteriaSet({0: atom_filter1, 1: atom_filter2, 2: atom_filter3, 3: atom_filter4})],
     ))
