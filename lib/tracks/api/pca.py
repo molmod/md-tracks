@@ -1,6 +1,6 @@
 # MD-Tracks is a statistical analysis toolkit for molecular dynamics
 # and monte carlo simulations.
-# Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
+# Copyright (C) 2007 - 2010 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
 # for Molecular Modeling (CMM), Ghent University, Ghent, Belgium; all rights
 # reserved unless otherwise stated.
 #
@@ -559,4 +559,5 @@ def pca_common_script(
             dump_track("%s.sigmas_err.%07i" % (output_prefix, level), sigmas_err)
 
     return cm.mean
+
 

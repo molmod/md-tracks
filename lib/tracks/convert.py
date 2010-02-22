@@ -1,6 +1,6 @@
 # MD-Tracks is a statistical analysis toolkit for molecular dynamics
 # and monte carlo simulations.
-# Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
+# Copyright (C) 2007 - 2010 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
 # for Molecular Modeling (CMM), Ghent University, Ghent, Belgium; all rights
 # reserved unless otherwise stated.
 #
@@ -417,4 +417,5 @@ def gro_to_tracks(filename, destination, sub=slice(None), clear=True):
     for time, pos, vel, cell in gro_reader:
         mtw.dump_row((time, pos, vel, cell))
     mtw.finish()
+
 

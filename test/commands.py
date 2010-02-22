@@ -1,6 +1,6 @@
 # MD-Tracks is a statistical analysis toolkit for molecular dynamics
 # and monte carlo simulations.
-# Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
+# Copyright (C) 2007 - 2010 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
 # for Molecular Modeling (CMM), Ghent University, Ghent, Belgium; all rights
 # reserved unless otherwise stated.
 #
@@ -1633,4 +1633,5 @@ class CommandsTestCase(BaseTestCase):
         self.assert_(os.path.isfile("tracks/fit.rot.c.z"))
         self.assert_(os.path.isfile("tracks/fit.trans.x"))
         self.assert_(os.path.isfile("tracks/fit.trans.z"))
+
 

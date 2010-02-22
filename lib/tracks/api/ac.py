@@ -1,6 +1,6 @@
 # MD-Tracks is a statistical analysis toolkit for molecular dynamics
 # and monte carlo simulations.
-# Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
+# Copyright (C) 2007 - 2010 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
 # for Molecular Modeling (CMM), Ghent University, Ghent, Belgium; all rights
 # reserved unless otherwise stated.
 #
@@ -236,4 +236,5 @@ def mean_error_blav(signal, min_blocks=100):
          min_blocks  --  The minimum number of blocks to be considered.
     """
     return compute_blav(1.0, signal, min_blocks=min_blocks)[:2]
+
 

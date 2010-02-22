@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # MD-Tracks is a statistical analysis toolkit for molecular dynamics
 # and monte carlo simulations.
-# Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
+# Copyright (C) 2007 - 2010 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
 # for Molecular Modeling (CMM), Ghent University, Ghent, Belgium; all rights
 # reserved unless otherwise stated.
 #
@@ -115,4 +115,5 @@ log("WRITTEN %s.normalized" % path_out)
 
 cor_time = fit_cor_time(time_step, result)
 log("Correlation time [%s]: %.3f" % (options.time_unit, cor_time/time_unit))
+
 

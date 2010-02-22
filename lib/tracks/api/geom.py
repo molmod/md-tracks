@@ -1,6 +1,6 @@
 # MD-Tracks is a statistical analysis toolkit for molecular dynamics
 # and monte carlo simulations.
-# Copyright (C) 2007 - 2009 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
+# Copyright (C) 2007 - 2010 Toon Verstraelen <Toon.Verstraelen@UGent.be>, Center
 # for Molecular Modeling (CMM), Ghent University, Ghent, Belgium; all rights
 # reserved unless otherwise stated.
 #
@@ -79,4 +79,5 @@ def fit_geometry(ref_coordinates, mtr, mtw, do_geom=False, do_transform=False, w
             row.append(transform.r)
         mtw.dump_row(tuple(row))
     mtw.finish()
+
 
