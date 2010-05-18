@@ -5,10 +5,6 @@ if [ -n $1 ] && [ "$1" = "--system" ]; then
   rm -v /usr/local/bin/tr-*
   rm -vr /usr/local/lib/python*/site-packages/tracks
 else
-  if [ -z $PYTHONPATH ]; then
-    echo 'WARNING: $PYTHONPATH is not defined, defaulting to \$HOME/lib/python'
-    PYTHONPATH=$HOME/lib/python
-  fi
   rm -v $HOME/bin/tr-*
-  rm -vr $PYTHONPATH/tracks
+  rm -vr $HOME/lib/python/tracks
 fi
