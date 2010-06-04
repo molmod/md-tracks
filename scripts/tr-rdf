@@ -169,7 +169,7 @@ def iter_deltas():
 
 def iter_distances():
     for uc, deltas in itertools.izip(iter_unit_cells(unit_cell_str, sub), iter_deltas()):
-        rho = N/uc.generalized_volume
+        rho = N/uc.volume
         reference_counts = rho*4*numpy.pi/3*((radii+bin_width)**3-radii**3)
         distances = []
         if uc is None:
