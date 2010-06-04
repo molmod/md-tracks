@@ -124,7 +124,7 @@ else:
     ], project=options.project)
 
     if options.project:
-        results_pos, results_vel, projections = result
+        results_pos, results_vel, projections, foo = result
     else:
         results_pos, results_vel = result
 

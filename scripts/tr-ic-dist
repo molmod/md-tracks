@@ -42,6 +42,7 @@ import tracks.api.vector as vector
 import tracks.api.cell as cell
 
 from optparse import OptionParser
+import os
 
 
 usage = """%prog [options] pos_prefix1 pos_prefix2 [vel_prefix1 vel_prefix2] pos_output [vel_output]
@@ -99,7 +100,7 @@ else:
     )
 
     if options.project:
-        dist_pos, dist_vel, proj_vel = result
+        dist_pos, dist_vel, proj_vel, foo = result
     else:
         dist_pos, dist_vel = result
 
@@ -108,8 +109,10 @@ else:
     dump_track(vel_output_path, dist_vel)
     log("WRITTEN: %s" % vel_output_path)
     if options.project:
-        proj_output_path = "%s.proj" % vel_output_path
-        dump_track(proj_output_path, proj_vel)
-        log("WRITTEN: %s" % proj_output_path)
+        for i, vel_prefix in enumerate([vel_prefix1,vel_prefix2]):
+            for j, c in enumerate('xyz'):
+                filename = "%s.%s.proj.%s" % (vel_prefix, c, os.path.basename(vel_output_path))
+                dump_track(filename, proj_vel[i].data[j])
+                log("WRITTEN: %s" % filename)
 
 

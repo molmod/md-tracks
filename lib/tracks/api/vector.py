@@ -147,11 +147,14 @@ def dist(p1, p2, v1=None, v2=None, track_cell=None, project=False):
     if v1 is None:
         return pd
     else:
-        vd = dot(v1-v2, p_delta)/pd
+        tangent = p_delta/pd
+        vd = dot(v1-v2, tangent)
         if not project:
             return pd, vd
         else:
-            return pd, vd, vd
+            tangent /= numpy.sqrt(2)
+            proj = tangent*vd
+            return pd, vd, (proj, -proj), (tangent, -tangent)
 
 
 def bend(p1, p2, p3, v1=None, v2=None, v3=None, return_cos=False, track_cell=None):
@@ -411,8 +414,8 @@ def puckering(ps, vs=None, project=False):
     elif project is False:
         return p_results, derivative(vs)
     else:
-        # A) construct the gradient of the puckering coordinates
-        gradient = []
+        # A) construct the proj of the puckering coordinates
+        proj = []
         for i in xrange(len(ps)):
             grad_comp = []
             for j in xrange(3):
@@ -423,10 +426,10 @@ def puckering(ps, vs=None, project=False):
                 ]) for k in range(len(ps))]
                 ds[i].data[j][:] = 1
                 grad_comp.append(derivative(ds))
-            gradient.append(grad_comp)
+            proj.append(grad_comp)
 
         # B) Compute the norms of the gradients
-        labels = gradient[0][0].keys()
+        labels = proj[0][0].keys()
         norms_sq = {}
         for label in labels:
             norm_sq = 0.0
@@ -435,10 +438,10 @@ def puckering(ps, vs=None, project=False):
             test_z = 0.0
             for i in xrange(len(ps)):
                 for j in xrange(3):
-                    norm_sq += gradient[i][j][label]**2
-                test_x += gradient[i][0][label]
-                test_y += gradient[i][1][label]
-                test_z += gradient[i][2][label]
+                    norm_sq += proj[i][j][label]**2
+                test_x += proj[i][0][label]
+                test_y += proj[i][1][label]
+                test_z += proj[i][2][label]
             norms_sq[label] = norm_sq
 
         # C) project the cartesian coordinates of the velocity on the gradients
@@ -446,8 +449,8 @@ def puckering(ps, vs=None, project=False):
         for label in labels:
             for i in xrange(len(ps)):
                 for j in xrange(3):
-                    gradient[i][j][label] *= v_results[label]/norms_sq[label]
+                    proj[i][j][label] *= v_results[label]/norms_sq[label]
 
-        return p_results, v_results, gradient
+        return p_results, v_results, proj, None
 
 
