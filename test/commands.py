@@ -416,7 +416,7 @@ class CommandsTestCase(BaseTestCase):
         self.execute("tr-to-xyz", [os.path.join(input_dir, "thf01/init.xyz"), "tracks/atom.pos", "test.pos.xyz", "-a2,5"])
         xyz_reader_orig = XYZReader(os.path.join(input_dir, "thf01/md-pos-1.xyz"))
         xyz_reader_copy = XYZReader("test.pos.xyz")
-        self.assertEqual(xyz_reader_copy.symbols,['C','H'])
+        self.assertEqual(xyz_reader_copy.symbols,('C','H'))
         for (title_orig, coordinates_orig), (tile_copy, coordinates_copy) in zip(xyz_reader_orig, xyz_reader_copy):
             self.assertArraysAlmostEqual(coordinates_orig[[2,5]], coordinates_copy, 1e-7)
         self.from_xyz("water32", "pos")
