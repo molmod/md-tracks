@@ -44,7 +44,7 @@ if __name__ == "__main__":
         author='Toon Verstraelen',
         author_email='Toon.Verstraelen@UGent.be',
         url='http://molmod.ugent.be/code/',
-        package_dir = {'tracks': 'lib/tracks'},
+        package_dir = {'tracks': 'tracks'},
         packages = ['tracks', 'tracks.api'],
         scripts=glob("scripts/*"),
         classifiers=[
