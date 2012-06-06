@@ -188,10 +188,15 @@ def compute_blav(time_step, signal, min_blocks=100):
             signal[i*block_size:(i+1)*block_size].mean() for i in xrange(n_blocks)
         ], float)
 
+        var = signal[:total_size].var()
+        if var == 0:
+            # useless datapoint
+            continue
+
         x.append(block_size*time_step)
         e.append(averages.std()/numpy.sqrt(n_blocks))
-        c.append(0.5*averages.var()/signal[:total_size].var()*block_size*time_step)
-        s.append(averages.var()/signal[:total_size].var()*block_size)
+        c.append(0.5*averages.var()/var*block_size*time_step)
+        s.append(averages.var()/var*block_size)
 
     x = numpy.array(x)
     e = numpy.array(e)

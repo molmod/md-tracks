@@ -174,7 +174,10 @@ class MultiTrackBase(object):
             sub_dtype = dtype.fields[name][0]
             for flat_index in xrange(numpy.product(sub_dtype.shape,dtype=int)):
                 track = Track(filenames[counter], clear=clear)
-                index = numpy.unravel_index(flat_index, sub_dtype.shape)
+                if len(sub_dtype.shape) == 0:
+                    index = tuple([])
+                else:
+                    index = numpy.unravel_index(flat_index, sub_dtype.shape)
                 l.append((index, track))
                 counter += 1
 

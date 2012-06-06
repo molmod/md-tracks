@@ -34,26 +34,15 @@
 
 import os, sys, glob
 
-orig_dir = os.getcwd()
-if '-i' in sys.argv:
-    # use the installed library for testing
-    sys.argv.remove('-i')
-    scripts_dir = "/usr/bin"
-    lib_dir = None
-else:
-    retcode = os.system("(cd ..; python setup.py build)")
-    if retcode != 0: sys.exit(retcode)
-    scripts_dir = glob.glob(os.path.join(os.path.dirname(orig_dir), "build/scripts*"))[0]
-    lib_dir = glob.glob(os.path.join(os.path.dirname(orig_dir), "build/lib*"))[0]
-    sys.path.insert(0, lib_dir)
-
-tmp_dir = os.path.join(orig_dir, "tmp")
-input_dir = os.path.join(orig_dir, "input")
-output_dir = os.path.join(orig_dir, "output")
+orig_dir = os.path.abspath('test')
+tmp_dir = os.path.join(orig_dir, 'tmp')
+input_dir =  os.path.join(orig_dir, 'input')
+output_dir =  os.path.join(orig_dir, 'output')
+lib_dir =  os.path.join(orig_dir, '../')
+scripts_dir =  os.path.join(orig_dir, '../scripts')
 
 if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
-
 
 import unittest, shutil, numpy
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in `find lib scripts test | egrep "\.pyc$|\.py~$|\.pyc~$|\.bak$"` ; do rm -v ${i}; done
+for i in `find tracks scripts test | egrep "\.pyc$|\.py~$|\.pyc~$|\.bak$"` ; do rm -v ${i}; done
 
 rm -vr debian/python-*
 rm -vr debian/pycompat

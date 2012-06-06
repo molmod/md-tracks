@@ -142,7 +142,10 @@ class MultiTrackTestCase(BaseTestCase):
             sub_data = data[name]
             sub_dtype = data.dtype.fields[name][0]
             for flat_index in xrange(numpy.product(sub_dtype.shape,dtype=int)):
-                index = numpy.unravel_index(flat_index, sub_dtype.shape)
+                if len(sub_dtype.shape) == 0:
+                    index = tuple([])
+                else:
+                    index = numpy.unravel_index(flat_index, sub_dtype.shape)
                 dump_track(filenames[counter], sub_data[(slice(None),)+index])
                 counter += 1
 
@@ -154,7 +157,10 @@ class MultiTrackTestCase(BaseTestCase):
             sub_data = data[name]
             sub_dtype = data.dtype.fields[name][0]
             for flat_index in xrange(numpy.product(sub_dtype.shape,dtype=int)):
-                index = numpy.unravel_index(flat_index, sub_dtype.shape)
+                if len(sub_dtype.shape) == 0:
+                    index = tuple([])
+                else:
+                    index = numpy.unravel_index(flat_index, sub_dtype.shape)
                 tmp = load_track(filenames[counter])
                 sub_data[(slice(None),)+index] = tmp
                 counter += 1

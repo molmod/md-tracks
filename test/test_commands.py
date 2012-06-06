@@ -1156,13 +1156,13 @@ class CommandsTestCase(BaseTestCase):
         # ordinary hist, with error bars
         self.execute("tr-hist", glob.glob("tracks/atom.bond.pos.???????.???????") + ["--bin-tracks", "1.0*A", "1.2*A", "20", "tracks/atom.bond.pos.df"])
         lines = []
-        for bin_filename in sorted(glob.glob("tracks/atom.bond.pos.df.bin.???????")):
+        for bin_filename in sorted(glob.glob("tracks/atom.bond.pos.df.bin.???????"))[:19]:
             output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
             lines.append(output[0])
         self.execute("tr-from-txt", ["tracks/atom.bond.pos.df.hist", "tracks/atom.bond.pos.df.hist.error"], stdin=lines)
         df_hist_bis = load_track("tracks/atom.bond.pos.df.hist")
         self.assertAlmostEqual(df_hist_bis.sum(), 1.0, 2)
-        self.assertArraysAlmostEqual(df_hist, df_hist_bis, 1e-5)
+        self.assertArraysAlmostEqual(df_hist[:19], df_hist_bis, 1e-5)
         self.execute("tr-plot", [
             "--title=C-H bond length distribution", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
             ":bar", "tracks/atom.bond.pos.df.bins", "tracks/atom.bond.pos.df.hist", "tracks/atom.bond.pos.df.hist.error",
@@ -1170,13 +1170,13 @@ class CommandsTestCase(BaseTestCase):
         ])
         # cumulative hist, with error bars
         lines = []
-        for bin_filename in sorted(glob.glob("tracks/atom.bond.pos.df.cumul.bin.???????")):
+        for bin_filename in sorted(glob.glob("tracks/atom.bond.pos.df.cumul.bin.???????"))[:19]:
             output = self.execute("tr-blav", [bin_filename, "tracks/time", "-b10"])
             lines.append(output[0])
         self.execute("tr-from-txt", ["tracks/atom.bond.pos.df.cumul.hist", "tracks/atom.bond.pos.df.cumul.hist.error"], stdin=lines)
         cdf_hist_bis = load_track("tracks/atom.bond.pos.df.cumul.hist")
         self.assertAlmostEqual(cdf_hist_bis[-1], 1.0, 2)
-        self.assertArraysAlmostEqual(cdf_hist, cdf_hist_bis, 1e-5)
+        self.assertArraysAlmostEqual(cdf_hist[:19], cdf_hist_bis, 1e-5)
         self.execute("tr-plot", [
             "--title=C-H bond length distribution", "--xlabel=C-H Distance", "--xunit=A", "--yunit=1", "--ylabel=Frequency",
             ":bar", "tracks/atom.bond.pos.df.bins", "tracks/atom.bond.pos.df.cumul.hist", "tracks/atom.bond.pos.df.cumul.hist.error",

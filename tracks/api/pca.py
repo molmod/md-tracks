@@ -210,7 +210,7 @@ class CovarianceMatrix(object):
 
            Call finish_proj after the last call to data_proj.
         """
-        self.ccs = self.dot_data_cos**2/(self.sqnorms_data*self.sqnorms_cos)
+        self.ccs = self.dot_data_cos**2/(self.sqnorms_data*self.sqnorms_cos+1e-10)
         if self.proj_mtw is not None:
             self.proj_mtw.finish()
         del self.proj_mtw
@@ -441,6 +441,8 @@ def cov_overlap(A, B):
        Cite this paper when you use this routine.
     """
     distance_max = numpy.sqrt(numpy.trace(A) + numpy.trace(B))
+    if distance_max == 0:
+        return 1.0
     evals_A, evecs_A = numpy.linalg.eigh(A)
     evals_B, evecs_B = numpy.linalg.eigh(B)
     tmp_A = evecs_A * numpy.sqrt(abs(evals_A))
@@ -471,7 +473,10 @@ def cov_overlap_multi(covs):
     average = covs_sqrt.mean(axis=0)
     msd = ((covs_sqrt - average)**2).mean()
     msa = (covs_sqrt**2).mean()
-    return numpy.sqrt(msd/msa)
+    if msa == 0:
+        return 0
+    else:
+        return numpy.sqrt(msd/msa)
 
 
 pca_common_usage = """The following files are always written to the tracks database
