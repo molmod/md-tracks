@@ -1,0 +1,218 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>1. Installation &mdash; MD-Tracks v0.0 documentation</title>
+    <link rel="stylesheet" href="static/default.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '0.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="MD-Tracks v0.0 documentation" href="index.html" />
+    <link rel="next" title="2. If you encounter a problem" href="tut_support.html" />
+    <link rel="prev" title="MD-Tracks documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="tut_support.html" title="2. If you encounter a problem"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="MD-Tracks documentation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">MD-Tracks v0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="installation">
+<h1>1. Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="disclaimer">
+<h2>1.1. Disclaimer<a class="headerlink" href="#disclaimer" title="Permalink to this headline">¶</a></h2>
+<p>MD-Tracks is developed and tested in modern Linux environments. The
+installation instructions below are given for a Linux system only. If you want
+to use MD-Tracks on other operating systems such as Windows or OSX, you should
+have a minimal computer geek status to get it working. We are always interested
+in hearing from your installation adventures.</p>
+</div>
+<div class="section" id="molmod-dependency">
+<h2>1.2. MolMod dependency<a class="headerlink" href="#molmod-dependency" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://molmod.github.com/molmod/">MolMod</a> is a Python library used by most
+Python programs developed at the CMM. It must be installed before MD-Tracks can
+be used or installed. Installation and download instructions can be found in the
+<a class="reference external" href="http://molmod.github.com/molmod/tutorial/install.html">molmod documentation</a>.
+The instructions below only work of the MolMod package is installed.</p>
+</div>
+<div class="section" id="external-dependencies">
+<h2>1.3. External dependencies<a class="headerlink" href="#external-dependencies" title="Permalink to this headline">¶</a></h2>
+<p>Some software packages should be installed before MD-Tracks can be installed or
+used. It is recommended to use the software package management of your Linux
+distribution to install these dependencies.</p>
+<p>The following software must be installed:</p>
+<ul class="simple">
+<li>Python 2.5, 2.6 or 2.7 (including the development files): <a class="reference external" href="http://www.python.org/">http://www.python.org/</a></li>
+<li>Numpy &gt;= 1.0: <a class="reference external" href="http://numpy.scipy.org/">http://numpy.scipy.org/</a></li>
+<li>MatPlotLib &gt;= 1.0: <a class="reference external" href="http://matplotlib.sourceforge.net/">http://matplotlib.sourceforge.net/</a></li>
+</ul>
+<p>Most Linux distributions can install this software with just a single terminal
+command.</p>
+<ul>
+<li><p class="first">Ubuntu 12.4:</p>
+<div class="highlight-python"><pre>sudo apt-get install python-numpy python-matplotlib</pre>
+</div>
+</li>
+<li><p class="first">Fedora 17:</p>
+<div class="highlight-python"><pre>sudo yum install {TODO}</pre>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="installing-the-latest-version-of-md-tracks">
+<h2>1.4. Installing the latest version of MD-Tracks<a class="headerlink" href="#installing-the-latest-version-of-md-tracks" title="Permalink to this headline">¶</a></h2>
+<p>The following series of commands will download the latest version of md-tracks,
+and will then install it into your home directory.</p>
+<div class="highlight-python"><pre>cd ~/build/
+git clone git://github.com/molmod/md-tracks.git
+(cd md-Tracks; ./setup.py install --home=~)</pre>
+</div>
+<p>You are now ready to start using MD-Tracks!</p>
+</div>
+<div class="section" id="upgrading-to-the-latest-version-of-molmod-and-md-tracks">
+<h2>1.5. Upgrading to the latest version of MolMod and MD-Tracks<a class="headerlink" href="#upgrading-to-the-latest-version-of-molmod-and-md-tracks" title="Permalink to this headline">¶</a></h2>
+<p>In case you want to upgrade MD-Tracks to the latests development version after
+a previous install, then execute the following commands (in the same directory
+that was originally used to install MD-Tracks):</p>
+<div class="highlight-python"><pre>cd ~/build/
+(cd molmod; git pull; rm -r ~/lib*/python/molmod*; ./setup.py install --home=~)
+(cd md-tracks; git pull; rm -r ~/lib*/python/tracks*; ./setup.py install --home=~)</pre>
+</div>
+</div>
+<div class="section" id="testing-your-installation">
+<h2>1.6. Testing your installation<a class="headerlink" href="#testing-your-installation" title="Permalink to this headline">¶</a></h2>
+<p>For the development and testing one needs to install one additional package:</p>
+<ul class="simple">
+<li>Nosetests &gt;= 0.11: <a class="reference external" href="http://somethingaboutorange.com/mrl/projects/nose/0.11.2/">http://somethingaboutorange.com/mrl/projects/nose/0.11.2/</a></li>
+</ul>
+<p>Most Linux distributions can install this software with just a single command on
+the command line by the administrator.</p>
+<ul>
+<li><p class="first">Ubuntu 10.4:</p>
+<div class="highlight-python"><pre>sudo apt-get install python-nose</pre>
+</div>
+</li>
+<li><p class="first">Debian 5:</p>
+<div class="highlight-python"><pre>su -
+apt-get install python-nose
+exit</pre>
+</div>
+</li>
+<li><p class="first">Fedora 17:</p>
+<div class="highlight-python"><pre>sudo yum install python-nose</pre>
+</div>
+</li>
+<li><p class="first">Suse 11.2:</p>
+<div class="highlight-python"><pre>sudo zypper install python-nose</pre>
+</div>
+</li>
+</ul>
+<p>Once these dependencies are installed, execute the following commands to run the
+tests:</p>
+<div class="highlight-python"><pre>cd ~/build/
+cd md-tracks
+nosetests -v</pre>
+</div>
+<p>If some tests fail, post the output of the tests on the <a class="reference external" href="https://groups.google.com/forum/#!forum/MD-Tracks">MD-Tracks
+mailing list</a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference external" href="#">1. Installation</a><ul>
+<li><a class="reference external" href="#disclaimer">1.1. Disclaimer</a></li>
+<li><a class="reference external" href="#molmod-dependency">1.2. MolMod dependency</a></li>
+<li><a class="reference external" href="#external-dependencies">1.3. External dependencies</a></li>
+<li><a class="reference external" href="#installing-the-latest-version-of-md-tracks">1.4. Installing the latest version of MD-Tracks</a></li>
+<li><a class="reference external" href="#upgrading-to-the-latest-version-of-molmod-and-md-tracks">1.5. Upgrading to the latest version of MolMod and MD-Tracks</a></li>
+<li><a class="reference external" href="#testing-your-installation">1.6. Testing your installation</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">MD-Tracks documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tut_support.html"
+                        title="next chapter">2. If you encounter a problem</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/tut_install.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="tut_support.html" title="2. If you encounter a problem"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="MD-Tracks documentation"
+             >previous</a> |</li>
+        <li><a href="index.html">MD-Tracks v0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Toon Verstraelen.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.
+    </div>
+  </body>
+</html>
