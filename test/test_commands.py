@@ -72,10 +72,10 @@ class CommandsTestCase(BaseTestCase):
 
     def execute(self, command, args, verbose=False, stdin=None):
         from subprocess import Popen, PIPE, STDOUT
-        if lib_dir is None:
-            env = {}
-        else:
+        env = {}
+        if lib_dir is not None:
             env = {"PYTHONPATH": "%s:%s" % (lib_dir, os.getenv("PYTHONPATH"))}
+        env['DISPLAY'] = os.getenv('DISPLAY')
         p = Popen(
             ["/usr/bin/python", os.path.join(scripts_dir, command)] + args,
             stdin=PIPE, stdout=PIPE, stderr=PIPE, env=env,
