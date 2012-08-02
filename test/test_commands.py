@@ -77,7 +77,7 @@ class CommandsTestCase(BaseTestCase):
             env = {"PYTHONPATH": "%s:%s" % (lib_dir, os.getenv("PYTHONPATH"))}
         env['DISPLAY'] = os.getenv('DISPLAY')
         p = Popen(
-            ["/usr/bin/python", os.path.join(scripts_dir, command)] + args,
+            ["/usr/bin/env", "python", os.path.join(scripts_dir, command)] + args,
             stdin=PIPE, stdout=PIPE, stderr=PIPE, env=env,
         )
         if stdin is not None:
