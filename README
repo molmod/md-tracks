@@ -1,3 +1,8 @@
+This repository is a read-only archive. Futher development has been discontinued.
+Consider using MDTRaj instead: https://github.com/mdtraj/mdtraj
+
+-----------
+
 MD-Tracks is a trajectory analysis toolkit for molecular dynamics and Monte
 Carlo simulations. It is designed to interact with several simulation codes that
 generate trajectory data: CP2K, CPMD, DLPOLY, GROMACS, LAMMPS. The trajectory
@@ -6,9 +11,9 @@ then be processed with a bundle of analysis scripts, e.g. for the analysis of
 vibrational spectra, diffusion constants, radial distribution functions, and so
 on.
 
-More information about MD-Zeobuilder can be found on the CMM Software website:
+More information about MD-Tracks can be found on the CMM Software website:
 http://molmod.ugent.be/software/
 
-Zeobuilder is distributed as open source software under the conditions of the GPL
+MD-Tracks is distributed as open source software under the conditions of the GPL
 license version 3.  Read the file COPYING for more details, or visit
 http://www.gnu.org/licenses/
